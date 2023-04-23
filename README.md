@@ -33,3 +33,7 @@ The primary objectives of the tools provided here are:
 ### Building the Project
 
 TBD
+
+## References
+
+This implementation is heavily based on an earlier version written in rust, which can be found here: https://github.com/certainty/braces
