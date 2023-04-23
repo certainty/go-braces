@@ -2,6 +2,7 @@
 
 # Variables
 EXECUTABLES = braces-vm 
+LINTER := golangci-lint
 
 # Build the package
 build:
@@ -15,7 +16,7 @@ test:
 
 # Lint the package
 lint:
-	golint ./...
+	@$(LINTER) run 
 
 # Clean up
 clean:

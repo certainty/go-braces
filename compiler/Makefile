@@ -2,6 +2,7 @@
 
 # Variables
 EXECUTABLES = braces-compiler 
+LINTER := golangci-lint
 
 # Build the package
 build:
@@ -15,10 +16,16 @@ test:
 
 # Lint the package
 lint:
-	golint ./...
+	@$(LINTER) run 
 
 # Clean up
 clean:
 	rm -rf ./target/bin/$(notdir $(CURDIR))
+
+tidy:
+	@for pkg in $(PACKAGES); do \
+		echo "Tidying $$pkg..."; \
+		cd $$pkg && go mod tidy && cd ..; \
+	done
 
 .PHONY: build test lint clean

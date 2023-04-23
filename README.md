@@ -32,7 +32,14 @@ The primary objectives of the tools provided here are:
 
 ### Building the Project
 
-TBD
+The following will build all executables in each of the packages. 
+The binaries will be placed in `$package/target/bin`. 
+
+```
+make
+```
+
+You can also build individual packages separately, by changing into the corresponding directory and then invoking `make`.
 
 ## References
 

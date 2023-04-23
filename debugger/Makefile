@@ -2,6 +2,7 @@
 
 # Variables
 EXECUTABLES = braces-debugger 
+LINTER := golangci-lint
 
 # Build the package
 build:
@@ -15,10 +16,11 @@ test:
 
 # Lint the package
 lint:
-	golint ./...
+	@$(LINTER) run 
 
 # Clean up
 clean:
 	rm -rf ./target/bin/$(notdir $(CURDIR))
+
 
 .PHONY: build test lint clean

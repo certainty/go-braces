@@ -26,4 +26,15 @@ lint:
 clean:
 	rm -rf bin
 
-.PHONY: all test lint clean $(PACKAGES)
+tidy:
+	@for pkg in $(PACKAGES); do \
+		echo "Tidying $$pkg..."; \
+		cd $$pkg && go mod tidy && cd ..; \
+	done
+
+install-tools:
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
+
+
+
+.PHONY: all test lint clean tidy install-tools $(PACKAGES)

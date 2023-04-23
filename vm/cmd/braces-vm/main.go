@@ -15,7 +15,6 @@ var rootCmd = &cobra.Command{
           a set of tools and options to do so.
         `,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Add your application logic here
 		fmt.Println("Runnning braces-vm")
 	},
 }

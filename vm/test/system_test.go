@@ -6,5 +6,5 @@ import (
 )
 
 func TestSystemExample(t *testing.T) {
-	assert.Equal(t, true, true, "System test for ExampleFunction should return the expected result")
+	assert.Equal(t, true, true, "System test should return the expected result")
 }
