@@ -1,0 +1,62 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - name: Set up matrix for packages
+      id: set-matrix
+      run: echo "::set-output name=matrix::{\"include\":[{\"package\":\"compiler\"},{\"package\":\"vm\"},{\"package\":\"repl\"},{\"package\":\"debugger\"}]}"
+
+  build-and-test:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.20'
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.package }}
+        go mod tidy
+
+    - name: Build ${{ matrix.package }}
+      run: |
+        cd ${{ matrix.package }}
+        make 
+
+    - name: Test ${{ matrix.package }}
+      run: |
+        cd ${{ matrix.package }}
+        make test
+
+    - name: Lint ${{ matrix.package }}
+      run: |
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.0
+        cd ${{ matrix.package }}
+        make lint
+
