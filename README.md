@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/certainty/go-braces/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/certainty/go-braces/actions/workflows/ci.yml)
+
 # Go-Braces
 A comprehensive compiler and VM implementation for programming language enthusiasts.
 
