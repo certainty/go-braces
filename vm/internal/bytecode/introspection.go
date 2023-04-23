@@ -3,13 +3,23 @@ package bytecode
 import "fmt"
 
 type SourceSpan struct {
-	line   uint32
-	column uint32
+	Line   uint32
+	Column uint32
 }
 
 type SourceInformation struct {
 	Span SourceSpan
 	// we will store additional information in the future
+}
+
+func NewSourceInformation(line, column uint32) SourceInformation {
+	span := SourceSpan{
+		Line:   line,
+		Column: column,
+	}
+	return SourceInformation{
+		Span: span,
+	}
 }
 
 type IntrospectionInfo struct {
