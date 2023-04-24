@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches:
@@ -8,55 +9,41 @@ on:
       - main
 
 jobs:
-  setup:
+  build-lint-test:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-    - name: Set up matrix for packages
-      id: set-matrix
-      run: echo "::set-output name=matrix::{\"include\":[{\"package\":\"compiler\"},{\"package\":\"vm\"},{\"package\":\"repl\"},{\"package\":\"debugger\"}]}"
+      - name: Check out code
+        uses: actions/checkout@v2
 
-  build-and-test:
-    needs: setup
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
-    steps:
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.20'
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.20'
 
-    - name: Check out code
-      uses: actions/checkout@v2
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-    - name: Cache Go modules
-      uses: actions/cache@v2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+      - name: Build
+        run: go build -v ./...
 
-    - name: Install dependencies
-      run: |
-        cd ${{ matrix.package }}
-        go mod tidy
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-    - name: Build ${{ matrix.package }}
-      run: |
-        cd ${{ matrix.package }}
-        make 
+      - name: Lint
+        run: golangci-lint run
 
-    - name: Test ${{ matrix.package }}
-      run: |
-        cd ${{ matrix.package }}
-        make test
+      - name: Test
+        run: go test -v ./...
 
-    - name: Lint ${{ matrix.package }}
-      run: |
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.0
-        cd ${{ matrix.package }}
-        make lint
+      - name: Check formatting
+        run: |
+          if gofmt -d . | grep -q '^'; then
+            echo "Code is not properly formatted. Please run 'gofmt -w .'"
+            exit 1
+          fi
 
