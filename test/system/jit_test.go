@@ -1,10 +1,11 @@
 package system_test
 
 import (
+	"testing"
+
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // runJitTest compiles the given source code, executes it on the VM, and returns the result
@@ -39,16 +40,30 @@ func assertCompilerError(t *testing.T, sourceCode string) {
 	t.Helper()
 
 	_, err := runJitTest(sourceCode)
-	assert.Contains(t, err.Error(), "Compile error")
+	assert.Error(t, err)
+	if err != nil {
+		assert.Contains(t, err.Error(), "Compile error")
+	}
 }
 
 func assertRuntimeError(t *testing.T, sourceCode string) {
 	t.Helper()
 
 	_, err := runJitTest(sourceCode)
-	assert.Contains(t, err.Error(), "Runtime error")
+	assert.Error(t, err)
+	if err != nil {
+		assert.Contains(t, err.Error(), "Runtime error")
+	}
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
 	assertJITExcute(t, "(begin true)", true)
+}
+
+func TestJitCompileError(t *testing.T) {
+	assertCompilerError(t, "(begin true")
+}
+
+func TestJitRuntimeError(t *testing.T) {
+	assertRuntimeError(t, "(proc-does-not-exist)")
 }
