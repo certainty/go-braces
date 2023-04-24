@@ -27,6 +27,10 @@ format:
 	@echo "Formatting code..."
 	@gofmt -w $(GOFMT_FILES)
 
+vet:
+	@echo "Vetting code..."
+	@go vet ./... 
+
 clean:
 	@echo "Cleaning up..."
 	@rm -rf target/*
