@@ -42,7 +42,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          if ! gofmt -d . | grep '^'; then
+          if gofmt -d . | grep -q '^'; then
             echo "Code is not properly formatted. Please run 'gofmt -w .'"
             exit 1
           fi
