@@ -1,40 +1,33 @@
-# Main Makefile for the Go-Braces project
+BINARY_COMPILE=braces-compile
+BINARY_VM=braces-vm
+TEST?=./...
+GOFMT_FILES?=$$(find . -name '*.go')
 
-# Variables
-PACKAGES = compiler vm repl debugger
+.PHONY: build build-compile build-vm test lint format clean
 
-# Build all packages
-all: $(PACKAGES)
+build: build-compile build-vm
 
-# Build individual packages
-$(PACKAGES):
-	$(MAKE) -C $@ build
+build-compile:
+	@echo "Building $(BINARY_COMPILE)..."
+	@go build -o target/$(BINARY_COMPILE) ./cmd/braces-compile
 
-# Run tests for all packages
+build-vm:
+	@echo "Building $(BINARY_VM)..."
+	@go build -o target/$(BINARY_VM) ./cmd/braces-vm
+
 test:
-	for pkg in $(PACKAGES); do \
-		$(MAKE) -C $$pkg test; \
-	done
+	@echo "Running tests..."
+	@go test -v $(TEST)
 
-# Lint all packages
 lint:
-	for pkg in $(PACKAGES); do \
-		$(MAKE) -C $$pkg lint; \
-	done
+	@echo "Running linters..."
+	@golangci-lint run
 
-# Clean up
+format:
+	@echo "Formatting code..."
+	@gofmt -w $(GOFMT_FILES)
+
 clean:
-	rm -rf bin
+	@echo "Cleaning up..."
+	@rm -rf target/*
 
-tidy:
-	@for pkg in $(PACKAGES); do \
-		echo "Tidying $$pkg..."; \
-		cd $$pkg && go mod tidy && cd ..; \
-	done
-
-install-tools:
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
-
-
-
-.PHONY: all test lint clean tidy install-tools $(PACKAGES)
