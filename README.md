@@ -34,14 +34,19 @@ The primary objectives of the tools provided here are:
 
 ### Building the Project
 
-The following will build all executables in each of the packages. 
-The binaries will be placed in `$package/target/bin`. 
+Build the entire project with a simple invocation of make:
 
 ```
 make
 ```
 
-You can also build individual packages separately, by changing into the corresponding directory and then invoking `make`.
+#### Testing
+
+Again testing is simple and you can run the harness with:
+
+```
+make test
+```
 
 ## References
 
