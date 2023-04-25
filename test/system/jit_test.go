@@ -28,7 +28,7 @@ func runJitTest(sourceCode string) (interface{}, error) {
 	return result, nil
 }
 
-func assertJITExcute(t *testing.T, sourceCode string, expectedValue interface{}) {
+func assertCompilesAndRuns(t *testing.T, sourceCode string, expectedValue interface{}) {
 	t.Helper()
 
 	result, err := runJitTest(sourceCode)
@@ -37,7 +37,7 @@ func assertJITExcute(t *testing.T, sourceCode string, expectedValue interface{})
 	assert.Equal(t, expectedValue, result)
 }
 
-func assertCompilerError(t *testing.T, sourceCode string) {
+func assertCompilationError(t *testing.T, sourceCode string) {
 	t.Helper()
 
 	_, err := runJitTest(sourceCode)
@@ -60,5 +60,5 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
-	assertJITExcute(t, "(begin true)", true)
+	assertCompilesAndRuns(t, "(begin true)", true)
 }
