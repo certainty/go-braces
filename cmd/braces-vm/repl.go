@@ -1,7 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"github.com/certainty/go-braces/internal/repl"
+	"github.com/certainty/go-braces/internal/vm"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -10,8 +12,15 @@ var replCmd = &cobra.Command{
 	Short: "Start the VM in repl mode",
 	Long:  `More documentation still to come here`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("repl called")
+		run()
 	},
+}
+
+func run() {
+	vm := vm.NewVM(vm.DefaultOptions())
+	repl := repl.NewRepl(80, 25, &vm)
+	program := tea.NewProgram(repl)
+	program.Start()
 }
 
 func init() {
