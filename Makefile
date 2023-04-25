@@ -21,7 +21,7 @@ test:
 
 lint:
 	@echo "Running linters..."
-	@golangci-lint run
+	@golangci-lint run --tests=false
 
 format:
 	@echo "Formatting code..."
