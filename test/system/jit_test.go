@@ -62,11 +62,3 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
 	assertJITExcute(t, "(begin true)", true)
 }
-
-func TestJitCompileError(t *testing.T) {
-	//assertCompilerError(t, "(begin true")
-}
-
-func TestJitRuntimeError(t *testing.T) {
-	//assertRuntimeError(t, "(proc-does-not-exist)")
-}
