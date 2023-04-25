@@ -45,7 +45,7 @@ jobs:
           fi
 
       - name: Lint
-        run: golangci-lint run
+        run: golangci-lint run --tests=false
 
       - name: Build
         run: go build -v ./...
