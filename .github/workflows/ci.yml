@@ -43,15 +43,11 @@ jobs:
           if ! command -v golangci-lint &> /dev/null; then
             make install-tools
           fi
-
-      - name: Lint
-        run: make lint 
-
       - name: Build
         run: make build 
-
       - name: Test
         run: make test 
-
+      - name: Lint
+        run: make lint 
       - name: Check formatting
         run: make check-format
