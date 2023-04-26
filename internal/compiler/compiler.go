@@ -1,11 +1,13 @@
 package compiler
 
+import "github.com/certainty/go-braces/internal/introspection"
+
 type CompilerOptions struct {
-	// enable debug mode which intercepts, phases, lexing, parsing etc.
+	introspectionAPI *introspection.API
 }
 
 type Compiler struct {
-	options CompilerOptions
+	introspectionAPI *introspection.API
 }
 
 type CompilationUnit struct {
@@ -16,7 +18,11 @@ func DefaultOptions() CompilerOptions {
 }
 
 func NewCompiler(options CompilerOptions) Compiler {
-	return Compiler{options: options}
+	if options.introspectionAPI == nil {
+		return Compiler{introspectionAPI: introspection.NullAPI()}
+	} else {
+		return Compiler{introspectionAPI: options.introspectionAPI}
+	}
 }
 
 func (c Compiler) JitCompile(code string) (*CompilationUnit, error) {

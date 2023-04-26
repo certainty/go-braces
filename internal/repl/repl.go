@@ -2,7 +2,6 @@ package repl
 
 import (
 	"fmt"
-
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/certainty/go-braces/internal/vm/language/value"
