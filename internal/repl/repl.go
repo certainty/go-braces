@@ -3,20 +3,25 @@ package repl
 import (
 	"errors"
 	"fmt"
-	"github.com/certainty/go-braces/internal/vm"
-	"github.com/knz/bubbline"
 	"io"
+
+	"github.com/certainty/go-braces/internal/compiler"
+	"github.com/certainty/go-braces/internal/vm"
+	"github.com/certainty/go-braces/internal/vm/language/value"
+	"github.com/knz/bubbline"
 )
 
 type Repl struct {
 	lineEditor *bubbline.Editor
 	vm         *vm.VM
+	compiler   *compiler.Compiler
 }
 
-func NewRepl(vm *vm.VM) *Repl {
+func NewRepl(vm *vm.VM, compiler *compiler.Compiler) *Repl {
 	return &Repl{
 		lineEditor: bubbline.New(),
 		vm:         vm,
+		compiler:   compiler,
 	}
 }
 
@@ -44,6 +49,22 @@ func (r *Repl) Run() {
 			continue
 		}
 		r.lineEditor.AddHistory(val)
-		println(val)
+
+		// TODO: check if input is a command or normal input
+		result, err := r.compileAndRun(val)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("%v\n", result)
+		}
 	}
+}
+
+func (r *Repl) compileAndRun(input string) (value.Value, error) {
+	complicationUnit, err := r.compiler.JitCompile(input)
+
+	if err != nil {
+		return nil, err
+	}
+	return r.vm.Execute(complicationUnit)
 }

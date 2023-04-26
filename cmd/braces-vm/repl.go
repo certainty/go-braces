@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/repl"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/spf13/cobra"
@@ -17,7 +18,9 @@ var replCmd = &cobra.Command{
 
 func run() {
 	vm := vm.NewVM(vm.DefaultOptions())
-	repl := repl.NewRepl(&vm)
+	compiler := compiler.NewCompiler(compiler.DefaultOptions())
+
+	repl := repl.NewRepl(&vm, &compiler)
 	repl.Run()
 }
 
