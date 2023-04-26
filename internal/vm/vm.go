@@ -19,5 +19,4 @@ func NewVM(options VmOptions) VM {
 
 func (vm *VM) Execute(compilationUnit *compiler.CompilationUnit) (value.Value, error) {
 	return true, nil
-
 }

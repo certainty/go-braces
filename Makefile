@@ -49,5 +49,6 @@ install-tools:
 	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$$GOLANGCI_LINT_VERSION
 
 
-
+repl: build
+	./target/braces-vm repl
 
