@@ -1,61 +1,91 @@
 package repl
 
 import (
-	"errors"
 	"fmt"
-	"io"
 
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/certainty/go-braces/internal/vm/language/value"
-	"github.com/knz/bubbline"
+	"github.com/chzyer/readline"
 )
 
 type Repl struct {
-	lineEditor *bubbline.Editor
 	vm         *vm.VM
 	compiler   *compiler.Compiler
+	lineedit   *readline.Instance
+	inputCount int
 }
 
-func NewRepl(vm *vm.VM, compiler *compiler.Compiler) *Repl {
+func NewRepl(vm *vm.VM, compiler *compiler.Compiler) (*Repl, error) {
+	rl, err := readline.New("> ")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repl{
-		lineEditor: bubbline.New(),
 		vm:         vm,
 		compiler:   compiler,
-	}
+		lineedit:   rl,
+		inputCount: 0,
+	}, nil
 }
 
 // run without introspection
 func (r *Repl) Run() {
 	println("Welcome to the Go Braces REPL!")
+	println("Press Ctrl+C to exit and :help for help\n")
+	defer r.lineedit.Close()
 
 	for {
-		val, err := r.lineEditor.GetLine()
-
-		if err != nil {
-			if err == io.EOF {
-				// No more input.
-				break
-			}
-			if errors.Is(err, bubbline.ErrInterrupted) {
-				// Entered Ctrl+C to cancel input.
-				fmt.Println("^C")
-			} else if errors.Is(err, bubbline.ErrTerminated) {
-				fmt.Println("terminated")
-				break
-			} else {
-				fmt.Println("error:", err)
-			}
-			continue
+		input, err := r.getInput()
+		if err != nil { // io.EOF, readline.ErrInterrupt
+			break
 		}
-		r.lineEditor.AddHistory(val)
 
-		// TODO: check if input is a command or normal input
-		result, err := r.compileAndRun(val)
+		result, err := r.compileAndRun(input)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(err.Error())
 		} else {
-			fmt.Printf("%v\n", result)
+			fmt.Printf("=> %v\n", result)
+		}
+	}
+}
+
+func (r *Repl) getInput() (string, error) {
+	openBrackes, openParens, openQuotes := 0, 0, 0
+	buffer := ""
+	r.lineedit.SetPrompt(fmt.Sprintf("%03d:> ", r.inputCount))
+
+	for {
+		line, err := r.lineedit.Readline()
+		if err != nil {
+			return "", err
+		}
+
+		buffer += line
+
+		for _, char := range line {
+			switch char {
+			case '[':
+				openBrackes++
+			case ']':
+				openBrackes--
+			case '(':
+				openParens++
+			case ')':
+				openParens--
+			case '"':
+				openQuotes++
+			}
+		}
+
+		if openBrackes == 0 && openParens == 0 && openQuotes%2 == 0 {
+			r.inputCount += 1
+			r.lineedit.SetPrompt(fmt.Sprintf("%03d:> ", r.inputCount))
+			return buffer, nil
+		} else {
+			buffer += "\n"
+			r.lineedit.SetPrompt(fmt.Sprintf("%03d:* ", r.inputCount))
 		}
 	}
 }

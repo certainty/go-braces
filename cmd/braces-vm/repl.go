@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/repl"
 	"github.com/certainty/go-braces/internal/vm"
@@ -20,7 +23,12 @@ func run() {
 	vm := vm.NewVM(vm.DefaultOptions())
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
 
-	repl := repl.NewRepl(&vm, &compiler)
+	repl, err := repl.NewRepl(&vm, &compiler)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
 	repl.Run()
 }
 
