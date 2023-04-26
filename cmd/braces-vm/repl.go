@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/certainty/go-braces/internal/repl"
 	"github.com/certainty/go-braces/internal/vm"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +17,8 @@ var replCmd = &cobra.Command{
 
 func run() {
 	vm := vm.NewVM(vm.DefaultOptions())
-	repl := repl.NewRepl(80, 25, &vm)
-	program := tea.NewProgram(repl)
-	program.Start()
+	repl := repl.NewRepl(&vm)
+	repl.Run()
 }
 
 func init() {
