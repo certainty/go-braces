@@ -34,4 +34,6 @@ func NullAPI() *Null {
 	return &Null{}
 }
 
-func (n *Null) SendEvent(event IntrospectionEvent) {}
+// implements API
+func (n *Null) SendEvent(event IntrospectionEvent) {
+}
