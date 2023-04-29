@@ -12,14 +12,14 @@ import (
 // runJitTest compiles the given source code, executes it on the VM, and returns the result
 func runJitTest(sourceCode string) (interface{}, error) {
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
-	compilationUnit, err := compiler.JitCompile(sourceCode)
+	assemblyModule, err := compiler.JitCompile(sourceCode)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a new VM instance and execute the compilation unit
 	virtualMachine := vm.NewVM(vm.DefaultOptions())
-	result, err := virtualMachine.Execute(compilationUnit)
+	result, err := virtualMachine.ExecuteModule(assemblyModule)
 
 	if err != nil {
 		return nil, err

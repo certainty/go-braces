@@ -87,3 +87,17 @@ func (e ParserError) Error() string {
 func (e ParserError) ID() string {
 	return e.id
 }
+
+type ErrorDetail struct {
+	Type            string
+	underlyingError error
+}
+
+// Combination of all errors
+type CompilerError struct {
+	details []ErrorDetail
+}
+
+func (e CompilerError) Error() string {
+	return "Compiler error"
+}
