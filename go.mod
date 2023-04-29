@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/alecthomas/participle/v2 v2.0.0
 	github.com/chzyer/readline v1.5.1
+	github.com/prataprc/goparsec v0.0.0-20211219142520-daac0e635e7e
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 )

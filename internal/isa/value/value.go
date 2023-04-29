@@ -1,4 +1,4 @@
-package isa
+package value
 
 // Values are not actullay part of the ISA normally
 // and this file will go away eventually, but in the
@@ -8,3 +8,5 @@ package isa
 // for example.
 
 type Value interface{}
+
+type BoolValue bool

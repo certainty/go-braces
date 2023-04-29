@@ -3,7 +3,7 @@ package vm
 import (
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa/assembly"
-	"github.com/certainty/go-braces/internal/vm/language/value"
+	"github.com/certainty/go-braces/internal/isa/value"
 )
 
 type VmOptions struct {
