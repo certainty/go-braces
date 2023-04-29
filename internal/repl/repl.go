@@ -90,7 +90,7 @@ func (r *Repl) getInput() (string, error) {
 }
 
 func (r *Repl) compileAndRun(input string) (value.Value, error) {
-	assemblyModule, err := r.compiler.JitCompile(input)
+	assemblyModule, err := r.compiler.CompileString(input)
 
 	if err != nil {
 		return nil, err

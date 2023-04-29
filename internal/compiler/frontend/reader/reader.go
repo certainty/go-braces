@@ -14,6 +14,6 @@ func NewReader(introspectionAPI introspection.API) *Reader {
 	}
 }
 
-func (r *Reader) Read(source string) (*DatumAST, error) {
+func (r *Reader) Read(source *[]byte) (*DatumAST, error) {
 	return nil, nil
 }

@@ -1,4 +1,4 @@
-package compiler
+package location
 
 import (
 	"bufio"
@@ -44,6 +44,13 @@ type StringInput struct {
 	value string
 }
 
+func NewStringInput(label, value string) StringInput {
+	return StringInput{
+		label: label,
+		value: value,
+	}
+}
+
 func (s StringInput) Type() string {
 	return fmt.Sprintf("string://%s", s.label)
 }
@@ -60,6 +67,13 @@ func (s StringInput) WithReader(r ReadFunction) (interface{}, error) {
 type ReplInput struct {
 	count int
 	input StringInput
+}
+
+func NewReplInput(input string, count int) ReplInput {
+	return ReplInput{
+		count: count,
+		input: NewStringInput("REPL", input),
+	}
 }
 
 func (r ReplInput) Type() string {

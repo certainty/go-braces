@@ -1,6 +1,8 @@
 package introspection
 
-type IntrospectionEvent interface{}
+type IntrospectionEvent interface {
+	EventInspect() string
+}
 
 type IntrospectionRequest interface{}
 

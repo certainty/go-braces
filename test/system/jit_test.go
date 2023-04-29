@@ -12,7 +12,7 @@ import (
 // runJitTest compiles the given source code, executes it on the VM, and returns the result
 func runJitTest(sourceCode string) (interface{}, error) {
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
-	assemblyModule, err := compiler.JitCompile(sourceCode)
+	assemblyModule, err := compiler.CompileString(sourceCode)
 	if err != nil {
 		return nil, err
 	}

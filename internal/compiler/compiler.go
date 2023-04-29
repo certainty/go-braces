@@ -5,17 +5,18 @@ import (
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
+	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa/assembly"
 )
 
 // The compile follows a traditional compile design of frontend, middleend and backend
 // Since scheme has rather rich meta syntactical capabilities with its macro system
-// we separate the core compiler, which deals with core forms, afer they have been transformed
-// parsed and expanded.
+// we separate the core compiler, which deals with core forms, after they have been transformed
+// parsed and expanded, from the rest.
 //
-// This struct is the main interface to the compiler and houses the compiler frontend (syntactic analysisee and macro expansion)
-// as well as the core compiler which deals with the rest.
+// This struct is the main interface to the compiler and houses the compiler frontend
+// (syntactic analysises and macro expansion) as well as the core compiler which deals with the rest.
 type Compiler struct {
 	introspectionAPI introspection.API
 	reader           *reader.Reader
@@ -32,12 +33,20 @@ func NewCompiler(options CompilerOptions) *Compiler {
 	}
 }
 
-func (c *Compiler) JitCompile(code string) (*assembly.AssemblyModule, error) {
-	return c.compileModule(code, "JIT")
+func (c *Compiler) CompileString(code string) (*assembly.AssemblyModule, error) {
+	input := location.NewStringInput(code, "ADHOC")
+	return c.CompileModule(input)
 }
 
-func (c *Compiler) compileModule(code string, name string) (*assembly.AssemblyModule, error) {
-	datum, err := c.reader.Read(code)
+func (c *Compiler) CompileModule(input location.Input) (*assembly.AssemblyModule, error) {
+	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
+
+	buffer, err := input.Buffer()
+	if err != nil {
+		return nil, fmt.Errorf("BufferError: %w", err)
+	}
+
+	datum, err := c.reader.Read(&buffer)
 
 	if err != nil {
 		return nil, fmt.Errorf("ReadError: %w", err)
@@ -53,5 +62,6 @@ func (c *Compiler) compileModule(code string, name string) (*assembly.AssemblyMo
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}
 
+	c.introspectionAPI.SendEvent(introspection.EventEndCompileModule())
 	return assemblyModule, nil
 }

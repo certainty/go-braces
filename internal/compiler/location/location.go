@@ -1,4 +1,4 @@
-package compiler
+package location
 
 type Location struct {
 	Input *Input
