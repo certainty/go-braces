@@ -38,5 +38,4 @@ func NullAPI() Null {
 
 // implements API
 func (n Null) SendEvent(event IntrospectionEvent) {
-	return
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -26,7 +25,7 @@ func (f FileInput) Type() string {
 }
 
 func (f FileInput) Buffer() ([]byte, error) {
-	return ioutil.ReadFile(f.path)
+	return os.ReadFile(f.path)
 }
 
 func (f FileInput) WithReader(r ReadFunction) (interface{}, error) {
