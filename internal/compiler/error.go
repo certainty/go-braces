@@ -89,13 +89,13 @@ func (e ParserError) ID() string {
 }
 
 type ErrorDetail struct {
-	Type            string
-	underlyingError error
+	Type string
+	error
 }
 
 // Combination of all errors
 type CompilerError struct {
-	details []ErrorDetail
+	// details []ErrorDetail
 }
 
 func (e CompilerError) Error() string {
