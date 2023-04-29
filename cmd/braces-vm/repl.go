@@ -23,7 +23,7 @@ func run() {
 	vm := vm.NewVM(vm.DefaultOptions())
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
 
-	repl, err := repl.NewRepl(&vm, &compiler)
+	repl, err := repl.NewRepl(&vm, compiler)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

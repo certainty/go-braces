@@ -16,12 +16,12 @@ type IntrospectionChannel struct {
 	responses chan IntrospectionResponse
 }
 
-func (c *IntrospectionChannel) SendEvent(event IntrospectionEvent) {
+func (c IntrospectionChannel) SendEvent(event IntrospectionEvent) {
 	c.events <- event
 }
 
-func NewChannel() *IntrospectionChannel {
-	return &IntrospectionChannel{
+func NewChannel() IntrospectionChannel {
+	return IntrospectionChannel{
 		events:    make(chan IntrospectionEvent),
 		requests:  make(chan IntrospectionRequest),
 		responses: make(chan IntrospectionResponse),
@@ -30,10 +30,11 @@ func NewChannel() *IntrospectionChannel {
 
 type Null struct{}
 
-func NullAPI() *Null {
-	return &Null{}
+func NullAPI() Null {
+	return Null{}
 }
 
 // implements API
-func (n *Null) SendEvent(event IntrospectionEvent) {
+func (n Null) SendEvent(event IntrospectionEvent) {
+	return
 }

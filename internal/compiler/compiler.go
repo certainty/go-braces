@@ -6,6 +6,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/isa/assembly"
 )
 
 // The compile follows a traditional compile design of frontend, middleend and backend
@@ -16,7 +17,7 @@ import (
 // This struct is the main interface to the compiler and houses the compiler frontend (syntactic analysisee and macro expansion)
 // as well as the core compiler which deals with the rest.
 type Compiler struct {
-	introspectionAPI *introspection.API
+	introspectionAPI introspection.API
 	reader           *reader.Reader
 	parser           *parser.Parser
 	coreCompiler     *CoreCompiler
@@ -31,12 +32,13 @@ func NewCompiler(options CompilerOptions) *Compiler {
 	}
 }
 
-func (c *Compiler) JitCompile(code string) (*CompilationUnit, error) {
-	return c.compileUnit(code, "JIT")
+func (c *Compiler) JitCompile(code string) (*assembly.AssemblyModule, error) {
+	return c.compileModule(code, "JIT")
 }
 
-func (c *Compiler) compileUnit(code string, name string) (*CompilationUnit, error) {
+func (c *Compiler) compileModule(code string, name string) (*assembly.AssemblyModule, error) {
 	datum, err := c.reader.Read(code)
+
 	if err != nil {
 		return nil, fmt.Errorf("ReadError: %w", err)
 	}
@@ -46,10 +48,10 @@ func (c *Compiler) compileUnit(code string, name string) (*CompilationUnit, erro
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
 
-	compilationUnit, err := c.coreCompiler.Compile(coreAst)
+	assemblyModule, err := c.coreCompiler.CompileModule(coreAst)
 	if err != nil {
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}
 
-	return compilationUnit, nil
+	return assemblyModule, nil
 }

@@ -3,13 +3,13 @@ module github.com/certainty/go-braces
 go 1.20
 
 require (
+	github.com/alecthomas/participle/v2 v2.0.0
 	github.com/chzyer/readline v1.5.1
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 )
 
 require (
-	github.com/alecthomas/participle/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect

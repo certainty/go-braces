@@ -3,13 +3,17 @@ package reader
 import "github.com/certainty/go-braces/internal/introspection"
 
 type Reader struct {
-	introspectionAPI *introspection.API
+	introspectionAPI introspection.API
 	parser           *Parser
 }
 
-func NewReader(introspectionAPI *introspection.API) *Reader {
+func NewReader(introspectionAPI introspection.API) *Reader {
 	return &Reader{
 		introspectionAPI: introspectionAPI,
 		parser:           NewParser(introspectionAPI),
 	}
+}
+
+func (r *Reader) Read(source string) (*DatumAST, error) {
+	return nil, nil
 }

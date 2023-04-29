@@ -5,9 +5,9 @@ import (
 )
 
 type Parser struct {
-	introspectionAPI *introspection.API
+	introspectionAPI introspection.API
 }
 
-func NewParser(introspectionAPI *introspection.API) *Parser {
+func NewParser(introspectionAPI introspection.API) *Parser {
 	return &Parser{introspectionAPI: introspectionAPI}
 }

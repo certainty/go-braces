@@ -90,10 +90,10 @@ func (r *Repl) getInput() (string, error) {
 }
 
 func (r *Repl) compileAndRun(input string) (value.Value, error) {
-	complicationUnit, err := r.compiler.JitCompile(input)
+	assemblyModule, err := r.compiler.JitCompile(input)
 
 	if err != nil {
 		return nil, err
 	}
-	return r.vm.Execute(complicationUnit)
+	return r.vm.ExecuteModule(assemblyModule)
 }
