@@ -57,8 +57,139 @@ func (s *Scanner) Position() Position {
 		Line:   s.line,
 		Col:    s.col,
 	}
+
 }
 
-func (s *Scanner) SkipIrrelevant() {
-	// skip inter-token-space and comments
+func (s *Scanner) skipWhitespace() (bool, error) {
+	ch, err := s.Peek()
+	if err != nil {
+		return false, err
+	}
+
+	if ch == ' ' || ch == '\t' {
+		s.Next()
+		return true, nil
+	}
+	return false, nil
+}
+
+func (s *Scanner) skipEOL() (bool, error) {
+	ch, err := s.Peek()
+	if err != nil {
+		return false, err
+	}
+
+	if ch == '\n' || ch == '\r' {
+		s.Next()
+		if ch == '\r' {
+			nextCh, _ := s.Peek()
+			if nextCh == '\n' {
+				s.Next()
+			}
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (s *Scanner) SkipIrrelevant() error {
+	for {
+		accepted, err := s.skipWhitespace()
+		if err != nil {
+			return err
+		}
+		if accepted {
+			continue
+		}
+
+		accepted, err = s.skipEOL()
+		if err != nil {
+			return err
+		}
+		if accepted {
+			continue
+		}
+
+		accepted, err = s.skipSkipLineComment()
+		if err != nil {
+			return err
+		}
+
+		if accepted {
+			continue
+		}
+
+		accepted, err = s.skipMultiLineComment()
+		if err != nil {
+			return err
+		}
+		if accepted {
+			continue
+		}
+
+		break
+	}
+	return nil
+}
+
+func (s *Scanner) skipMultiLineComment() (bool, error) {
+	ch, err := s.Peek()
+	if err != nil {
+		return false, err
+	}
+
+	if ch == '#' {
+		s.Next()
+		nextCh, _ := s.Peek()
+		if nextCh == '|' {
+			s.Next()
+			var commentNesting = 1
+
+			for commentNesting > 0 {
+				ch, err = s.Next()
+				if err != nil {
+					return false, err
+				}
+
+				if ch == '#' {
+					nextCh, _ := s.Peek()
+					if nextCh == '|' {
+						s.Next()
+						commentNesting++
+					}
+				} else if ch == '|' {
+					nextCh, _ := s.Peek()
+					if nextCh == '#' {
+						s.Next()
+						commentNesting--
+					}
+				}
+			}
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// consumes the input stream skipping a line comment
+func (s *Scanner) skipSkipLineComment() (bool, error) {
+	ch, err := s.Peek()
+	if err != nil {
+		return false, err
+	}
+
+	if ch == ';' {
+		s.Next()
+		for {
+			ch, err = s.Next()
+			if err != nil {
+				return false, err
+			}
+			if ch == '\n' || ch == '\r' {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }

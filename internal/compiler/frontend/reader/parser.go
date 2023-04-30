@@ -1,21 +1,11 @@
 package reader
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/introspection"
 )
-
-type ReadError struct {
-	Msg string
-	pos Position
-}
-
-func (e ReadError) Error() string {
-	return fmt.Sprintf("%s at %d:%d", e.Msg, e.pos.Line, e.pos.Col)
-}
 
 type Parser struct {
 	introspectionAPI introspection.API
@@ -28,6 +18,7 @@ func NewParser(introspectionAPI introspection.API) *Parser {
 }
 
 func (p *Parser) Parse(input location.Input) (*DatumAST, []ReadError) {
+	return nil, nil
 	p.scanner = NewScanner(input.Reader())
 	p.errors = []ReadError{}
 
