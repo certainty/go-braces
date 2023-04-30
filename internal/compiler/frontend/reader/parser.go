@@ -50,6 +50,7 @@ func (p *Parser) parseAll() []Datum {
 	data := []Datum{}
 
 	for {
+		p.scanner.SkipIrrelevant()
 		datum := p.parseDatum()
 		if datum == nil && !p.scanner.IsEof() {
 			p.error("expected datum")
