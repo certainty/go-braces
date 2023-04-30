@@ -1,8 +1,9 @@
 package reader
 
 import (
-	"io"
+	"fmt"
 
+	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/introspection"
 )
@@ -11,16 +12,17 @@ type Parser struct {
 	introspectionAPI introspection.API
 	scanner          *Scanner
 	errors           []ReadError
+	input            *input.Input
 }
 
 func NewParser(introspectionAPI introspection.API) *Parser {
 	return &Parser{introspectionAPI: introspectionAPI}
 }
 
-func (p *Parser) Parse(input location.Input) (*DatumAST, []ReadError) {
-	return nil, nil
-	p.scanner = NewScanner(input.Reader())
+func (p *Parser) Parse(input *input.Input) (*DatumAST, []ReadError) {
+	p.scanner = NewScanner(input.Buffer)
 	p.errors = []ReadError{}
+	p.input = input
 
 	data := p.parseAll()
 	if len(p.errors) > 0 {
@@ -48,26 +50,58 @@ func (p *Parser) recover() {
 
 func (p *Parser) parseAll() []Datum {
 	data := []Datum{}
+	attempts := 0
 
 	for {
-		p.scanner.SkipIrrelevant()
-		_, err := p.scanner.Peek()
-
-		if err == io.EOF {
-			break
+		attempts++
+		if attempts > 10 {
+			return nil
 		}
 
-		if err != nil {
-			p.error("Error reading input")
-			break
-		}
+		fmt.Printf("Parse all: %d\n", p.scanner.pos)
 
 		datum := p.parseDatum()
-		data = append(data, datum)
+		if datum == nil {
+			p.error("Failed to parse datum")
+			//p.recover()
+		} else {
+			data = append(data, datum)
+		}
+
+		println("scanner.IsEof():", p.scanner.IsEof())
+		println("scanner pos", p.scanner.pos)
+
+		if p.scanner.IsEof() {
+			break
+		}
 	}
 	return data
 }
 
 func (p *Parser) parseDatum() Datum {
-	return nil
+	return p.parseBoolean()
+}
+
+func (p *Parser) parseBoolean() Datum {
+	matched, err := p.scanner.Attempt("#t")
+
+	if err != nil {
+		return nil
+	}
+
+	if matched {
+		pos := p.scanner.Position()
+		return NewDatumBool(true, p.makeLocation(pos.Line, pos.Offset-2, pos.Offset))
+	} else {
+		return nil
+	}
+}
+
+func (p *Parser) makeLocation(line, start, end uint64) location.Location {
+	return location.Location{
+		Origin:      &p.input.Origin,
+		Line:        line,
+		StartOffset: start,
+		EndOffset:   end,
+	}
 }

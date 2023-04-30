@@ -5,7 +5,7 @@ import (
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa/assembly"
 )
@@ -34,11 +34,11 @@ func NewCompiler(options CompilerOptions) *Compiler {
 }
 
 func (c *Compiler) CompileString(code string) (*assembly.AssemblyModule, error) {
-	input := location.NewStringInput(code, "ADHOC")
+	input := input.NewStringInput("ADHOC", code)
 	return c.CompileModule(input)
 }
 
-func (c *Compiler) CompileModule(input location.Input) (*assembly.AssemblyModule, error) {
+func (c *Compiler) CompileModule(input *input.Input) (*assembly.AssemblyModule, error) {
 	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
 
 	datum, err := c.reader.Read(input)

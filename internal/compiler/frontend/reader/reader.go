@@ -1,19 +1,19 @@
 package reader
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"fmt"
+
+	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection"
 )
 
 type Reader struct {
 	introspectionAPI introspection.API
-	parser           *Parser
 }
 
 func NewReader(introspectionAPI introspection.API) *Reader {
 	return &Reader{
 		introspectionAPI: introspectionAPI,
-		parser:           NewParser(introspectionAPI),
 	}
 }
 
@@ -22,11 +22,17 @@ type ReaderError struct {
 }
 
 func (e ReaderError) Error() string {
-	return "ReaderError"
+	details := ""
+	for _, detail := range e.Details {
+		details += detail.Error() + "\n"
+	}
+	return fmt.Sprintf("ReaderError: %s", details)
 }
 
-func (r *Reader) Read(input location.Input) (*DatumAST, error) {
-	ast, errors := r.parser.Parse(input)
+func (r *Reader) Read(input *input.Input) (*DatumAST, error) {
+	parser := NewParser(r.introspectionAPI)
+	ast, errors := parser.Parse(input)
+
 	if errors != nil && len(errors) > 0 {
 		return nil, ReaderError{Details: errors}
 	} else {

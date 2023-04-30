@@ -18,7 +18,7 @@ build-vm:
 
 test:
 	@echo "Running tests..."
-	@go test -v $(TEST)
+	@gotestsum $(TEST)
 
 lint:
 	@echo "Running linters..."
@@ -47,6 +47,7 @@ tidy:
 install-tools:
 	@echo "Installing tools..."
 	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$$GOLANGCI_LINT_VERSION
+	@go get -u gotest.tools/gotestsum  
 
 
 repl: build

@@ -15,6 +15,6 @@ type DatumBool struct {
 	Loc   location.Location
 }
 
-func (d *DatumBool) Location() location.Location {
+func (d DatumBool) Location() location.Location {
 	return d.Loc
 }

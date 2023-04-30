@@ -1,54 +1,34 @@
 package reader
 
 import (
-	"bufio"
 	"io"
 )
 
 type Position struct {
-	Offset    int
-	Line, Col int
+	Offset    uint64
+	Line, Col uint64
 }
 
 type Scanner struct {
-	reader         io.Reader
-	runeReader     *bufio.Reader
-	pos, line, col int
+	buffer         *[]rune
+	bufferLen      uint64
+	pos, line, col uint64
+	posStack       []uint64
 }
 
-func NewScanner(r io.Reader) *Scanner {
+func NewScanner(buffer *[]rune) *Scanner {
 	return &Scanner{
-		reader:     r,
-		runeReader: bufio.NewReader(r),
-		line:       1,
+		buffer:    buffer,
+		bufferLen: uint64(len(*buffer)),
+		pos:       0,
+		line:      1,
+		col:       1,
+		posStack:  []uint64{},
 	}
 }
 
-func (s *Scanner) Peek() (rune, error) {
-	ch, _, err := s.runeReader.ReadRune()
-	if err != nil {
-		return 0, err
-	}
-	err = s.runeReader.UnreadRune()
-	if err != nil {
-		return 0, err
-	}
-	return ch, nil
-}
-
-func (s *Scanner) Next() (rune, error) {
-	ch, _, err := s.runeReader.ReadRune()
-	if err != nil {
-		return 0, err
-	}
-	s.pos++
-	if ch == '\n' {
-		s.line++
-		s.col = 0
-	} else {
-		s.col++
-	}
-	return ch, nil
+func (s *Scanner) IsEof() bool {
+	return s.pos >= s.bufferLen
 }
 
 func (s *Scanner) Position() Position {
@@ -57,7 +37,49 @@ func (s *Scanner) Position() Position {
 		Line:   s.line,
 		Col:    s.col,
 	}
+}
 
+func (s *Scanner) SavePosition() error {
+	s.posStack = append(s.posStack, s.pos)
+	return nil
+}
+
+func (s *Scanner) RestorePosition() error {
+	if len(s.posStack) == 0 {
+		return io.ErrUnexpectedEOF
+	}
+
+	s.pos = s.posStack[len(s.posStack)-1]
+	s.posStack = s.posStack[:len(s.posStack)-1]
+	return nil
+}
+
+func (s *Scanner) Peek() (rune, error) {
+	return s.PeekN(1)
+}
+
+func (s *Scanner) PeekN(n uint64) (rune, error) {
+	if s.pos+n >= s.bufferLen {
+		return 0, io.EOF
+	}
+	return (*s.buffer)[s.pos+n], nil
+}
+
+func (s *Scanner) Next() (rune, error) {
+	s.pos++
+	if s.IsEof() {
+		return 0, io.EOF
+	}
+
+	ch := (*s.buffer)[s.pos]
+	if ch == '\n' {
+		s.line++
+		s.col = 0
+	} else {
+		s.col++
+	}
+
+	return ch, nil
 }
 
 func (s *Scanner) skipWhitespace() (bool, error) {
@@ -140,6 +162,7 @@ func (s *Scanner) skipMultiLineComment() (bool, error) {
 	}
 
 	if ch == '#' {
+		s.SavePosition()
 		s.Next()
 		nextCh, _ := s.Peek()
 		if nextCh == '|' {
@@ -167,6 +190,8 @@ func (s *Scanner) skipMultiLineComment() (bool, error) {
 				}
 			}
 			return true, nil
+		} else {
+			s.RestorePosition()
 		}
 	}
 	return false, nil
@@ -192,4 +217,20 @@ func (s *Scanner) skipSkipLineComment() (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (s *Scanner) Attempt(expected string) (bool, error) {
+	expectedLen := uint64(len(expected))
+
+	if s.pos+expectedLen > s.bufferLen {
+		return false, nil
+	}
+	actualRunes := (*s.buffer)[s.pos : s.pos+expectedLen]
+
+	if expected != string(actualRunes) {
+		return false, nil
+	}
+
+	s.pos += expectedLen
+	return true, nil
 }
