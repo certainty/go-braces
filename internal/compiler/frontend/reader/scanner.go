@@ -219,18 +219,18 @@ func (s *Scanner) skipSkipLineComment() (bool, error) {
 	return false, nil
 }
 
-func (s *Scanner) Attempt(expected string) (bool, error) {
+func (s *Scanner) Attempt(expected string) bool {
 	expectedLen := uint64(len(expected))
 
 	if s.pos+expectedLen > s.bufferLen {
-		return false, nil
+		return false
 	}
 	actualRunes := (*s.buffer)[s.pos : s.pos+expectedLen]
 
 	if expected != string(actualRunes) {
-		return false, nil
+		return false
 	}
 
 	s.pos += expectedLen
-	return true, nil
+	return true
 }

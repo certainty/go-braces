@@ -9,14 +9,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestReadBoolean(t *testing.T) {
+func ReadString(s string) (*reader.DatumAST, error) {
 	r := reader.NewReader(introspection.NullAPI())
-	result, err := r.Read(input.NewStringInput("TESTS", "#t"))
+	return r.Read(input.NewStringInput("TESTS", s))
+}
 
-	assert.NoError(t, err)
-	assert.Len(t, result.Data, 1)
-	assert.IsType(t, reader.DatumBool{}, result.Data[0])
-	assert.Equal(t, true, result.Data[0].(reader.DatumBool).Value)
+func TestReadBoolean(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "Read #t",
+			input:    "#t",
+			expected: true,
+		},
+
+		{
+			name:     "Read #true",
+			input:    "#t",
+			expected: true,
+		},
+		{
+			name:     "Read #f",
+			input:    "#f",
+			expected: false,
+		},
+		{
+			name:     "Read #false",
+			input:    "#false",
+			expected: false,
+		},
+	}
+
+	for _, rt := range testCases {
+		t.Run(rt.name, func(t *testing.T) {
+			result, err := ReadString(rt.input)
+			assert.NoError(t, err)
+			assert.Equal(t, rt.expected, result.Data[0].(reader.DatumBool).Value)
+		})
+	}
 }
 
 // func TestSkipIrrelevantTokens(t *testing.T) {

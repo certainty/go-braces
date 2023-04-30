@@ -71,18 +71,27 @@ func (p *Parser) parseDatum() Datum {
 }
 
 func (p *Parser) parseBoolean() Datum {
-	matched, err := p.scanner.Attempt("#t")
+	matched := false
+	var value bool
 
-	if err != nil {
-		return nil
+	prevPos := p.scanner.Position().Offset
+
+	if p.scanner.Attempt("#true") || p.scanner.Attempt("#t") {
+		matched = true
+		value = true
+	}
+
+	if p.scanner.Attempt("#false") || p.scanner.Attempt("#f") {
+		matched = true
+		value = false
 	}
 
 	if matched {
 		pos := p.scanner.Position()
-		return NewDatumBool(true, p.makeLocation(pos.Line, pos.Offset-2, pos.Offset))
-	} else {
-		return nil
+		return NewDatumBool(value, p.makeLocation(pos.Line, prevPos, pos.Offset))
 	}
+
+	return nil
 }
 
 func (p *Parser) makeLocation(line, start, end uint64) location.Location {
