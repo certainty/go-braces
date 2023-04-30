@@ -13,11 +13,12 @@ type ReadFunction func(reader io.Reader) (interface{}, error)
 type Input interface {
 	Type() string
 	Buffer() ([]byte, error)
-	WithReader(fn ReadFunction) (interface{}, error)
+	Reader() io.Reader
 }
 
 type FileInput struct {
 	path string
+	file *os.File
 }
 
 func (f FileInput) Type() string {
@@ -28,14 +29,15 @@ func (f FileInput) Buffer() ([]byte, error) {
 	return os.ReadFile(f.path)
 }
 
-func (f FileInput) WithReader(r ReadFunction) (interface{}, error) {
-	file, err := os.Open(f.path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	return r(reader)
+func (f FileInput) Reader() io.Reader {
+	return bufio.NewReader(f.file)
+}
+
+func NewFileInput(file os.File) (FileInput, error) {
+	return FileInput{
+		path: file.Name(),
+		file: &file,
+	}, nil
 }
 
 type StringInput struct {
@@ -58,9 +60,8 @@ func (s StringInput) Buffer() ([]byte, error) {
 	return []byte(s.value), nil
 }
 
-func (s StringInput) WithReader(r ReadFunction) (interface{}, error) {
-	reader := strings.NewReader(s.value)
-	return r(reader)
+func (s StringInput) Reader() io.Reader {
+	return strings.NewReader(s.value)
 }
 
 type ReplInput struct {
@@ -83,6 +84,6 @@ func (r ReplInput) Buffer() ([]byte, error) {
 	return r.input.Buffer()
 }
 
-func (r ReplInput) WithReader(fn ReadFunction) (interface{}, error) {
-	return r.input.WithReader(fn)
+func (r ReplInput) Reader() io.Reader {
+	return r.input.Reader()
 }

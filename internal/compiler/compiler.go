@@ -41,13 +41,7 @@ func (c *Compiler) CompileString(code string) (*assembly.AssemblyModule, error) 
 func (c *Compiler) CompileModule(input location.Input) (*assembly.AssemblyModule, error) {
 	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
 
-	buffer, err := input.Buffer()
-	if err != nil {
-		return nil, fmt.Errorf("BufferError: %w", err)
-	}
-
-	datum, err := c.reader.Read(&buffer)
-
+	datum, err := c.reader.Read(input)
 	if err != nil {
 		return nil, fmt.Errorf("ReadError: %w", err)
 	}

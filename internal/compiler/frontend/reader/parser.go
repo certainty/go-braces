@@ -2,81 +2,81 @@ package reader
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/prataprc/goparsec"
 )
+
+type ReadError struct {
+	Msg string
+	pos Position
+}
+
+func (e ReadError) Error() string {
+	return fmt.Sprintf("%s at %d:%d", e.Msg, e.pos.Line, e.pos.Col)
+}
 
 type Parser struct {
 	introspectionAPI introspection.API
+	scanner          *Scanner
+	errors           []ReadError
 }
 
 func NewParser(introspectionAPI introspection.API) *Parser {
 	return &Parser{introspectionAPI: introspectionAPI}
 }
 
-func RecoverErrors(parser parsec.Parser, errors *[]error) parsec.Parser {
-	return func(s parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
-		result, newScanner := parser(s)
+func (p *Parser) Parse(input location.Input) (*DatumAST, []ReadError) {
+	p.scanner = NewScanner(input.Reader())
+	p.errors = []ReadError{}
 
-		if result == nil {
-			// failed to parse, so we skip the scanning to till the next strategic choice and continue there
-			// first get the error
-			// now skip till the next strategic choice
-			// finally restart the scan
-			return nil, newScanner
-		} else {
-			return result, newScanner
-		}
-	}
-}
-
-// Parses a single datum
-func (p *Parser) Parse(source *[]byte) (*DatumAST, error) {
-	var nodes []Datum
-	collectNodes := func(nodes []parsec.ParsecNode) parsec.ParsecNode {
-		for _, node := range nodes {
-			nodes = append(nodes, node.(Datum))
-		}
-		return nodes
-	}
-	scanner := parsec.NewScanner(*source).TrackLineno()
-	parser := parsec.Many(collectNodes, parseDatum)
-
-	_, err := parser(scanner)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing datum")
+	data := p.parseAll()
+	if len(p.errors) > 0 {
+		return nil, p.errors
 	} else {
-		return &DatumAST{Data: nodes}, nil
+		return &DatumAST{Data: data}, nil
 	}
 }
 
-func parseDatum(scanner parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
-	return parseBoolean(scanner)
+func (p *Parser) error(msg string) {
+	pos := p.scanner.Position()
+	p.errors = append(p.errors, ReadError{Msg: msg, pos: pos})
 }
 
-func parseBoolean(scanner parsec.Scanner) (parsec.ParsecNode, parsec.Scanner) {
-	boolParser := parsec.OrdChoice(nil, parsec.Token("#t", "TOK_TRUE"), parsec.Token("#f", "TOK_FALSE"))
-	node, newScanner := boolParser(scanner)
-
-	if node != nil {
-		loc := buildLocation(scanner, newScanner)
-		terminal := node.(parsec.Terminal)
-		return NewDatumBool(terminal.GetName() == "TOK_TRUE", loc), newScanner
-	} else {
-		return nil, newScanner
+func (p *Parser) recover() {
+	// simple recovery strategy for now
+	for {
+		ch, err := p.scanner.Peek()
+		if err != nil || ch == '(' || ch == '\n' {
+			break
+		}
+		p.scanner.Next()
 	}
 }
 
-func buildLocation(before parsec.Scanner, after parsec.Scanner) location.Location {
-	beforeCursor := before.GetCursor()
-	afterCursor := after.GetCursor()
+func (p *Parser) parseAll() []Datum {
+	data := []Datum{}
 
-	return location.Location{
-		Input:       nil,
-		Line:        before.Lineno(),
-		StartOffset: beforeCursor,
-		EndOffset:   afterCursor,
+	for {
+		p.scanner.SkipIrrelevant()
+		_, err := p.scanner.Peek()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			p.error("Error reading input")
+			break
+		}
+
+		datum := p.parseDatum()
+		data = append(data, datum)
 	}
+	return data
+}
+
+func (p *Parser) parseDatum() Datum {
+	return nil
 }
