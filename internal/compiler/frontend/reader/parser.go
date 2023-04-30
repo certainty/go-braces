@@ -1,8 +1,6 @@
 package reader
 
 import (
-	"fmt"
-
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/introspection"
@@ -50,32 +48,22 @@ func (p *Parser) recover() {
 
 func (p *Parser) parseAll() []Datum {
 	data := []Datum{}
-	attempts := 0
 
 	for {
-		attempts++
-		if attempts > 10 {
+		datum := p.parseDatum()
+		if datum == nil && !p.scanner.IsEof() {
+			p.error("expected datum")
 			return nil
 		}
 
-		fmt.Printf("Parse all: %d\n", p.scanner.pos)
-
-		datum := p.parseDatum()
-		if datum == nil {
-			p.error("Failed to parse datum")
-			//p.recover()
-		} else {
+		if datum != nil {
 			data = append(data, datum)
 		}
 
-		println("scanner.IsEof():", p.scanner.IsEof())
-		println("scanner pos", p.scanner.pos)
-
 		if p.scanner.IsEof() {
-			break
+			return data
 		}
 	}
-	return data
 }
 
 func (p *Parser) parseDatum() Datum {

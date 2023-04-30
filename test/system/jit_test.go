@@ -60,5 +60,5 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
-	//assertCompilesAndRuns(t, "(begin true)", true)
+	assertCompilesAndRuns(t, "(begin true)", true)
 }
