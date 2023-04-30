@@ -5,7 +5,7 @@ import (
 
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/middleend/transformer"
+	"github.com/certainty/go-braces/internal/compiler/middleend/ir"
 	"github.com/certainty/go-braces/internal/compiler/middleend/typechecker"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa/assembly"
@@ -21,7 +21,7 @@ type CoreCompiler struct {
 	typechecker *typechecker.TypeChecker
 
 	// transformation and optimization
-	cpsTransformer *transformer.CPSTransformer
+	irTransformer *ir.SSATransformer
 
 	// code generation
 	codegen *codegen.Codegenerator
@@ -31,7 +31,7 @@ func NewCoreCompiler(introspectionAPI introspection.API) *CoreCompiler {
 	return &CoreCompiler{
 		introspectionAPI: introspectionAPI,
 		typechecker:      typechecker.NewTypeChecker(introspectionAPI),
-		cpsTransformer:   transformer.NewCpsTransformer(introspectionAPI),
+		irTransformer:    ir.NewSSATransformer(introspectionAPI),
 		codegen:          codegen.NewCodegenerator(introspectionAPI),
 	}
 }
@@ -41,12 +41,12 @@ func (c *CoreCompiler) CompileModule(coreAst *parser.CoreAST) (*assembly.Assembl
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
-	cpsAst, err := c.cpsTransformer.Transform(coreAst)
+	ssa, err := c.irTransformer.Transform(coreAst)
 	if err != nil {
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}
 
-	assemblyModule, err := c.codegen.GenerateModule(cpsAst)
+	assemblyModule, err := c.codegen.GenerateModule(ssa)
 	if err != nil {
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}

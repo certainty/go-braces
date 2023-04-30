@@ -1,12 +1,15 @@
 package parser
 
 import (
+	"github.com/certainty/go-braces/internal/compiler/frontend/expander"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/introspection"
 )
 
 type Parser struct {
 	introspectionAPI introspection.API
+	expander         *expander.Expander
+	coreParser       *CoreParser
 }
 
 func NewParser(introspectionAPI introspection.API) *Parser {
@@ -16,8 +19,32 @@ func NewParser(introspectionAPI introspection.API) *Parser {
 }
 
 func (p *Parser) Parse(data *reader.DatumAST) (*CoreAST, error) {
-	// expander := expander.NewExpander(p.introspectionAPI)
-	// coreParser := NewCoreParser(p.introspectionAPI)
+	p.expander = expander.NewExpander(p.introspectionAPI)
+	p.coreParser = NewCoreParser(p.introspectionAPI)
+	coreAst := NewCoreAST()
 
-	return nil, nil
+	for _, datum := range data.Data {
+		expr, err := p.doParse(datum)
+
+		if err != nil {
+			// track errors, try to recover and go on
+		}
+		coreAst.AddExpression(expr)
+	}
+
+	return coreAst, nil
+}
+
+func (p *Parser) doParse(data reader.Datum) (SchemeExpression, error) {
+	expanded, err := p.expander.Expand(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// expansions might result in nothing, which is ok
+	if expanded == nil {
+		return nil, nil
+	}
+
+	return p.coreParser.Parse(expanded)
 }
