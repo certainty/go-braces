@@ -6,7 +6,8 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/middleend/typechecker"
+	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
+	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -21,7 +22,7 @@ type CoreCompiler struct {
 	typechecker *typechecker.TypeChecker
 
 	// transformation and optimization
-	irTransformer *ir.SSATransformer
+	optimizer *optimization.Optimizer
 
 	// code generation
 	codegen *codegen.Codegenerator
@@ -31,7 +32,7 @@ func NewCoreCompiler(introspectionAPI introspection.API) *CoreCompiler {
 	return &CoreCompiler{
 		introspectionAPI: introspectionAPI,
 		typechecker:      typechecker.NewTypeChecker(introspectionAPI),
-		irTransformer:    ir.NewSSATransformer(introspectionAPI),
+		optimizer:        optimization.NewOptimizer(introspectionAPI),
 		codegen:          codegen.NewCodegenerator(introspectionAPI),
 	}
 }
@@ -40,13 +41,11 @@ func (c *CoreCompiler) CompileModule(coreAst *parser.CoreAST) (*isa.AssemblyModu
 	if err := c.typechecker.Check(coreAst); err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
+	ir, err := ir.LowerToIR(coreAst)
 
-	ssa, err := c.irTransformer.Transform(coreAst)
-	if err != nil {
-		return nil, fmt.Errorf("CompilerBug: %w", err)
-	}
+	optimized, err := c.optimizer.Optimize(ir)
 
-	assemblyModule, err := c.codegen.GenerateModule(ssa)
+	assemblyModule, err := c.codegen.GenerateModule(optimized)
 	if err != nil {
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}

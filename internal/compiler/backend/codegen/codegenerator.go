@@ -14,6 +14,6 @@ func NewCodegenerator(introspectionAPI introspection.API) *Codegenerator {
 	return &Codegenerator{introspectionAPI: introspectionAPI}
 }
 
-func (c *Codegenerator) GenerateModule(ssa *ir.SSA) (*isa.AssemblyModule, error) {
+func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule, error) {
 	return nil, nil
 }
