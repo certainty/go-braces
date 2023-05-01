@@ -3,7 +3,7 @@ package vm_test
 import (
 	"testing"
 
-	"github.com/certainty/go-braces/internal/isa/value"
+	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,17 +11,17 @@ import (
 func TestWrite(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    value.Value
+		input    isa.Value
 		expected string
 	}{
 		{
 			name:     "Write true BoolValue",
-			input:    value.BoolValue(true),
+			input:    isa.BoolValue(true),
 			expected: "#t",
 		},
 		{
 			name:     "Write false BoolValue",
-			input:    value.BoolValue(false),
+			input:    isa.BoolValue(false),
 			expected: "#f",
 		},
 	}

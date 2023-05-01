@@ -1,6 +1,6 @@
 package vm
 
-import "github.com/certainty/go-braces/internal/isa/value"
+import "github.com/certainty/go-braces/internal/isa"
 
 type Writer struct {
 	internedStrings *InternedStringTable
@@ -12,9 +12,9 @@ func NewWriter(internedStrings *InternedStringTable) *Writer {
 	}
 }
 
-func (w *Writer) Write(v value.Value) string {
+func (w *Writer) Write(v isa.Value) string {
 	switch value := v.(type) {
-	case value.BoolValue:
+	case isa.BoolValue:
 		if value {
 			return "#t"
 		} else {

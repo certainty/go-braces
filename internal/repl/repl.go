@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/certainty/go-braces/internal/compiler"
-	"github.com/certainty/go-braces/internal/isa/value"
+	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/chzyer/readline"
 )
@@ -90,7 +90,7 @@ func (r *Repl) getInput() (string, error) {
 	}
 }
 
-func (r *Repl) compileAndRun(input string) (value.Value, error) {
+func (r *Repl) compileAndRun(input string) (isa.Value, error) {
 	assemblyModule, err := r.compiler.CompileString(input)
 
 	if err != nil {

@@ -1,4 +1,4 @@
-package value
+package isa
 
 // Values are not actullay part of the ISA normally
 // and this file will go away eventually, but in the
@@ -10,3 +10,13 @@ package value
 type Value interface{}
 
 type BoolValue bool
+
+type ProcedureValue struct {
+	Code CodeUnit
+	// more to come later: like arity
+}
+
+type ClosureValue struct {
+	Procedure ProcedureValue
+	UpValues  []*Value
+}

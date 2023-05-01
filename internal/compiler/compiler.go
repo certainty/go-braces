@@ -7,7 +7,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/isa/assembly"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 // The compile follows a traditional compile design of frontend, middleend and backend
@@ -27,12 +27,12 @@ func NewCompiler(options CompilerOptions) *Compiler {
 	}
 }
 
-func (c *Compiler) CompileString(code string) (*assembly.AssemblyModule, error) {
+func (c *Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
 	input := input.NewStringInput("ADHOC", code)
 	return c.CompileModule(input)
 }
 
-func (c *Compiler) CompileModule(input *input.Input) (*assembly.AssemblyModule, error) {
+func (c *Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
 	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
 	reader := reader.NewReader(c.introspectionAPI)
 	parser := parser.NewParser(c.introspectionAPI)

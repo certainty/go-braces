@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
+	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/middleend/ir"
 	"github.com/certainty/go-braces/internal/compiler/middleend/typechecker"
 	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/isa/assembly"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 // The core compile is essentially the middle and backend combined.
@@ -36,7 +36,7 @@ func NewCoreCompiler(introspectionAPI introspection.API) *CoreCompiler {
 	}
 }
 
-func (c *CoreCompiler) CompileModule(coreAst *parser.CoreAST) (*assembly.AssemblyModule, error) {
+func (c *CoreCompiler) CompileModule(coreAst *parser.CoreAST) (*isa.AssemblyModule, error) {
 	if err := c.typechecker.Check(coreAst); err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}

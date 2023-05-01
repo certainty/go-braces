@@ -2,8 +2,7 @@ package vm
 
 import (
 	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/isa/assembly"
-	"github.com/certainty/go-braces/internal/isa/value"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type VmOptions struct {
@@ -26,6 +25,6 @@ func NewVM(options VmOptions) VM {
 	}
 }
 
-func (vm *VM) ExecuteModule(module *assembly.AssemblyModule) (value.Value, error) {
+func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 	return true, nil
 }

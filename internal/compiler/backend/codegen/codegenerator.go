@@ -1,9 +1,9 @@
 package codegen
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/middleend/ir"
+	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/isa/assembly"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Codegenerator struct {
@@ -14,6 +14,6 @@ func NewCodegenerator(introspectionAPI introspection.API) *Codegenerator {
 	return &Codegenerator{introspectionAPI: introspectionAPI}
 }
 
-func (c *Codegenerator) GenerateModule(ssa *ir.SSA) (*assembly.AssemblyModule, error) {
+func (c *Codegenerator) GenerateModule(ssa *ir.SSA) (*isa.AssemblyModule, error) {
 	return nil, nil
 }
