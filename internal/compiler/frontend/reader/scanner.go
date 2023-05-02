@@ -82,6 +82,11 @@ func (s *Scanner) Next() (rune, error) {
 	return ch, nil
 }
 
+func (s *Scanner) Skip() error {
+	_, err := s.Next()
+	return err
+}
+
 func (s *Scanner) skipWhitespace() (bool, error) {
 	ch, err := s.Peek()
 	if err != nil {
@@ -89,7 +94,9 @@ func (s *Scanner) skipWhitespace() (bool, error) {
 	}
 
 	if ch == ' ' || ch == '\t' {
-		s.Next()
+		if err := s.Skip(); err != nil {
+			return false, err
+		}
 		return true, nil
 	}
 	return false, nil
@@ -102,11 +109,16 @@ func (s *Scanner) skipEOL() (bool, error) {
 	}
 
 	if ch == '\n' || ch == '\r' {
-		s.Next()
+		if err := s.Skip(); err != nil {
+			return false, err
+		}
+
 		if ch == '\r' {
 			nextCh, _ := s.Peek()
 			if nextCh == '\n' {
-				s.Next()
+				if err := s.Skip(); err != nil {
+					return false, err
+				}
 			}
 		}
 		return true, nil
@@ -162,11 +174,18 @@ func (s *Scanner) skipMultiLineComment() (bool, error) {
 	}
 
 	if ch == '#' {
-		s.SavePosition()
-		s.Next()
+		if err := s.SavePosition(); err != nil {
+			return false, err
+		}
+
+		if err := s.Skip(); err != nil {
+			return false, err
+		}
 		nextCh, _ := s.Peek()
 		if nextCh == '|' {
-			s.Next()
+			if err := s.Skip(); err != nil {
+				return false, err
+			}
 			var commentNesting = 1
 
 			for commentNesting > 0 {
@@ -178,20 +197,26 @@ func (s *Scanner) skipMultiLineComment() (bool, error) {
 				if ch == '#' {
 					nextCh, _ := s.Peek()
 					if nextCh == '|' {
-						s.Next()
+						if err := s.Skip(); err != nil {
+							return false, err
+						}
 						commentNesting++
 					}
 				} else if ch == '|' {
 					nextCh, _ := s.Peek()
 					if nextCh == '#' {
-						s.Next()
+						if err := s.Skip(); err != nil {
+							return false, err
+						}
 						commentNesting--
 					}
 				}
 			}
 			return true, nil
 		} else {
-			s.RestorePosition()
+			if err := s.RestorePosition(); err != nil {
+				return false, err
+			}
 		}
 	}
 	return false, nil
@@ -205,7 +230,10 @@ func (s *Scanner) skipSkipLineComment() (bool, error) {
 	}
 
 	if ch == ';' {
-		s.Next()
+		if err := s.Skip(); err != nil {
+			return false, err
+		}
+
 		for {
 			ch, err = s.Next()
 			if err != nil {

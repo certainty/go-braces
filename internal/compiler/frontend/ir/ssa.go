@@ -6,7 +6,6 @@ import (
 )
 
 type SSA struct {
-	blocks []IRBlock
 }
 
 type SSATransformer struct {

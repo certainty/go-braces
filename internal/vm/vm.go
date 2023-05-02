@@ -53,7 +53,7 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
 			vm.registers[REG_SP_ACCU] = isa.BoolValue(true)
 		case isa.OP_HALT:
 			vm.registers[REG_SP_HALT] = vm.registers[REG_SP_ACCU]
-			break
+			return &vm.registers[REG_SP_HALT], nil
 		default:
 			panic("unimplemented opcode")
 		}

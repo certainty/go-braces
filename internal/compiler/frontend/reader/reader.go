@@ -33,7 +33,7 @@ func (r *Reader) Read(input *input.Input) (*DatumAST, error) {
 	parser := NewParser(r.introspectionAPI)
 	ast, errors := parser.Parse(input)
 
-	if errors != nil && len(errors) > 0 {
+	if len(errors) > 0 {
 		return nil, ReaderError{Details: errors}
 	} else {
 		return ast, nil

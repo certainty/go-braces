@@ -35,26 +35,36 @@ func (p *Parser) error(msg string) {
 	p.errors = append(p.errors, ReadError{Msg: msg, pos: pos})
 }
 
-func (p *Parser) recover() {
+func (p *Parser) recover() error {
 	// simple recovery strategy for now
 	for {
 		ch, err := p.scanner.Peek()
 		if err != nil || ch == '(' || ch == '\n' {
 			break
 		}
-		p.scanner.Next()
+		if err := p.scanner.Skip(); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (p *Parser) parseAll() []Datum {
 	data := []Datum{}
 
 	for {
-		p.scanner.SkipIrrelevant()
+		if err := p.scanner.SkipIrrelevant(); err != nil {
+			p.error(err.Error())
+			return nil
+		}
+
 		datum := p.parseDatum()
 		if datum == nil && !p.scanner.IsEof() {
 			p.error("expected datum")
-			return nil
+			if err := p.recover(); err != nil {
+				return nil
+			}
 		}
 
 		if datum != nil {
