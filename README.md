@@ -30,6 +30,12 @@ The primary objectives of the tools provided here are:
 * Create the most efficient/fast/resource-optimized VM or compiler.
   * Strive for a balance between comprehensibility and performance.
 
+
+## Language deviations
+
+* No first class continuations 
+* Gradual type system
+
 ## Getting Started
 
 ### Building the Project

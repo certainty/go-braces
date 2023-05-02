@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/certainty/go-braces/internal/compiler"
+	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,20 +13,20 @@ import (
 // runJitTest compiles the given source code, executes it on the VM, and returns the result
 func runJitTest(sourceCode string) (interface{}, error) {
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
-	compilationUnit, err := compiler.JitCompile(sourceCode)
+	assemblyModule, err := compiler.CompileString(sourceCode)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a new VM instance and execute the compilation unit
 	virtualMachine := vm.NewVM(vm.DefaultOptions())
-	result, err := virtualMachine.Execute(compilationUnit)
+	result, err := virtualMachine.ExecuteModule(assemblyModule)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return *result, nil
 }
 
 func assertCompilesAndRuns(t *testing.T, sourceCode string, expectedValue interface{}) {
@@ -60,5 +61,5 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
-	assertCompilesAndRuns(t, "(begin true)", true)
+	assertCompilesAndRuns(t, "#t", isa.BoolValue(true))
 }

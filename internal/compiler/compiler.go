@@ -1,26 +1,58 @@
 package compiler
 
-type CompilerOptions struct {
-	// enable debug mode which intercepts, phases, lexing, parsing etc.
-}
+import (
+	"fmt"
 
+	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
+	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
+	"github.com/certainty/go-braces/internal/compiler/input"
+	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/isa"
+)
+
+// The compile follows a traditional compile design of frontend, middleend and backend
+// Since scheme has rather rich meta syntactical capabilities with its macro system
+// we separate the core compiler, which deals with core forms, after they have been transformed
+// parsed and expanded, from the rest.
+//
+// This struct is the main interface to the compiler and houses the compiler frontend
+// (syntactic analysises and macro expansion) as well as the core compiler which deals with the rest.
 type Compiler struct {
-	options CompilerOptions
+	introspectionAPI introspection.API
 }
 
-type CompilationUnit struct {
+func NewCompiler(options CompilerOptions) *Compiler {
+	return &Compiler{
+		introspectionAPI: options.introspectionAPI,
+	}
 }
 
-func DefaultOptions() CompilerOptions {
-	return CompilerOptions{}
+func (c *Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
+	input := input.NewStringInput("ADHOC", code)
+	return c.CompileModule(input)
 }
 
-func NewCompiler(options CompilerOptions) Compiler {
-	return Compiler{options: options}
-}
+func (c *Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
+	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
+	reader := reader.NewReader(c.introspectionAPI)
+	parser := parser.NewParser(c.introspectionAPI)
+	coreCompiler := NewCoreCompiler(c.introspectionAPI)
 
-func (c Compiler) JitCompile(code string) (*CompilationUnit, error) {
-	compilationUnit := CompilationUnit{}
+	datum, err := reader.Read(input)
+	if err != nil {
+		return nil, fmt.Errorf("ReadError: %w", err)
+	}
 
-	return &compilationUnit, nil
+	coreAst, err := parser.Parse(datum)
+	if err != nil {
+		return nil, fmt.Errorf("ParseError: %w", err)
+	}
+
+	assemblyModule, err := coreCompiler.CompileModule(coreAst)
+	if err != nil {
+		return nil, fmt.Errorf("CompilerBug: %w", err)
+	}
+
+	c.introspectionAPI.SendEvent(introspection.EventEndCompileModule())
+	return assemblyModule, nil
 }

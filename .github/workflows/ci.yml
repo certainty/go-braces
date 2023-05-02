@@ -38,9 +38,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-golangci-lint-
 
-      - name: Install golangci-lint
+      - name: Cache gogetsum
+        uses: actions/cache@v2
+        with:
+          path: ~/go/bin/gogetsum
+          key: ${{ runner.os }}-gogetsum
+          restore-keys: |
+            ${{ runner.os }}-gogetsum-
+
+      - name: Install tools 
         run: |
           if ! command -v golangci-lint &> /dev/null; then
+            make install-tools
+          fi
+
+          if ! command -v gotestsum &> /dev/null; then
             make install-tools
           fi
       - name: Build

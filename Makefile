@@ -1,6 +1,6 @@
 BINARY_COMPILE=braces-compile
 BINARY_VM=braces-vm
-TEST?=./...
+TEST?='./...'
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
 
@@ -18,7 +18,7 @@ build-vm:
 
 test:
 	@echo "Running tests..."
-	@go test -v $(TEST)
+	@gotestsum $(TEST)
 
 lint:
 	@echo "Running linters..."
@@ -46,7 +46,9 @@ tidy:
 
 install-tools:
 	@echo "Installing tools..."
-	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$$GOLANGCI_LINT_VERSION
+	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	@go get gotest.tools/gotestsum  
+	@go install gotest.tools/gotestsum  
 
 
 repl: build
