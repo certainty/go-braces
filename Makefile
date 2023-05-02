@@ -47,6 +47,7 @@ tidy:
 install-tools:
 	@echo "Installing tools..."
 	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	@go get gotest.tools/gotestsum  
 	@go install gotest.tools/gotestsum  
 
 
