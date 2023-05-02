@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/certainty/go-braces/internal/compiler"
+	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +26,7 @@ func runJitTest(sourceCode string) (interface{}, error) {
 		return nil, err
 	}
 
-	return result, nil
+	return *result, nil
 }
 
 func assertCompilesAndRuns(t *testing.T, sourceCode string, expectedValue interface{}) {
@@ -60,5 +61,5 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
-	assertCompilesAndRuns(t, "#t", true)
+	assertCompilesAndRuns(t, "#t", isa.BoolValue(true))
 }

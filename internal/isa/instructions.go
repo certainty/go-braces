@@ -1,5 +1,7 @@
 package isa
 
+import "fmt"
+
 type OpCode uint8
 type Register uint32
 
@@ -20,6 +22,10 @@ func NewInstruction(code OpCode, operands ...interface{}) Instruction {
 		Opcode:   code,
 		Operands: operands,
 	}
+}
+
+func (i Instruction) String() string {
+	return fmt.Sprintf("%d %v", i.Opcode, i.Operands)
 }
 
 func InstTrue(register Register) Instruction {

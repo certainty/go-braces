@@ -1,6 +1,10 @@
 package reader
 
-import "github.com/certainty/go-braces/internal/compiler/location"
+import (
+	"fmt"
+
+	"github.com/certainty/go-braces/internal/compiler/location"
+)
 
 type Datum interface {
 	Location() location.Location
@@ -17,4 +21,8 @@ type DatumBool struct {
 
 func (d DatumBool) Location() location.Location {
 	return d.Loc
+}
+
+func (d DatumBool) String() string {
+	return fmt.Sprintf("<%v>[%d:%d]", d.Value, d.Location().Line, d.Location().StartOffset)
 }

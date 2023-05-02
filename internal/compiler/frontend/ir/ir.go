@@ -2,6 +2,8 @@ package ir
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -41,32 +43,36 @@ func (b *IRBlock) AddInstruction(instruction IRInstruction) {
 }
 
 type IR struct {
-	Blocks []IRBlock
+	Blocks []*IRBlock
 }
 
 func NewIR() IR {
-	return IR{Blocks: make([]IRBlock, 0)}
+	return IR{Blocks: make([]*IRBlock, 0)}
 }
 
 func (ir *IR) AddBlock(name string) *IRBlock {
 	block := NewBlock(name)
-	ir.Blocks = append(ir.Blocks, *block)
+	ir.Blocks = append(ir.Blocks, block)
 	return block
 }
 
 func LowerToIR(coreAst *parser.CoreAST) (*IR, error) {
-	var ir IR = IR{Blocks: make([]IRBlock, 0)}
+	var ir IR = NewIR()
 	var currentBlock *IRBlock = ir.AddBlock("entry")
+
+	log.Printf("lowering %v", coreAst)
 
 	for _, expression := range coreAst.Expressions {
 		switch exp := expression.(type) {
 		case parser.LiteralExpression:
-			{
-				currentBlock.AddInstruction(NewConstant(exp.Datum))
-			}
+			log.Printf("lowering literal expression %v", exp)
+			currentBlock.AddInstruction(NewConstant(exp.Datum))
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", expression)
 		}
 	}
+
+	log.Printf("lowered %v", ir)
+
 	return &ir, nil
 }

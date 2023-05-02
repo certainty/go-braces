@@ -19,6 +19,5 @@ func NewOptimizer(introspectionAPI introspection.API) *Optimizer {
 
 func (o *Optimizer) Optimize(intermediate *ir.IR) (*ir.IR, error) {
 	log.Printf("opitmizing %v", intermediate)
-
 	return intermediate, nil
 }

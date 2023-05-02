@@ -66,7 +66,7 @@ func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule
 	codeBuilder := newCodeUnitBuilder(c.introspectionAPI)
 
 	for _, block := range intermediate.Blocks {
-		if err := c.emitBlock(&block, codeBuilder); err != nil {
+		if err := c.emitBlock(block, codeBuilder); err != nil {
 			return nil, err
 		}
 	}
@@ -86,7 +86,7 @@ func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule
 func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) error {
 	for _, instruction := range block.Instructions {
 		switch instruction.(type) {
-		case *ir.IRConstant:
+		case ir.IRConstant:
 			// include register to use in IR?
 			builder.AddInstruction(isa.InstTrue(c.registerAccu))
 		default:
