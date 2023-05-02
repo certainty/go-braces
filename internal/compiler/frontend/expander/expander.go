@@ -14,5 +14,5 @@ func NewExpander(introspectionAPI introspection.API) *Expander {
 }
 
 func (e *Expander) Expand(data reader.Datum) (reader.Datum, error) {
-	return nil, nil
+	return data, nil
 }

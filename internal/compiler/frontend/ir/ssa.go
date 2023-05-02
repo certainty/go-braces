@@ -5,10 +5,8 @@ import (
 	"github.com/certainty/go-braces/internal/introspection"
 )
 
-type Block struct{}
-
 type SSA struct {
-	blocks []Block
+	blocks []IRBlock
 }
 
 type SSATransformer struct {

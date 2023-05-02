@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/compiler/frontend/expander"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/introspection"
@@ -28,8 +30,10 @@ func (p *Parser) Parse(data *reader.DatumAST) (*CoreAST, error) {
 
 		if err != nil {
 			// track errors, try to recover and go on
+		} else {
+			log.Printf("Adding expression %v", expr)
+			coreAst.AddExpression(expr)
 		}
-		coreAst.AddExpression(expr)
 	}
 
 	return coreAst, nil
