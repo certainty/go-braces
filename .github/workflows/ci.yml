@@ -43,6 +43,10 @@ jobs:
           if ! command -v golangci-lint &> /dev/null; then
             make install-tools
           fi
+
+          if ! command -v gotestsum &> /dev/null; then
+            make install-tools
+          fi
       - name: Build
         run: make build 
       - name: Test
