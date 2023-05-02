@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -58,6 +60,8 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
 			panic("unimplemented opcode")
 		}
 	}
+
+	log.Printf("Halted with %v", vm.registers[REG_SP_HALT])
 
 	return &vm.registers[REG_SP_HALT], nil
 }
