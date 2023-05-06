@@ -4,7 +4,7 @@ TEST?='./...'
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
 
-.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools
+.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto
 
 build: tidy build-compile build-vm
 
@@ -15,6 +15,10 @@ build-compile:
 build-vm:
 	@echo "Building $(BINARY_VM)..."
 	@go build -o target/$(BINARY_VM) ./cmd/braces-vm
+
+build-proto:
+	@echo "Building grpc services..."
+	@protoc --go_out=./internal/introspection/service --go-grpc_out=./internal/introspection/service ./internal/introspection/service/proto/compiler_introspection.proto
 
 test:
 	@echo "Running tests..."
@@ -50,6 +54,11 @@ install-tools:
 	@go get gotest.tools/gotestsum  
 	@go install gotest.tools/gotestsum  
 
+install-proto-tools:
+	@echo "Installing protobuf tools..."
+	@brew install protobuf
+	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 repl: build
 	./target/braces-vm repl

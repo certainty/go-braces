@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package compilerintrospection;
+
+option go_package = "./compiler_introsection";
+
+// Capability information exchanged between client and server
+message Capability {
+  // Add fields related to capability information
+}
+
+message StartSessionRequest {
+  // Add any fields necessary for starting a session
+}
+
+message StartSessionResponse {
+  string session_id = 1;
+}
+
+message Event {
+  // Add fields related to the introspection events
+}
+
+message AbortSessionRequest {
+  string session_id = 1;
+}
+
+message AbortSessionResponse {
+  // Add any fields necessary for indicating the result of aborting a session
+}
+
+service CompilerIntrospection {
+  rpc Helo (Capability) returns (Capability) {}
+  rpc StartSession (StartSessionRequest) returns (StartSessionResponse) {}
+  rpc EventStream (StartSessionResponse) returns (stream Event) {}
+  rpc AbortSession (AbortSessionRequest) returns (AbortSessionResponse) {}
+}
