@@ -35,10 +35,10 @@ func NewRepl(vm *vm.VM, compiler *compiler.Compiler, compilerIntrospection *intr
 // run without introspection
 func (r *Repl) Run() {
 	println("Welcome to the Go Braces REPL!")
-	println("Press Ctrl+C to exit and :help for help")
+	println("Type :exit or CTRL-C for exit, and :help for help")
 
 	if r.compilerIntrospection != nil {
-		println("Compiler Introspection is enabled. Server listening on ", r.compilerIntrospection.ListenAddr)
+		println("Compiler Introspection is enabled. To connect run: braces-introspect compiler", r.compilerIntrospection.ListenAddr)
 	}
 
 	println("\n")

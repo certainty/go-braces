@@ -45,8 +45,8 @@ func StartServer(wg *sync.WaitGroup) (*introspection.IntrospectionServer, error)
 	return introspectionServer, nil
 }
 
-func (s *server) Hello(ctx context.Context, capability Capability) (Capability, error) {
-	return Capability{}, nil
+func (s *server) Helo(ctx context.Context, capability *Capability) (*Capability, error) {
+	return &Capability{}, nil
 }
 
 func (s *server) StartSession(ctx context.Context, req *StartSessionRequest) (*StartSessionResponse, error) {

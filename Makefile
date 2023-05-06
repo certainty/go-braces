@@ -1,12 +1,13 @@
 BINARY_COMPILE=braces-compile
 BINARY_VM=braces-vm
+BINARY_INTROSPECT=braces-introspect
 TEST?='./...'
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
 
-.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto
+.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto build-introspect
 
-build: tidy build-compile build-vm
+build: tidy build-compile build-vm build-introspect
 
 build-compile: build-proto
 	@echo "Building $(BINARY_COMPILE)..."
@@ -15,6 +16,10 @@ build-compile: build-proto
 build-vm:
 	@echo "Building $(BINARY_VM)..."
 	@go build -o target/$(BINARY_VM) ./cmd/braces-vm
+
+build-introspect:
+	@echo "Building $(BINARY_INTROSPECT)..."
+	@go build -o target/$(BINARY_INTROSPECT) ./cmd/braces-introspect
 
 build-proto:
 	@echo "Generating grpc services..."
