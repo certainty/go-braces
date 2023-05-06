@@ -15,24 +15,25 @@ type server struct {
 	api introspection.API
 }
 
-// starte the server on the next available port in a separate goroutine
-func StartServer(ctx context.Context, wg *sync.WaitGroup, api introspection.API) (net.Addr, error) {
+func StartServer(wg *sync.WaitGroup) (*introspection.IntrospectionServer, error) {
 	lis, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	introspectionServer := introspection.NewIntrospectionServer(lis.Addr().String(), ctx, cancel)
+
 	grpcServer := grpc.NewServer()
 	RegisterCompilerIntrospectionServer(grpcServer, &server{
-		api: api,
+		api: introspectionServer.Api,
 	})
 
-	// Start the server in a separate goroutine
 	go func() {
 		defer wg.Done()
 
 		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			log.Fatalf("failed to serve commpiler introspection: %v", err)
 		}
 	}()
 
@@ -41,7 +42,7 @@ func StartServer(ctx context.Context, wg *sync.WaitGroup, api introspection.API)
 		grpcServer.GracefulStop()
 	}()
 
-	return lis.Addr(), nil
+	return introspectionServer, nil
 }
 
 func (s *server) Hello(ctx context.Context, capability Capability) (Capability, error) {

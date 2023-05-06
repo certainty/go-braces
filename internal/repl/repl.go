@@ -2,7 +2,6 @@ package repl
 
 import (
 	"fmt"
-
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
@@ -14,11 +13,11 @@ type Repl struct {
 	vm                    *vm.VM
 	compiler              *compiler.Compiler
 	lineedit              *readline.Instance
-	compilerIntrospection *introspection.Options
+	compilerIntrospection *introspection.IntrospectionServer
 	inputCount            int
 }
 
-func NewRepl(vm *vm.VM, compiler *compiler.Compiler, compilerIntrospection *introspection.Options) (*Repl, error) {
+func NewRepl(vm *vm.VM, compiler *compiler.Compiler, compilerIntrospection *introspection.IntrospectionServer) (*Repl, error) {
 	rl, err := readline.New("> ")
 	if err != nil {
 		return nil, err
@@ -39,7 +38,7 @@ func (r *Repl) Run() {
 	println("Press Ctrl+C to exit and :help for help")
 
 	if r.compilerIntrospection != nil {
-		println("Compiler Introspection is enabled. Server listening on ", r.compilerIntrospection.GrpServerAddress.String())
+		println("Compiler Introspection is enabled. Server listening on ", r.compilerIntrospection.ListenAddr)
 	}
 
 	println("\n")

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"sync"
 
@@ -30,38 +28,27 @@ func run(cmd *cobra.Command, args []string) {
 	enableVMIntrospection, _ := cmd.Flags().GetBool("introspect-vm")
 
 	if enableCompilerIntrospection || enableVMIntrospection {
-		ctx, cancelServers := context.WithCancel(context.Background())
-
 		var wg sync.WaitGroup
-		var compilerIntrospectionOpts *introspection.Options
 
 		if enableCompilerIntrospection {
-			var compilerIntrospectionServerAddress net.Addr
 			wg.Add(1)
 
-			api := introspection.NewAPI()
-			compilerIntrospectionServerAddress, error := compiler_introsection.StartServer(ctx, &wg, api)
+			compilerIntrospectionServer, err := compiler_introsection.StartServer(&wg)
 
-			if error != nil {
-				log.Fatal("Could not start introspection server: ", error.Error())
+			if err != nil {
+				log.Fatal("Could not start introspection server: ", err.Error())
 				os.Exit(1)
 			}
-
-			compilerIntrospectionOpts = &introspection.Options{
-				GrpServerAddress: compilerIntrospectionServerAddress,
-				API:              api,
-				Cancel:           cancelServers,
-			}
+			runRepl(compilerIntrospectionServer)
+			compilerIntrospectionServer.Stop()
+			wg.Wait()
 		}
-		runRepl(compilerIntrospectionOpts)
-		cancelServers()
-		wg.Wait()
 	} else {
 		runRepl(nil)
 	}
 }
 
-func runRepl(compilerIntrospection *introspection.Options) {
+func runRepl(compilerIntrospection *introspection.IntrospectionServer) {
 	vm := vm.NewVM(vm.DefaultOptions())
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
 
