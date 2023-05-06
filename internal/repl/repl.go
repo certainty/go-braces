@@ -39,6 +39,8 @@ func (r *Repl) Run() {
 
 	if r.compilerIntrospection != nil {
 		println("Compiler Introspection is enabled. To connect run: braces-introspect compiler", r.compilerIntrospection.ListenAddr)
+		println("Waiting for introspection client ....")
+		r.compilerIntrospection.WaitForClient()
 	}
 
 	println("\n")

@@ -49,8 +49,14 @@ func run(cmd *cobra.Command, args []string) {
 }
 
 func runRepl(compilerIntrospection *introspection.IntrospectionServer) {
+	compilerOptions := compiler.DefaultOptions()
+
+	if compilerIntrospection != nil {
+		compilerOptions = compiler.NewCompilerOptions(compilerIntrospection.Api)
+	}
+
 	vm := vm.NewVM(vm.DefaultOptions())
-	compiler := compiler.NewCompiler(compiler.DefaultOptions())
+	compiler := compiler.NewCompiler(compilerOptions)
 
 	repl, err := repl.NewRepl(vm, compiler, compilerIntrospection)
 	if err != nil {

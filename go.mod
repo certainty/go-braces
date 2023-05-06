@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/alecthomas/participle/v2 v2.0.0
 	github.com/chzyer/readline v1.5.1
+	github.com/google/uuid v1.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 	google.golang.org/grpc v1.54.0

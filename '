@@ -66,26 +66,26 @@ func (s *server) Helo(ctx context.Context, req *HeloRequest) (*HeloResponse, err
 	}, nil
 }
 
-func (s *server) EventStream(req *EventStreamRequest, stream CompilerIntrospection_EventStreamServer) error {
+func (s *server) StartSession(ctx context.Context, req *StartSessionRequest) (*StartSessionResponse, error) {
+	return nil, nil
+}
+
+func (s *server) EventStream(req *StartSessionResponse, stream CompilerIntrospection_EventStreamServer) error {
 	for {
 		// TODO: in  the future I might want to select here
 		evt := s.api.ReceiveEvent()
-		eventData, err := serializeEvent(evt)
-
-		if err != nil {
-			continue
-		}
 		rpcEvent := &Event{
-			Json: eventData,
+			json: serializeEvent(evt),
 		}
 
 		if err := stream.Send(rpcEvent); err != nil {
 			return err
 		}
 	}
+	return nil
 }
 
-func serializeEvent(evt introspection.IntrospectionEvent) (string, error) {
+func serializeEvent(evt IntrospectionEvent) (string, error) {
 	data, err := json.Marshal(evt)
 	if err != nil {
 		return "", err

@@ -20,7 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	CompilerIntrospection_Helo_FullMethodName         = "/compilerintrospection.CompilerIntrospection/Helo"
-	CompilerIntrospection_StartSession_FullMethodName = "/compilerintrospection.CompilerIntrospection/StartSession"
 	CompilerIntrospection_EventStream_FullMethodName  = "/compilerintrospection.CompilerIntrospection/EventStream"
 	CompilerIntrospection_AbortSession_FullMethodName = "/compilerintrospection.CompilerIntrospection/AbortSession"
 )
@@ -29,9 +28,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CompilerIntrospectionClient interface {
-	Helo(ctx context.Context, in *Capability, opts ...grpc.CallOption) (*Capability, error)
-	StartSession(ctx context.Context, in *StartSessionRequest, opts ...grpc.CallOption) (*StartSessionResponse, error)
-	EventStream(ctx context.Context, in *StartSessionResponse, opts ...grpc.CallOption) (CompilerIntrospection_EventStreamClient, error)
+	Helo(ctx context.Context, in *HeloRequest, opts ...grpc.CallOption) (*HeloResponse, error)
+	EventStream(ctx context.Context, in *EventStreamRequest, opts ...grpc.CallOption) (CompilerIntrospection_EventStreamClient, error)
 	AbortSession(ctx context.Context, in *AbortSessionRequest, opts ...grpc.CallOption) (*AbortSessionResponse, error)
 }
 
@@ -43,8 +41,8 @@ func NewCompilerIntrospectionClient(cc grpc.ClientConnInterface) CompilerIntrosp
 	return &compilerIntrospectionClient{cc}
 }
 
-func (c *compilerIntrospectionClient) Helo(ctx context.Context, in *Capability, opts ...grpc.CallOption) (*Capability, error) {
-	out := new(Capability)
+func (c *compilerIntrospectionClient) Helo(ctx context.Context, in *HeloRequest, opts ...grpc.CallOption) (*HeloResponse, error) {
+	out := new(HeloResponse)
 	err := c.cc.Invoke(ctx, CompilerIntrospection_Helo_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -52,16 +50,7 @@ func (c *compilerIntrospectionClient) Helo(ctx context.Context, in *Capability, 
 	return out, nil
 }
 
-func (c *compilerIntrospectionClient) StartSession(ctx context.Context, in *StartSessionRequest, opts ...grpc.CallOption) (*StartSessionResponse, error) {
-	out := new(StartSessionResponse)
-	err := c.cc.Invoke(ctx, CompilerIntrospection_StartSession_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *compilerIntrospectionClient) EventStream(ctx context.Context, in *StartSessionResponse, opts ...grpc.CallOption) (CompilerIntrospection_EventStreamClient, error) {
+func (c *compilerIntrospectionClient) EventStream(ctx context.Context, in *EventStreamRequest, opts ...grpc.CallOption) (CompilerIntrospection_EventStreamClient, error) {
 	stream, err := c.cc.NewStream(ctx, &CompilerIntrospection_ServiceDesc.Streams[0], CompilerIntrospection_EventStream_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
@@ -106,9 +95,8 @@ func (c *compilerIntrospectionClient) AbortSession(ctx context.Context, in *Abor
 // All implementations must embed UnimplementedCompilerIntrospectionServer
 // for forward compatibility
 type CompilerIntrospectionServer interface {
-	Helo(context.Context, *Capability) (*Capability, error)
-	StartSession(context.Context, *StartSessionRequest) (*StartSessionResponse, error)
-	EventStream(*StartSessionResponse, CompilerIntrospection_EventStreamServer) error
+	Helo(context.Context, *HeloRequest) (*HeloResponse, error)
+	EventStream(*EventStreamRequest, CompilerIntrospection_EventStreamServer) error
 	AbortSession(context.Context, *AbortSessionRequest) (*AbortSessionResponse, error)
 	mustEmbedUnimplementedCompilerIntrospectionServer()
 }
@@ -117,13 +105,10 @@ type CompilerIntrospectionServer interface {
 type UnimplementedCompilerIntrospectionServer struct {
 }
 
-func (UnimplementedCompilerIntrospectionServer) Helo(context.Context, *Capability) (*Capability, error) {
+func (UnimplementedCompilerIntrospectionServer) Helo(context.Context, *HeloRequest) (*HeloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Helo not implemented")
 }
-func (UnimplementedCompilerIntrospectionServer) StartSession(context.Context, *StartSessionRequest) (*StartSessionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartSession not implemented")
-}
-func (UnimplementedCompilerIntrospectionServer) EventStream(*StartSessionResponse, CompilerIntrospection_EventStreamServer) error {
+func (UnimplementedCompilerIntrospectionServer) EventStream(*EventStreamRequest, CompilerIntrospection_EventStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method EventStream not implemented")
 }
 func (UnimplementedCompilerIntrospectionServer) AbortSession(context.Context, *AbortSessionRequest) (*AbortSessionResponse, error) {
@@ -143,7 +128,7 @@ func RegisterCompilerIntrospectionServer(s grpc.ServiceRegistrar, srv CompilerIn
 }
 
 func _CompilerIntrospection_Helo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Capability)
+	in := new(HeloRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -155,31 +140,13 @@ func _CompilerIntrospection_Helo_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: CompilerIntrospection_Helo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CompilerIntrospectionServer).Helo(ctx, req.(*Capability))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CompilerIntrospection_StartSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartSessionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CompilerIntrospectionServer).StartSession(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CompilerIntrospection_StartSession_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CompilerIntrospectionServer).StartSession(ctx, req.(*StartSessionRequest))
+		return srv.(CompilerIntrospectionServer).Helo(ctx, req.(*HeloRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _CompilerIntrospection_EventStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(StartSessionResponse)
+	m := new(EventStreamRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -227,10 +194,6 @@ var CompilerIntrospection_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Helo",
 			Handler:    _CompilerIntrospection_Helo_Handler,
-		},
-		{
-			MethodName: "StartSession",
-			Handler:    _CompilerIntrospection_StartSession_Handler,
 		},
 		{
 			MethodName: "AbortSession",
