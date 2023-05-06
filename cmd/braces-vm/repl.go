@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net"
 	"os"
+	"sync"
 
 	"github.com/certainty/go-braces/internal/compiler"
+	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/service/compiler_introsection"
 	"github.com/certainty/go-braces/internal/repl"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/spf13/cobra"
@@ -15,15 +21,51 @@ var replCmd = &cobra.Command{
 	Short: "Start the VM in repl mode",
 	Long:  `More documentation still to come here`,
 	Run: func(cmd *cobra.Command, args []string) {
-		run()
+		run(cmd, args)
 	},
 }
 
-func run() {
+func run(cmd *cobra.Command, args []string) {
+	enableCompilerIntrospection, _ := cmd.Flags().GetBool("introspect-compiler")
+	enableVMIntrospection, _ := cmd.Flags().GetBool("introspect-vm")
+
+	if enableCompilerIntrospection || enableVMIntrospection {
+		ctx, cancelServers := context.WithCancel(context.Background())
+
+		var wg sync.WaitGroup
+		var compilerIntrospectionOpts *introspection.Options
+
+		if enableCompilerIntrospection {
+			var compilerIntrospectionServerAddress net.Addr
+			wg.Add(1)
+
+			api := introspection.NewAPI()
+			compilerIntrospectionServerAddress, error := compiler_introsection.StartServer(ctx, &wg, api)
+
+			if error != nil {
+				log.Fatal("Could not start introspection server: ", error.Error())
+				os.Exit(1)
+			}
+
+			compilerIntrospectionOpts = &introspection.Options{
+				GrpServerAddress: compilerIntrospectionServerAddress,
+				API:              api,
+				Cancel:           cancelServers,
+			}
+		}
+		runRepl(compilerIntrospectionOpts)
+		cancelServers()
+		wg.Wait()
+	} else {
+		runRepl(nil)
+	}
+}
+
+func runRepl(compilerIntrospection *introspection.Options) {
 	vm := vm.NewVM(vm.DefaultOptions())
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
 
-	repl, err := repl.NewRepl(vm, compiler)
+	repl, err := repl.NewRepl(vm, compiler, compilerIntrospection)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -35,13 +77,6 @@ func run() {
 func init() {
 	rootCmd.AddCommand(replCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// replCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// replCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	replCmd.Flags().BoolP("introspect-compiler", "c", false, "Run the repl in introspection mode for the compiler")
+	replCmd.Flags().BoolP("introspect-vm", "m", false, "Run the repl in introspection mode for the vm")
 }

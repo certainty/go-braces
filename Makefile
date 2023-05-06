@@ -8,7 +8,7 @@ GOLANGCI_LINT_VERSION?='v1.52.2'
 
 build: tidy build-compile build-vm
 
-build-compile:
+build-compile: build-proto
 	@echo "Building $(BINARY_COMPILE)..."
 	@go build -o target/$(BINARY_COMPILE) ./cmd/braces-compile
 
@@ -17,7 +17,7 @@ build-vm:
 	@go build -o target/$(BINARY_VM) ./cmd/braces-vm
 
 build-proto:
-	@echo "Building grpc services..."
+	@echo "Generating grpc services..."
 	@protoc --go_out=./internal/introspection/service --go-grpc_out=./internal/introspection/service ./internal/introspection/service/proto/compiler_introspection.proto
 
 test:

@@ -4,36 +4,46 @@ import (
 	"fmt"
 
 	"github.com/certainty/go-braces/internal/compiler"
+	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/chzyer/readline"
 )
 
 type Repl struct {
-	vm         *vm.VM
-	compiler   *compiler.Compiler
-	lineedit   *readline.Instance
-	inputCount int
+	vm                    *vm.VM
+	compiler              *compiler.Compiler
+	lineedit              *readline.Instance
+	compilerIntrospection *introspection.Options
+	inputCount            int
 }
 
-func NewRepl(vm *vm.VM, compiler *compiler.Compiler) (*Repl, error) {
+func NewRepl(vm *vm.VM, compiler *compiler.Compiler, compilerIntrospection *introspection.Options) (*Repl, error) {
 	rl, err := readline.New("> ")
 	if err != nil {
 		return nil, err
 	}
 
 	return &Repl{
-		vm:         vm,
-		compiler:   compiler,
-		lineedit:   rl,
-		inputCount: 0,
+		vm:                    vm,
+		compiler:              compiler,
+		compilerIntrospection: compilerIntrospection,
+		lineedit:              rl,
+		inputCount:            0,
 	}, nil
 }
 
 // run without introspection
 func (r *Repl) Run() {
 	println("Welcome to the Go Braces REPL!")
-	println("Press Ctrl+C to exit and :help for help\n")
+	println("Press Ctrl+C to exit and :help for help")
+
+	if r.compilerIntrospection != nil {
+		println("Compiler Introspection is enabled. Server listening on ", r.compilerIntrospection.GrpServerAddress.String())
+	}
+
+	println("\n")
+
 	defer r.lineedit.Close()
 
 	for {
@@ -42,13 +52,37 @@ func (r *Repl) Run() {
 			break
 		}
 
-		result, err := r.compileAndRun(input)
+		wasCommand, doExit, err := r.handleCommand(input)
 		if err != nil {
 			fmt.Println(err.Error())
+		}
+
+		if wasCommand {
+			if doExit {
+				break
+			}
 		} else {
-			fmt.Printf("=> %v\n", result)
+			result, err := r.compileAndRun(input)
+			if err != nil {
+				fmt.Println(err.Error())
+			} else {
+				fmt.Printf("=> %v\n", result)
+			}
 		}
 	}
+
+}
+
+func (r *Repl) handleCommand(input string) (bool, bool, error) {
+	if input == ":help" {
+		fmt.Println("Show help")
+		return true, false, nil
+	}
+
+	if input == ":exit" {
+		return true, true, nil
+	}
+	return false, false, nil
 }
 
 func (r *Repl) getInput() (string, error) {

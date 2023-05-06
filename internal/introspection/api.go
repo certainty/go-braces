@@ -22,7 +22,7 @@ func (c IntrospectionChannel) SendEvent(event IntrospectionEvent) {
 	c.events <- event
 }
 
-func NewChannel() IntrospectionChannel {
+func NewAPI() IntrospectionChannel {
 	return IntrospectionChannel{
 		events:    make(chan IntrospectionEvent),
 		requests:  make(chan IntrospectionRequest),
