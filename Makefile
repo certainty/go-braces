@@ -21,10 +21,6 @@ build-introspect:
 	@echo "Building $(BINARY_INTROSPECT)..."
 	@go build -o target/$(BINARY_INTROSPECT) ./cmd/braces-introspect
 
-build-proto:
-	@echo "Generating grpc services..."
-	@protoc --go_out=./internal/introspection/service --go-grpc_out=./internal/introspection/service ./internal/introspection/service/proto/compiler_introspection.proto
-
 test:
 	@echo "Running tests..."
 	@gotestsum $(TEST)

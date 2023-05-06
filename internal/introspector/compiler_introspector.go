@@ -1,69 +1,118 @@
 package introspector
 
 import (
-	"context"
 	"fmt"
-	"io"
-	"log"
+	"os"
+	"time"
 
-	"github.com/certainty/go-braces/internal/introspection/service/compiler_introsection"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/status"
+	"github.com/certainty/go-braces/internal/introspection/introspection_client"
+	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
+	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-type CompilerIntrospector struct {
-	address string
+type model struct {
+	events   []string
+	viewport viewport.Model
+	clientID string
+	quit     chan bool
+	client   *introspection_client.CompilerIntrospectionClient
 }
 
-func NewCompilerIntrospector(address string) *CompilerIntrospector {
-	return &CompilerIntrospector{address: address}
-}
+type eventMsg string
+type tickMsg time.Time
 
-func (introspector *CompilerIntrospector) Start() error {
-	conn, err := grpc.Dial(introspector.address, grpc.WithInsecure(), grpc.WithBlock())
+func RunIntrospector(ipcDir string) error {
+	quit := make(chan bool)
+	client, err := introspection_client.NewCompilerIntrospectionClient(ipcDir)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
 
-	client := compiler_introsection.NewCompilerIntrospectionClient(conn)
-
-	capabilities := compiler_introsection.CapabilityList{}
-	request := compiler_introsection.HeloRequest{
-		Capabilities:      &capabilities,
-		IntrospectionType: compiler_introsection.IntrospectionType_COMPILER,
-	}
-
-	heloResponse, err := client.Helo(context.Background(), &request)
+	resp, err := client.Helo()
 	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			fmt.Printf("gRPC error: %s (code: %s)\n", s.Message(), s.Code())
-		} else {
-			log.Fatalf("could not call Helo: %v", err)
-		}
-	}
-	fmt.Printf("Helo response: %v\n", heloResponse)
-
-	eventStream, err := client.EventStream(context.Background(), &compiler_introsection.EventStreamRequest{})
-	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			fmt.Printf("gRPC error: %s (code: %s)\n", s.Message(), s.Code())
-		} else {
-			log.Fatalf("could not call EventStream: %v", err)
-		}
+		return fmt.Errorf("Failed to send HELO request: %w", err)
 	}
 
-	// Process events from the server
-	for {
-		event, err := eventStream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("failed to receive event: %v", err)
-		}
-		fmt.Printf("Received event: %s\n", event.Json)
+	mainProgram := model{
+		viewport: viewport.New(100, 100),
+		clientID: resp.ClientID,
+		quit:     quit,
+		client:   client,
+	}
+	mainProgram.viewport.YOffset = 1
+
+	if err := tea.NewProgram(mainProgram).Start(); err != nil {
+		fmt.Printf("Failed to start TUI: %v\n", err)
+		os.Exit(1)
 	}
 
 	return nil
+}
+
+type TickMsg time.Time
+type EventMsg introspection_protocol.Event
+
+func doTick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return TickMsg(t)
+	})
+}
+
+func pollEvent(events chan introspection_protocol.Event) tea.Cmd {
+	return func() tea.Msg {
+		select {
+		case event := <-events:
+			return EventMsg(event)
+		default:
+			return nil
+		}
+	}
+}
+
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
+		pollEvent(m.client.IntrospectionClient.EventChan),
+		doTick(),
+	)
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height - 1
+		newViewport, _ := m.viewport.Update(msg)
+		m.viewport = newViewport
+		return m, nil
+
+	case tea.KeyMsg:
+		if msg.Type == tea.KeyCtrlC || msg.String() == "q" {
+			close(m.quit)
+			return m, tea.Quit
+		}
+
+	case EventMsg:
+		m.events = append(m.events, fmt.Sprintf("New Event %v", msg))
+		return m, pollEvent(m.client.IntrospectionClient.EventChan)
+
+	case TickMsg:
+		return m, doTick()
+	}
+
+	m.viewport.SetContent(m.eventsToString())
+	return m, nil
+}
+
+func (m model) View() string {
+	return fmt.Sprintf("ClientID: %s\n", m.clientID) + m.viewport.View()
+}
+
+func (m model) eventsToString() string {
+	var s string
+	for _, e := range m.events {
+		s += lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFDF5")).Render(e) + "\n"
+	}
+	return s
 }

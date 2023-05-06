@@ -1,6 +1,11 @@
 package introspection
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
+	"github.com/certainty/go-braces/internal/introspection/introspection_server"
+)
 
 type IntrospectionEvent interface {
 	EventInspect() string
@@ -18,31 +23,25 @@ type IntrospectionRequest interface{}
 
 type IntrospectionResponse interface{}
 
+// This is a sequential interface to the introspection capabiltities
+// The code is instrumented with this API
 type API interface {
-	SendEvent(event IntrospectionEvent)
-	ReceiveEvent() IntrospectionEvent
+	SendEvent(event introspection_protocol.Event)
+	// Future functions
+	// WaitSingleStep(state CurrentState) waits until the client resumes
+	// Abort() askes the interface if execution should be aborted
 }
 
-type IntrospectionChannel struct {
-	events    chan IntrospectionEvent
-	requests  chan IntrospectionRequest
-	responses chan IntrospectionResponse
+type APIFromServer struct {
+	sever *introspection_server.IntrospectionServer
 }
 
-func (c IntrospectionChannel) SendEvent(event IntrospectionEvent) {
-	c.events <- event
+func (c APIFromServer) SendEvent(event introspection_protocol.Event) {
+	c.sever.EventChan <- event
 }
 
-func (c IntrospectionChannel) ReceiveEvent() IntrospectionEvent {
-	return <-c.events
-}
-
-func NewAPI() IntrospectionChannel {
-	return IntrospectionChannel{
-		events:    make(chan IntrospectionEvent, 512),
-		requests:  make(chan IntrospectionRequest),
-		responses: make(chan IntrospectionResponse),
-	}
+func NewAPI(server *introspection_server.IntrospectionServer) APIFromServer {
+	return APIFromServer{server}
 }
 
 type Null struct{}
@@ -52,9 +51,5 @@ func NullAPI() Null {
 }
 
 // implements API
-func (n Null) SendEvent(event IntrospectionEvent) {
-}
-
-func (n Null) ReceiveEvent() IntrospectionEvent {
-	return nil
+func (n Null) SendEvent(event introspection_protocol.Event) {
 }
