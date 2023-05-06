@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -41,9 +43,10 @@ func NewVM(options VmOptions) *VM {
 	return &vm
 }
 
-func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
+func (vm VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
+	log.Printf("ExecuteModule: %v", module)
 	vm.code = module.Code
-
+	log.Printf("Assigned: %v", vm.code)
 	for vm.pc < len((*vm.code).Instructions) {
 		instr := (*vm.code).Instructions[vm.pc]
 		vm.pc++

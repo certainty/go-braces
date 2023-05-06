@@ -1,5 +1,7 @@
 package introspection
 
+import "fmt"
+
 type StartCompileModuleEvent struct{}
 
 func (e StartCompileModuleEvent) EventInspect() string {
@@ -18,4 +20,12 @@ func (e EndCompileModuleEvent) EventInspect() string {
 
 func EventEndCompileModule() EndCompileModuleEvent {
 	return EndCompileModuleEvent{}
+}
+
+type BeginCompileStringEvent struct {
+	Input string
+}
+
+func (e BeginCompileStringEvent) EventInspect() string {
+	return fmt.Sprintf("(BeginCompileStringEvent %s)", e.Input)
 }

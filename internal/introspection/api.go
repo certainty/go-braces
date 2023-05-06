@@ -1,22 +1,21 @@
 package introspection
 
 import (
-	"fmt"
-
+	"encoding/gob"
 	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
 	"github.com/certainty/go-braces/internal/introspection/introspection_server"
 )
 
+func RegisterTypes() {
+	gob.Register(introspection_protocol.HeloRequest{})
+	gob.Register(introspection_protocol.HeloResponse{})
+	gob.Register(BeginCompileStringEvent{})
+	gob.Register(StartCompileModuleEvent{})
+	gob.Register(EndCompileModuleEvent{})
+}
+
 type IntrospectionEvent interface {
 	EventInspect() string
-}
-
-type BeginCompileStringEvent struct {
-	Input string
-}
-
-func (e BeginCompileStringEvent) EventInspect() string {
-	return fmt.Sprintf("(BeginCompileStringEvent %s)", e.Input)
 }
 
 type IntrospectionRequest interface{}
@@ -52,4 +51,5 @@ func NullAPI() Null {
 
 // implements API
 func (n Null) SendEvent(event introspection_protocol.Event) {
+	return
 }

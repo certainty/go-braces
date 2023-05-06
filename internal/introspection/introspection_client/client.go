@@ -2,8 +2,8 @@ package introspection_client
 
 import (
 	"encoding/gob"
-	"errors"
 	"fmt"
+	"log"
 	"net"
 	"path/filepath"
 
@@ -49,7 +49,7 @@ func (c *IntrospectionClient) handleEventStream() {
 		var event introspection_protocol.WireEvent
 		err := dec.Decode(&event)
 		if err != nil {
-			c.EventChan <- errors.New("error decoding event")
+			log.Printf("error decoding event: %w", err)
 			continue
 		}
 		c.EventChan <- event.Event
@@ -63,13 +63,13 @@ func (c *IntrospectionClient) handleReqRep() {
 	for req := range c.RequestChan {
 		err := enc.Encode(introspection_protocol.WireRequest{Request: req})
 		if err != nil {
-			c.ResponseChan <- fmt.Errorf("error encoding request: %w", err)
+			log.Printf("error encoding request: %w", err)
 		}
 
 		var resp introspection_protocol.WireResponse
 		err = dec.Decode(&resp)
 		if err != nil {
-			c.ResponseChan <- fmt.Errorf("error decoding response: %w", err)
+			log.Printf("error decoding response: %w", err)
 		}
 		c.ResponseChan <- resp.Response
 	}

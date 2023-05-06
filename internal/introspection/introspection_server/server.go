@@ -86,7 +86,7 @@ func (s *IntrospectionServer) handleEventStream(conn net.Conn) {
 	for event := range s.EventChan {
 		err := enc.Encode(introspection_protocol.WireEvent{Event: event})
 		if err != nil {
-			s.ResponseChan <- err
+			log.Printf("Error encoding event: %v", err)
 		}
 	}
 }
@@ -98,10 +98,10 @@ func (s *IntrospectionServer) handleControlRequests(conn net.Conn) {
 		err := dec.Decode(&req)
 		if err != nil {
 			log.Printf("Error decoding request: %v", err)
-			s.RequestChan <- err
 			continue
+		} else {
+			s.RequestChan <- req.Request
 		}
-		s.RequestChan <- req.Request
 	}
 }
 

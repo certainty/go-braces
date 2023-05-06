@@ -1,7 +1,6 @@
 package introspection_server
 
 import (
-	"errors"
 	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
 	"github.com/google/uuid"
 )
@@ -12,8 +11,6 @@ type CompilerIntrospectionServer struct {
 }
 
 func NewCompilerIntrospectionServer() (*CompilerIntrospectionServer, error) {
-	introspection_protocol.RegisterTypes()
-
 	server, err := NewServer()
 	if err != nil {
 		return nil, err
@@ -25,7 +22,7 @@ func NewCompilerIntrospectionServer() (*CompilerIntrospectionServer, error) {
 	}, nil
 }
 
-func (s *CompilerIntrospectionServer) WaitForClient() {
+func (s *CompilerIntrospectionServer) WaitForClient() string {
 	for {
 		select {
 		case req := <-s.RequestChan:
@@ -40,13 +37,13 @@ func (s *CompilerIntrospectionServer) WaitForClient() {
 						ClientID: clientID,
 					}
 					s.ResponseChan <- response
-					return
+					return clientID
 				}
 			default:
-				s.ResponseChan <- errors.New("Expected HELO request")
+				s.ResponseChan <- "Expected HELO request"
 			}
 		case <-s.Quit:
-			return
+			return ""
 		}
 	}
 }

@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/introspection"
@@ -12,8 +13,8 @@ import (
 )
 
 type Repl struct {
-	vm                    *vm.VM
-	compiler              *compiler.Compiler
+	vmInstance            *vm.VM
+	compiler              compiler.Compiler
 	lineedit              *readline.Instance
 	compilerIntrospection *introspection_server.CompilerIntrospectionServer
 	inputCount            int
@@ -31,18 +32,23 @@ func NewRepl(options Options) (*Repl, error) {
 	}
 
 	var compilerIntrospection *introspection_server.CompilerIntrospectionServer
-	var compiler *compiler.Compiler
-	var vm *vm.VM
+	var compiler compiler.Compiler
 
 	if options.IntrospectCompiler {
+
 		compiler, compilerIntrospection, err = newCompilerWithIntrospection()
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	instance := vm.NewVM(vm.DefaultOptions())
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repl{
-		vm:                    vm,
+		vmInstance:            instance,
 		compiler:              compiler,
 		compilerIntrospection: compilerIntrospection,
 		lineedit:              rl,
@@ -50,15 +56,15 @@ func NewRepl(options Options) (*Repl, error) {
 	}, nil
 }
 
-func newCompiler() *compiler.Compiler {
+func newCompiler() compiler.Compiler {
 	return compiler.NewCompiler(compiler.DefaultOptions())
 }
 
-func newCompilerWithIntrospection() (*compiler.Compiler, *introspection_server.CompilerIntrospectionServer, error) {
+func newCompilerWithIntrospection() (compiler.Compiler, *introspection_server.CompilerIntrospectionServer, error) {
 	compilerIntrospection, err := introspection_server.NewCompilerIntrospectionServer()
 
 	if err != nil {
-		return nil, nil, err
+		return compiler.Compiler{}, nil, err
 	}
 	api := introspection.NewAPI(compilerIntrospection.IntrospectionServer)
 	compilerOptions := compiler.NewCompilerOptions(api)
@@ -66,14 +72,15 @@ func newCompilerWithIntrospection() (*compiler.Compiler, *introspection_server.C
 }
 
 // run without introspection
-func (r *Repl) Run() {
+func (r Repl) Run() {
 	println("Welcome to the Go Braces REPL!")
 	println("Type :exit or CTRL-C for exit, and :help for help")
 
 	if r.compilerIntrospection != nil {
 		println("Compiler Introspection is enabled. To connect run: braces-introspect compiler", r.compilerIntrospection.IPCDir())
 		println("Waiting for introspection client ....")
-		r.compilerIntrospection.WaitForClient()
+		clientId := r.compilerIntrospection.WaitForClient()
+		println("Client connected. ID is", clientId)
 	}
 
 	println("\n")
@@ -107,7 +114,7 @@ func (r *Repl) Run() {
 
 }
 
-func (r *Repl) handleCommand(input string) (bool, bool, error) {
+func (r Repl) handleCommand(input string) (bool, bool, error) {
 	if input == ":help" {
 		fmt.Println("Show help")
 		return true, false, nil
@@ -119,7 +126,7 @@ func (r *Repl) handleCommand(input string) (bool, bool, error) {
 	return false, false, nil
 }
 
-func (r *Repl) getInput() (string, error) {
+func (r Repl) getInput() (string, error) {
 	openBrackes, openParens, openQuotes := 0, 0, 0
 	buffer := ""
 	r.lineedit.SetPrompt(fmt.Sprintf("%03d:> ", r.inputCount))
@@ -158,11 +165,12 @@ func (r *Repl) getInput() (string, error) {
 	}
 }
 
-func (r *Repl) compileAndRun(input string) (isa.Value, error) {
+func (r Repl) compileAndRun(input string) (isa.Value, error) {
+	log.Printf("Alive %v", r.compiler)
 	assemblyModule, err := r.compiler.CompileString(input)
 
 	if err != nil {
 		return nil, err
 	}
-	return r.vm.ExecuteModule(assemblyModule)
+	return r.vmInstance.ExecuteModule(assemblyModule)
 }
