@@ -14,6 +14,10 @@ type IRConstant struct {
 	Value isa.Value
 }
 
+func (c IRConstant) String() string {
+	return fmt.Sprintf("const %v", c.Value)
+}
+
 type IRLabel struct{}
 type IRGlobalRef struct{}
 type IRSet struct{}
@@ -36,6 +40,10 @@ func NewBlock(label string) *IRBlock {
 		Label:        label,
 		Instructions: make([]IRInstruction, 0),
 	}
+}
+
+func (b *IRBlock) String() string {
+	return fmt.Sprintf("block %s %v", b.Label, b.Instructions)
 }
 
 func (b *IRBlock) AddInstruction(instruction IRInstruction) {

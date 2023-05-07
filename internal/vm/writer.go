@@ -1,9 +1,6 @@
 package vm
 
 import (
-	"log"
-	"reflect"
-
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -18,8 +15,6 @@ func NewWriter(internedStrings *InternedStringTable) *Writer {
 }
 
 func (w *Writer) Write(v isa.Value) string {
-	log.Printf("v: %s", reflect.TypeOf(v))
-	log.Printf("v: %s", v.Inspect())
 	switch value := v.(type) {
 	case isa.BoolValue:
 		if value {

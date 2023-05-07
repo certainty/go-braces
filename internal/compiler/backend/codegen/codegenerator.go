@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/introspection"
@@ -87,8 +88,19 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 	for _, instruction := range block.Instructions {
 		switch instruction.(type) {
 		case ir.IRConstant:
-			// include register to use in IR?
-			builder.AddInstruction(isa.InstTrue(c.registerAccu))
+			value := instruction.(ir.IRConstant).Value
+			switch value.(type) {
+			case isa.BoolValue:
+				if value == isa.BoolValue(true) {
+					log.Printf("emitBlock: true")
+					builder.AddInstruction(isa.InstTrue(c.registerAccu))
+				} else {
+					log.Printf("emitBlock: false")
+					builder.AddInstruction(isa.InstFalse(c.registerAccu))
+				}
+			default:
+				return fmt.Errorf("unknown constant type: %T", value)
+			}
 		default:
 			return fmt.Errorf("unknown instruction type: %T", instruction)
 		}

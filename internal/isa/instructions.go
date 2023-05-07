@@ -32,6 +32,10 @@ func InstTrue(register Register) Instruction {
 	return NewInstruction(OP_TRUE, register)
 }
 
+func InstFalse(register Register) Instruction {
+	return NewInstruction(OP_FALSE, register)
+}
+
 func InstHalt(returnValueRegister Register) Instruction {
 	return NewInstruction(OP_HALT, returnValueRegister)
 }
