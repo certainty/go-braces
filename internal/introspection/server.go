@@ -1,4 +1,4 @@
-package introspection_server
+package introspection
 
 import (
 	"encoding/gob"
@@ -8,20 +8,18 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-
-	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
 )
 
-type IntrospectionServer struct {
-	EventChan    chan introspection_protocol.Event
-	RequestChan  chan introspection_protocol.Request
-	ResponseChan chan introspection_protocol.Response
+type Server struct {
+	EventChan    chan IntrospectionEvent
+	RequestChan  chan Request
+	ResponseChan chan Response
 	eventsSock   net.Listener
 	controlSock  net.Listener
 	tempDir      string
 }
 
-func NewServer() (*IntrospectionServer, error) {
+func NewServer() (*Server, error) {
 	tempDir, err := ioutil.TempDir("", "introspection")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
@@ -43,10 +41,10 @@ func NewServer() (*IntrospectionServer, error) {
 		return nil, fmt.Errorf("failed to listen on control socket: %w", err)
 	}
 
-	server := &IntrospectionServer{
-		EventChan:    make(chan introspection_protocol.Event),
-		RequestChan:  make(chan introspection_protocol.Request),
-		ResponseChan: make(chan introspection_protocol.Response),
+	server := &Server{
+		EventChan:    make(chan IntrospectionEvent),
+		RequestChan:  make(chan Request),
+		ResponseChan: make(chan Response),
 		eventsSock:   eventSock,
 		controlSock:  controlSock,
 		tempDir:      tempDir,
@@ -58,7 +56,7 @@ func NewServer() (*IntrospectionServer, error) {
 	return server, nil
 }
 
-func (s *IntrospectionServer) handleEventConnections() {
+func (s *Server) handleEventConnections() {
 	for {
 		conn, err := s.eventsSock.Accept()
 		if err != nil {
@@ -69,7 +67,7 @@ func (s *IntrospectionServer) handleEventConnections() {
 	}
 }
 
-func (s *IntrospectionServer) handleControlConnections() {
+func (s *Server) handleControlConnections() {
 	for {
 		conn, err := s.controlSock.Accept()
 		if err != nil {
@@ -81,20 +79,20 @@ func (s *IntrospectionServer) handleControlConnections() {
 	}
 }
 
-func (s *IntrospectionServer) handleEventStream(conn net.Conn) {
+func (s *Server) handleEventStream(conn net.Conn) {
 	enc := gob.NewEncoder(conn)
 	for event := range s.EventChan {
-		err := enc.Encode(introspection_protocol.WireEvent{Event: event})
+		err := enc.Encode(WireEvent{IntrospectionEvent: event})
 		if err != nil {
 			log.Printf("Error encoding event: %v", err)
 		}
 	}
 }
 
-func (s *IntrospectionServer) handleControlRequests(conn net.Conn) {
+func (s *Server) handleControlRequests(conn net.Conn) {
 	dec := gob.NewDecoder(conn)
 	for {
-		var req introspection_protocol.WireRequest
+		var req WireRequest
 		err := dec.Decode(&req)
 		if err != nil {
 			log.Printf("Error decoding request: %v", err)
@@ -105,11 +103,11 @@ func (s *IntrospectionServer) handleControlRequests(conn net.Conn) {
 	}
 }
 
-func (s *IntrospectionServer) handleControlResponses(conn net.Conn) {
+func (s *Server) handleControlResponses(conn net.Conn) {
 	enc := gob.NewEncoder(conn)
 
 	for response := range s.ResponseChan {
-		err := enc.Encode(introspection_protocol.WireResponse{Response: response})
+		err := enc.Encode(WireResponse{Response: response})
 
 		if err != nil {
 			log.Printf("Error encoding response: %v", err)
@@ -117,7 +115,7 @@ func (s *IntrospectionServer) handleControlResponses(conn net.Conn) {
 	}
 }
 
-func (s *IntrospectionServer) Close() {
+func (s *Server) Close() {
 	close(s.EventChan)
 	close(s.RequestChan)
 	close(s.ResponseChan)
@@ -136,6 +134,6 @@ func controlSockPath(base string) string {
 	return filepath.Join(base, "control.ipc")
 }
 
-func (s *IntrospectionServer) IPCDir() string {
+func (s *Server) IPCDir() string {
 	return s.tempDir
 }

@@ -2,9 +2,9 @@ package repl
 
 import (
 	"fmt"
+
 	"github.com/certainty/go-braces/internal/compiler"
-	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/introspection/introspection_server"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/vm"
 	"github.com/chzyer/readline"
@@ -14,7 +14,7 @@ type Repl struct {
 	vmInstance            *vm.VM
 	compiler              *compiler.Compiler
 	lineedit              *readline.Instance
-	compilerIntrospection *introspection_server.CompilerIntrospectionServer
+	compilerIntrospection *compiler_introspection.Server
 	inputCount            int
 }
 
@@ -29,8 +29,8 @@ func NewRepl(options Options) (*Repl, error) {
 		return nil, err
 	}
 
-	var compilerIntrospection *introspection_server.CompilerIntrospectionServer
 	var compiler *compiler.Compiler
+	var compilerIntrospection *compiler_introspection.Server
 
 	if options.IntrospectCompiler {
 		compiler, compilerIntrospection, err = newCompilerWithIntrospection()
@@ -59,15 +59,14 @@ func newCompiler() *compiler.Compiler {
 	return compiler.NewCompiler(compiler.DefaultOptions())
 }
 
-func newCompilerWithIntrospection() (*compiler.Compiler, *introspection_server.CompilerIntrospectionServer, error) {
-	compilerIntrospection, err := introspection_server.NewCompilerIntrospectionServer()
+func newCompilerWithIntrospection() (*compiler.Compiler, *compiler_introspection.Server, error) {
+	introspectionServer, err := compiler_introspection.NewServer()
 
 	if err != nil {
 		return nil, nil, err
 	}
-	api := introspection.NewAPI(compilerIntrospection.IntrospectionServer)
-	compilerOptions := compiler.NewCompilerOptions(api)
-	return compiler.NewCompiler(compilerOptions), compilerIntrospection, nil
+	compilerOptions := compiler.NewCompilerOptions(introspectionServer.API())
+	return compiler.NewCompiler(compilerOptions), introspectionServer, nil
 }
 
 // run without introspection

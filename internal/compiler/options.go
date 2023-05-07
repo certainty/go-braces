@@ -1,6 +1,8 @@
 package compiler
 
-import "github.com/certainty/go-braces/internal/introspection"
+import (
+	"github.com/certainty/go-braces/internal/introspection"
+)
 
 type CompilerOptions struct {
 	introspectionAPI introspection.API

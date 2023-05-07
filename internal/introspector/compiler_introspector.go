@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/certainty/go-braces/internal/introspection/introspection_client"
-	"github.com/certainty/go-braces/internal/introspection/introspection_protocol"
+	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -17,7 +17,7 @@ type model struct {
 	viewport viewport.Model
 	clientID string
 	quit     chan bool
-	client   *introspection_client.CompilerIntrospectionClient
+	client   *compiler_introspection.Client
 }
 
 type eventMsg string
@@ -25,7 +25,7 @@ type tickMsg time.Time
 
 func RunIntrospector(ipcDir string) error {
 	quit := make(chan bool)
-	client, err := introspection_client.NewCompilerIntrospectionClient(ipcDir)
+	client, err := compiler_introspection.NewClient(ipcDir)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func RunIntrospector(ipcDir string) error {
 }
 
 type TickMsg time.Time
-type EventMsg introspection_protocol.Event
+type EventMsg introspection.IntrospectionEvent
 
 func doTick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
@@ -60,7 +60,7 @@ func doTick() tea.Cmd {
 	})
 }
 
-func pollEvent(events chan introspection_protocol.Event) tea.Cmd {
+func pollEvent(events chan introspection.IntrospectionEvent) tea.Cmd {
 	return func() tea.Msg {
 		select {
 		case event := <-events:
@@ -73,7 +73,7 @@ func pollEvent(events chan introspection_protocol.Event) tea.Cmd {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		pollEvent(m.client.IntrospectionClient.EventChan),
+		pollEvent(m.client.EventChan),
 		doTick(),
 	)
 }
@@ -95,7 +95,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case EventMsg:
 		m.events = append(m.events, fmt.Sprintf("New Event %v", msg))
-		return m, pollEvent(m.client.IntrospectionClient.EventChan)
+		return m, pollEvent(m.client.EventChan)
 
 	case TickMsg:
 		return m, doTick()

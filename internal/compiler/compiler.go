@@ -2,10 +2,12 @@ package compiler
 
 import (
 	"fmt"
+
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/introspection_events"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -27,13 +29,15 @@ func NewCompiler(options CompilerOptions) *Compiler {
 }
 
 func (c Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
-	//c.introspectionAPI.SendEvent(&introspection.BeginCompileStringEvent{Input: code})
+	c.introspectionAPI.SendEvent(introspection_events.EventBeginCompileString{Input: code})
 	input := input.NewStringInput("ADHOC", code)
 	return c.CompileModule(input)
 }
 
 func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
-	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
+	c.introspectionAPI.SendEvent(introspection_events.EventBeginCompileModule{})
+	c.introspectionAPI.SingleStepBarrier(&c)
+
 	reader := reader.NewReader(c.introspectionAPI)
 	parser := parser.NewParser(c.introspectionAPI)
 	coreCompiler := NewCoreCompiler(c.introspectionAPI)
@@ -53,6 +57,6 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}
 
-	c.introspectionAPI.SendEvent(introspection.EventEndCompileModule())
+	c.introspectionAPI.SendEvent(introspection_events.EventEndCompileModule{})
 	return assemblyModule, nil
 }
