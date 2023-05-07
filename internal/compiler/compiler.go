@@ -30,6 +30,7 @@ func NewCompiler(options CompilerOptions) *Compiler {
 
 func (c Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
 	c.introspectionAPI.SendEvent(introspection_events.EventBeginCompileString{Input: code})
+
 	input := input.NewStringInput("ADHOC", code)
 	return c.CompileModule(input)
 }

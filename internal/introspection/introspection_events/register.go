@@ -1,5 +1,10 @@
 package introspection_events
 
-func RegisterEventTypes() {
+import "encoding/gob"
 
+func RegisterEventTypes() {
+	gob.Register(EventBeginCompileString{})
+	gob.Register(EventEndCompileString{})
+	gob.Register(EventBeginCompileModule{})
+	gob.Register(EventEndCompileModule{})
 }
