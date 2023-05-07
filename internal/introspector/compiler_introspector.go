@@ -2,16 +2,15 @@ package introspector
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"log"
+	"os"
+	"strings"
+	"time"
 )
 
 type model struct {
