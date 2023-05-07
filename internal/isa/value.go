@@ -1,5 +1,10 @@
 package isa
 
+import (
+	"fmt"
+	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
+)
+
 // Values are not actullay part of the ISA normally
 // and this file will go away eventually, but in the
 // beginning it's very helpful to take some shortcuts
@@ -7,16 +12,40 @@ package isa
 // much about layout and encoding of the values in the constant pool
 // for example.
 
-type Value interface{}
+type Value interface {
+	Inspect() string
+}
 
 type BoolValue bool
+
+func (b BoolValue) Inspect() string {
+	return "BoolValue"
+}
 
 type ProcedureValue struct {
 	Code CodeUnit
 	// more to come later: like arity
 }
 
+func (p *ProcedureValue) Inspect() string {
+	return "ProcedureValue"
+}
+
 type ClosureValue struct {
 	Procedure ProcedureValue
 	UpValues  []*Value
+}
+
+func (c *ClosureValue) Inspect() string {
+	return "ClosureValue"
+}
+
+func ValueFromDatum(datum reader.Datum) (Value, error) {
+	switch datum := datum.(type) {
+	case reader.DatumBool:
+		// at this point location information is stripped
+		return BoolValue(datum.Value), nil
+	default:
+		return nil, fmt.Errorf("Can't convert datum to value")
+	}
 }

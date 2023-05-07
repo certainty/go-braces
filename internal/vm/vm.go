@@ -1,8 +1,6 @@
 package vm
 
 import (
-	"log"
-
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -21,8 +19,11 @@ type VmOptions struct {
 type VM struct {
 	introspectionAPI introspection.API
 	registers        [REG_SP_COUNT + REG_GP_COUNT]isa.Value
-	code             *isa.CodeUnit
-	pc               int
+	writer           *Writer
+	// read only reference
+	internedStrings *InternedStringTable
+	code            *isa.CodeUnit
+	pc              int
 }
 
 func DefaultOptions() VmOptions {
@@ -30,8 +31,13 @@ func DefaultOptions() VmOptions {
 }
 
 func NewVM(options VmOptions) *VM {
+	internedStrings := NewInternedStringTable()
+
 	vm := VM{
-		pc: 0,
+		pc:              0,
+		internedStrings: internedStrings,
+		writer:          NewWriter(internedStrings),
+		code:            nil,
 	}
 
 	if options.introspectionAPI == nil {
@@ -43,10 +49,12 @@ func NewVM(options VmOptions) *VM {
 	return &vm
 }
 
-func (vm VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
-	log.Printf("ExecuteModule: %v", module)
+func (vm *VM) WriteValue(value isa.Value) string {
+	return vm.writer.Write(value)
+}
+
+func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 	vm.code = module.Code
-	log.Printf("Assigned: %v", vm.code)
 	for vm.pc < len((*vm.code).Instructions) {
 		instr := (*vm.code).Instructions[vm.pc]
 		vm.pc++
@@ -56,11 +64,11 @@ func (vm VM) ExecuteModule(module *isa.AssemblyModule) (*isa.Value, error) {
 			vm.registers[REG_SP_ACCU] = isa.BoolValue(true)
 		case isa.OP_HALT:
 			vm.registers[REG_SP_HALT] = vm.registers[REG_SP_ACCU]
-			return &vm.registers[REG_SP_HALT], nil
+			return vm.registers[REG_SP_HALT], nil
 		default:
 			panic("unimplemented opcode")
 		}
 	}
 
-	return &vm.registers[REG_SP_HALT], nil
+	return vm.registers[REG_SP_HALT], nil
 }

@@ -65,8 +65,11 @@ func LowerToIR(coreAst *parser.CoreAST) (*IR, error) {
 	for _, expression := range coreAst.Expressions {
 		switch exp := expression.(type) {
 		case parser.LiteralExpression:
-			log.Printf("lowering literal expression %v", exp)
-			currentBlock.AddInstruction(NewConstant(exp.Datum))
+			value, err := isa.ValueFromDatum(exp.Datum)
+			if err != nil {
+				return nil, fmt.Errorf("could not convert literal to value: %w", err)
+			}
+			currentBlock.AddInstruction(NewConstant(value))
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", expression)
 		}

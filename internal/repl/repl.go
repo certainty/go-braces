@@ -2,8 +2,6 @@ package repl
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/introspection/introspection_server"
@@ -108,7 +106,7 @@ func (r *Repl) Run() {
 			if err != nil {
 				fmt.Println(err.Error())
 			} else {
-				fmt.Printf("=> %v\n", result)
+				fmt.Printf("%s\n", r.vmInstance.WriteValue(result))
 			}
 		}
 	}
@@ -167,7 +165,6 @@ func (r *Repl) getInput() (string, error) {
 }
 
 func (r *Repl) compileAndRun(input string) (isa.Value, error) {
-	log.Printf("Alive %v", r.compiler)
 	assemblyModule, err := r.compiler.CompileString(input)
 
 	if err != nil {
