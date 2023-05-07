@@ -3,6 +3,7 @@ package introspection
 import (
 	"encoding/gob"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -95,6 +96,10 @@ func (s *Server) handleControlRequests(conn net.Conn) {
 		var req WireRequest
 		err := dec.Decode(&req)
 		if err != nil {
+			if err == io.EOF {
+				// client disconnected
+				return
+			}
 			log.Printf("Error decoding request: %v", err)
 			continue
 		} else {

@@ -58,7 +58,7 @@ func (s *Server) Shutdown() {
 }
 
 func (s *Server) SendEvent(event introspection.IntrospectionEvent) {
-	s.ResponseChan <- event
+	s.EventChan <- event
 }
 
 func (s *Server) SingleStepBarrier(subject introspection.IntrospectionSubject) {

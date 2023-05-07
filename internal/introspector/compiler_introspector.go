@@ -2,7 +2,9 @@ package introspector
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/certainty/go-braces/internal/introspection"
@@ -22,6 +24,27 @@ type model struct {
 
 type eventMsg string
 type tickMsg time.Time
+
+// use this for debugging
+func RunIntrospector2(ipcDir string) error {
+	_ = make(chan bool)
+	client, err := compiler_introspection.NewClient(ipcDir)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.Helo()
+	if err != nil {
+		return fmt.Errorf("Failed to send HELO request: %w", err)
+	}
+
+	for evt := range client.EventChan {
+		log.Printf("Got event: %v", evt)
+
+	}
+
+	return nil
+}
 
 func RunIntrospector(ipcDir string) error {
 	quit := make(chan bool)
@@ -53,6 +76,7 @@ func RunIntrospector(ipcDir string) error {
 
 type TickMsg time.Time
 type EventMsg introspection.IntrospectionEvent
+type NoEventMsg struct{}
 
 func doTick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
@@ -62,12 +86,8 @@ func doTick() tea.Cmd {
 
 func pollEvent(events chan introspection.IntrospectionEvent) tea.Cmd {
 	return func() tea.Msg {
-		select {
-		case event := <-events:
-			return EventMsg(event)
-		default:
-			return nil
-		}
+		event := <-events
+		return EventMsg(event)
 	}
 }
 
@@ -106,7 +126,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf("ClientID: %s\n", m.clientID) + m.viewport.View()
+	var builder strings.Builder
+	builder.WriteString("ClientID: ")
+	builder.WriteString(m.clientID)
+	builder.WriteString("\n")
+	for _, e := range m.events {
+		builder.WriteString(e)
+		builder.WriteString("\n")
+	}
+	return builder.String()
 }
 
 func (m model) eventsToString() string {
