@@ -29,7 +29,7 @@ func (e ReaderError) Error() string {
 	return fmt.Sprintf("ReaderError: %s", details)
 }
 
-func (r *Reader) Read(input *input.Input) (*DatumAST, error) {
+func (r Reader) Read(input *input.Input) (*DatumAST, error) {
 	parser := NewParser(r.introspectionAPI)
 	ast, errors := parser.Parse(input)
 

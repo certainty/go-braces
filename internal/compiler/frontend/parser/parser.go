@@ -17,6 +17,8 @@ type Parser struct {
 func NewParser(introspectionAPI introspection.API) *Parser {
 	return &Parser{
 		introspectionAPI: introspectionAPI,
+		expander:         expander.NewExpander(introspectionAPI),
+		coreParser:       NewCoreParser(introspectionAPI),
 	}
 }
 

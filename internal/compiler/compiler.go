@@ -2,8 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/input"
@@ -22,8 +20,8 @@ type Compiler struct {
 	introspectionAPI introspection.API
 }
 
-func NewCompiler(options CompilerOptions) Compiler {
-	return Compiler{
+func NewCompiler(options CompilerOptions) *Compiler {
+	return &Compiler{
 		introspectionAPI: options.introspectionAPI,
 	}
 }
@@ -35,8 +33,7 @@ func (c Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
 }
 
 func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
-	log.Printf("CompileModule: %v %v", input, c)
-	//c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
+	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
 	reader := reader.NewReader(c.introspectionAPI)
 	parser := parser.NewParser(c.introspectionAPI)
 	coreCompiler := NewCoreCompiler(c.introspectionAPI)

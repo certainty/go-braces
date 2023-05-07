@@ -14,7 +14,7 @@ import (
 
 type Repl struct {
 	vmInstance            *vm.VM
-	compiler              compiler.Compiler
+	compiler              *compiler.Compiler
 	lineedit              *readline.Instance
 	compilerIntrospection *introspection_server.CompilerIntrospectionServer
 	inputCount            int
@@ -32,14 +32,15 @@ func NewRepl(options Options) (*Repl, error) {
 	}
 
 	var compilerIntrospection *introspection_server.CompilerIntrospectionServer
-	var compiler compiler.Compiler
+	var compiler *compiler.Compiler
 
 	if options.IntrospectCompiler {
-
 		compiler, compilerIntrospection, err = newCompilerWithIntrospection()
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		compiler = newCompiler()
 	}
 
 	instance := vm.NewVM(vm.DefaultOptions())
@@ -56,15 +57,15 @@ func NewRepl(options Options) (*Repl, error) {
 	}, nil
 }
 
-func newCompiler() compiler.Compiler {
+func newCompiler() *compiler.Compiler {
 	return compiler.NewCompiler(compiler.DefaultOptions())
 }
 
-func newCompilerWithIntrospection() (compiler.Compiler, *introspection_server.CompilerIntrospectionServer, error) {
+func newCompilerWithIntrospection() (*compiler.Compiler, *introspection_server.CompilerIntrospectionServer, error) {
 	compilerIntrospection, err := introspection_server.NewCompilerIntrospectionServer()
 
 	if err != nil {
-		return compiler.Compiler{}, nil, err
+		return nil, nil, err
 	}
 	api := introspection.NewAPI(compilerIntrospection.IntrospectionServer)
 	compilerOptions := compiler.NewCompilerOptions(api)
@@ -72,7 +73,7 @@ func newCompilerWithIntrospection() (compiler.Compiler, *introspection_server.Co
 }
 
 // run without introspection
-func (r Repl) Run() {
+func (r *Repl) Run() {
 	println("Welcome to the Go Braces REPL!")
 	println("Type :exit or CTRL-C for exit, and :help for help")
 
@@ -114,7 +115,7 @@ func (r Repl) Run() {
 
 }
 
-func (r Repl) handleCommand(input string) (bool, bool, error) {
+func (r *Repl) handleCommand(input string) (bool, bool, error) {
 	if input == ":help" {
 		fmt.Println("Show help")
 		return true, false, nil
@@ -126,7 +127,7 @@ func (r Repl) handleCommand(input string) (bool, bool, error) {
 	return false, false, nil
 }
 
-func (r Repl) getInput() (string, error) {
+func (r *Repl) getInput() (string, error) {
 	openBrackes, openParens, openQuotes := 0, 0, 0
 	buffer := ""
 	r.lineedit.SetPrompt(fmt.Sprintf("%03d:> ", r.inputCount))
@@ -165,7 +166,7 @@ func (r Repl) getInput() (string, error) {
 	}
 }
 
-func (r Repl) compileAndRun(input string) (isa.Value, error) {
+func (r *Repl) compileAndRun(input string) (isa.Value, error) {
 	log.Printf("Alive %v", r.compiler)
 	assemblyModule, err := r.compiler.CompileString(input)
 
