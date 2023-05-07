@@ -26,7 +26,7 @@ func runJitTest(sourceCode string) (interface{}, error) {
 		return nil, err
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 func assertCompilesAndRuns(t *testing.T, sourceCode string, expectedValue interface{}) {
