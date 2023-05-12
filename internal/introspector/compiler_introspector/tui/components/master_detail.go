@@ -7,17 +7,13 @@ import (
 )
 
 type MasterModel struct {
-	containerWidth  int
-	containerHeight int
-	theme           theme.Theme
+	theme theme.Theme
 }
 
 type DetailModel struct {
-	containerWidth  int
-	containerHeight int
-	theme           theme.Theme
-	InputData       string
-	OutputData      string
+	theme      theme.Theme
+	InputData  string
+	OutputData string
 }
 
 type MasterDetailModel struct {

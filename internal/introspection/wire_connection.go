@@ -7,6 +7,7 @@ import (
 	"net"
 	"reflect"
 	"sync"
+	"time"
 )
 
 type WireConnectioon interface {
@@ -71,14 +72,14 @@ func (w *WireControlConnection) processControlMessages() {
 	go w.processOutgoingControlMessages()
 }
 
-func (w *WireControlConnection) Close() {
+func (w *WireControlConnection) Close() error {
 	w.shutdown <- true
-	w.closeSocket()
+	return w.closeSocket()
 }
 
-func (w *WireEventConnection) Close() {
+func (w *WireEventConnection) Close() error {
 	w.shutdown <- true
-	w.closeSocket()
+	return w.closeSocket()
 }
 
 func (w *WireControlConnection) IsOpen() bool {
@@ -101,7 +102,7 @@ func (w *WireEventConnection) closeSocket() error {
 	return nil
 }
 
-func (w *WireControlConnection) processIncomingControlMessages() error {
+func (w *WireControlConnection) processIncomingControlMessages() {
 	defer w.wg.Done()
 	decoder := gob.NewDecoder(w.socket)
 
@@ -112,10 +113,11 @@ func (w *WireControlConnection) processIncomingControlMessages() error {
 			if _, ok := err.(*net.OpError); ok {
 				log.Printf("Control connection closed. Leaving incoming control message processing loop.")
 				w.Close()
+				return
 			} else if err == io.EOF || err == io.ErrClosedPipe {
 				log.Printf("Control connection closed. Leaving incoming control message processing loop.")
 				w.Close()
-				return err
+				return
 			} else {
 				log.Printf("Error decoding control message: %v", reflect.TypeOf(err))
 			}
@@ -126,7 +128,7 @@ func (w *WireControlConnection) processIncomingControlMessages() error {
 			case MessageTypeShutdown:
 				log.Printf("Client has shut down. Shutting down server.")
 				w.Close()
-				return nil
+				return
 			default:
 				log.Printf("Unknown message type: %v", wireMessage.MessageType)
 			}
@@ -134,31 +136,34 @@ func (w *WireControlConnection) processIncomingControlMessages() error {
 	}
 }
 
-func (w *WireControlConnection) processOutgoingControlMessages() error {
+func (w *WireControlConnection) processOutgoingControlMessages() {
 	defer w.wg.Done()
 	encoder := gob.NewEncoder(w.socket)
 
 	for {
 		select {
 		case <-w.shutdown:
-			return nil
+			return
 		case payload := <-w.Out:
 			wireMessage := WireMessage{MessageTypeControl, payload}
 			if err := encoder.Encode(wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
 					log.Printf("Control connection closed. Leaving outgoing control message processing loop.")
-					w.closeSocket()
-					return err
+					if err := w.closeSocket(); err != nil {
+						log.Printf("Failed to close socket. Ignoring...")
+					}
+					return
 				} else {
 					log.Printf("Error encoding control message: %v", err)
 				}
 			}
 		default:
+			time.Sleep(2 * time.Millisecond)
 		}
 	}
 }
 
-func (w *WireEventConnection) processIncomingEvents() error {
+func (w *WireEventConnection) processIncomingEvents() {
 	decoder := gob.NewDecoder(w.socket)
 
 	for {
@@ -167,7 +172,7 @@ func (w *WireEventConnection) processIncomingEvents() error {
 			if err == io.EOF || err == io.ErrClosedPipe {
 				log.Printf("Event connection closed. Leaving event message processing loop.")
 				w.Close()
-				return err
+				return
 			} else {
 				log.Printf("Error decoding event message: %v", err)
 			}
@@ -177,7 +182,7 @@ func (w *WireEventConnection) processIncomingEvents() error {
 				w.Channel <- wireMessage.Payload
 			case MessageTypeShutdown:
 				w.Close()
-				return nil
+				return
 			default:
 				log.Printf("Message not supported by event connection: %v", wireMessage.MessageType)
 			}
@@ -185,25 +190,28 @@ func (w *WireEventConnection) processIncomingEvents() error {
 	}
 }
 
-func (w *WireEventConnection) processOutgoingEvents() error {
+func (w *WireEventConnection) processOutgoingEvents() {
 	encoder := gob.NewEncoder(w.socket)
 
 	for {
 		select {
 		case <-w.shutdown:
-			return nil
+			return
 		case event := <-w.Channel:
 			wireMessage := WireMessage{MessageTypeEvent, event}
 			if err := encoder.Encode(wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
 					log.Printf("Event connection closed. Leaving event message processing loop.")
-					w.closeSocket()
-					return err
+					if err := w.closeSocket(); err != nil {
+						log.Printf("Failed to close socket. Ignoring...")
+					}
+					return
 				} else {
 					log.Printf("Error encoding event message: %v", err)
 				}
 			}
 		default:
+			time.Sleep(2 * time.Millisecond)
 		}
 	}
 }

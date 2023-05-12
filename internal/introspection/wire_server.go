@@ -18,7 +18,10 @@ type WireServer struct {
 }
 
 func NewWireServer(scope string) (*WireServer, error) {
-	SetupDirectories(scope)
+	if err := SetupDirectories(scope); err != nil {
+		return nil, fmt.Errorf("failed to setup directories: %w", err)
+	}
+
 	eventSockPath := EventSocketPath(scope)
 	controlSockPath := ControlSocketPath(scope)
 
@@ -45,22 +48,20 @@ func NewWireServer(scope string) (*WireServer, error) {
 }
 
 func (s *WireServer) Accept() (*WireControlConnection, *WireEventConnection, error) {
-	for {
-		controlCon, err := s.controlSock.Accept()
-		if err != nil {
-			log.Printf("Error accepting connection: %v", err)
-			return nil, nil, err
-		}
-		wireControlConnection := NewWireControlConnection(controlCon)
-
-		eventsConn, err := s.eventSock.Accept()
-		if err != nil {
-			log.Printf("Error accepting connection: %v", err)
-			wireControlConnection.Close()
-			return nil, nil, err
-		}
-		wireEventConnection := NewWireEventConnection(eventsConn, WireEventSource)
-
-		return wireControlConnection, wireEventConnection, nil
+	controlCon, err := s.controlSock.Accept()
+	if err != nil {
+		log.Printf("Error accepting connection: %v", err)
+		return nil, nil, err
 	}
+	wireControlConnection := NewWireControlConnection(controlCon)
+
+	eventsConn, err := s.eventSock.Accept()
+	if err != nil {
+		log.Printf("Error accepting connection: %v", err)
+		wireControlConnection.Close()
+		return nil, nil, err
+	}
+	wireEventConnection := NewWireEventConnection(eventsConn, WireEventSource)
+
+	return wireControlConnection, wireEventConnection, nil
 }

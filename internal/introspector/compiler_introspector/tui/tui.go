@@ -189,38 +189,6 @@ func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *TUIModel) requestSent() {
-	m.requestState = components.RequestSent
-	m.headerModel.RequestState = components.RequestSent
-	m.statusBarModel.RequestState = components.RequestSent
-}
-func (m *TUIModel) awaitResponse() {
-	m.requestState = components.AwaitResponse
-	m.headerModel.RequestState = components.AwaitResponse
-	m.statusBarModel.RequestState = components.AwaitResponse
-}
-func (m *TUIModel) responseReceived() {
-	m.requestState = components.NoRequest
-	m.headerModel.RequestState = components.NoRequest
-	m.statusBarModel.RequestState = components.NoRequest
-}
-
-func (m *TUIModel) enableSingleStepMode() {
-	m.singleStepMode = true
-	m.introspectionKeyMap.ToggleSingleStepping.SetEnabled(true)
-	m.introspectionKeyMap.Reset.SetEnabled(true)
-	m.introspectionKeyMap.Continue.SetEnabled(true)
-	m.introspectionKeyMap.Step.SetEnabled(true)
-}
-
-func (m *TUIModel) disableSingleStepMode() {
-	m.singleStepMode = false
-	m.introspectionKeyMap.ToggleSingleStepping.SetEnabled(true)
-	m.introspectionKeyMap.Reset.SetEnabled(false)
-	m.introspectionKeyMap.Continue.SetEnabled(false)
-	m.introspectionKeyMap.Step.SetEnabled(false)
-}
-
 func (m TUIModel) propagateUpdate(msg tea.Msg) (tea.Model, []tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd

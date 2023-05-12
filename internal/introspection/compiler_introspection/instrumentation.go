@@ -67,11 +67,11 @@ func (e EventLeavePhase) String() string {
 
 // control stuff
 type Instrumentation interface {
-	EnterPhase(phase CompilationPhase) error
-	LeavePhase(phase CompilationPhase) error
-	EnterCompilerModule(origin location.Origin, sourceCode string) error
-	LeaveCompilerModule(module isa.AssemblyModule) error
-	Breakpoint(id BreakpointID, subject IntrospectionSubject) error
+	EnterPhase(phase CompilationPhase)
+	LeavePhase(phase CompilationPhase)
+	EnterCompilerModule(origin location.Origin, sourceCode string)
+	LeaveCompilerModule(module isa.AssemblyModule)
+	Breakpoint(id BreakpointID, subject IntrospectionSubject)
 }
 
 type InstrumentationFromServer struct {
@@ -82,35 +82,29 @@ func NewInstrumentationFromServer(server *Server) Instrumentation {
 	return &InstrumentationFromServer{server}
 }
 
-func (s *InstrumentationFromServer) EnterPhase(phase CompilationPhase) error {
+func (s *InstrumentationFromServer) EnterPhase(phase CompilationPhase) {
 	if s.server != nil && s.server.IsConnected() {
-		return s.server.SendEvents(EventEnterPhase{Phase: phase})
+		s.server.SendEvents(EventEnterPhase{Phase: phase}) // nolint:errcheck
 	}
-	return nil
 }
 
-func (s *InstrumentationFromServer) LeavePhase(phase CompilationPhase) error {
+func (s *InstrumentationFromServer) LeavePhase(phase CompilationPhase) {
 	if s.server != nil && s.server.IsConnected() {
-		return s.server.SendEvents(EventLeavePhase{Phase: phase})
+		s.server.SendEvents(EventLeavePhase{Phase: phase}) //nolint:errcheck
 	}
-
-	return nil
 }
 
-func (s *InstrumentationFromServer) EnterCompilerModule(origin location.Origin, sourceCode string) error {
+func (s *InstrumentationFromServer) EnterCompilerModule(origin location.Origin, sourceCode string) {
 	if s.server != nil && s.server.IsConnected() {
-		return s.server.SendEvents(EventBeginCompileModule{Origin: origin, SourceCode: sourceCode})
+		s.server.SendEvents(EventBeginCompileModule{Origin: origin, SourceCode: sourceCode}) //nolint:errcheck
 	}
-	return nil
 }
 
-func (s *InstrumentationFromServer) LeaveCompilerModule(module isa.AssemblyModule) error {
+func (s *InstrumentationFromServer) LeaveCompilerModule(module isa.AssemblyModule) {
 	if s.server != nil && s.server.IsConnected() {
-		return s.server.SendEvents(NewEventEndCompileModule(module))
+		s.server.SendEvents(NewEventEndCompileModule(module)) //nolint:errcheck
 	}
-	return nil
 }
 
-func (s *InstrumentationFromServer) Breakpoint(id BreakpointID, subject IntrospectionSubject) error {
-	return nil
+func (s *InstrumentationFromServer) Breakpoint(id BreakpointID, subject IntrospectionSubject) {
 }

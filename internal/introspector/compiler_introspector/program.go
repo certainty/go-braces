@@ -7,7 +7,6 @@ import (
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
 )
 
 func RunIntrospector() error {
@@ -21,9 +20,7 @@ func RunIntrospector() error {
 		return fmt.Errorf("Failed to connect %w", err)
 	}
 
-	termenv.HideCursor()
-	defer termenv.ShowCursor()
-	err = tea.NewProgram(tui.InitialTUIModel(client), tea.WithAltScreen()).Start()
+	_, err = tea.NewProgram(tui.InitialTUIModel(client), tea.WithAltScreen()).Run()
 	if err != nil {
 		fmt.Printf("Failed to start TUI: %v\n", err)
 		os.Exit(1)

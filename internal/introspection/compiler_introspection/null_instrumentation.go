@@ -11,22 +11,12 @@ func NewNullInstrumentation() *NullInstrumentation {
 	return &NullInstrumentation{}
 }
 
-func (n NullInstrumentation) EnterPhase(phase CompilationPhase) error {
-	return nil
-}
+func (n NullInstrumentation) EnterPhase(phase CompilationPhase) {}
 
-func (n *NullInstrumentation) LeavePhase(phase CompilationPhase) error {
-	return nil
-}
+func (n *NullInstrumentation) LeavePhase(phase CompilationPhase) {}
 
-func (s *NullInstrumentation) EnterCompilerModule(origin location.Origin, sourceCode string) error {
-	return nil
-}
+func (s *NullInstrumentation) EnterCompilerModule(origin location.Origin, sourceCode string) {}
 
-func (s *NullInstrumentation) LeaveCompilerModule(module isa.AssemblyModule) error {
-	return nil
-}
+func (s *NullInstrumentation) LeaveCompilerModule(module isa.AssemblyModule) {}
 
-func (n NullInstrumentation) Breakpoint(id BreakpointID, subject IntrospectionSubject) error {
-	return nil
-}
+func (n NullInstrumentation) Breakpoint(id BreakpointID, subject IntrospectionSubject) {}
