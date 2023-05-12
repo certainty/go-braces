@@ -98,7 +98,7 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 		theme:                    theme,
 		globalKeyMap:             globalKeyMap,
 		introspectionKeyMap:      introspectionKeyMap,
-		headerModel:              components.InitialHeaderModel(theme, "(Go-Braces-Inrospect 'Compiler)", connected),
+		headerModel:              components.InitialHeaderModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
 		infoModel:                components.InitialInfoModel(theme, currentInput, currentCompilerOptions),
 		mainModel:                components.InitialMainModel(theme),
 		statusBarModel:           components.InitialStatusBarModel(theme, shortcuts),
