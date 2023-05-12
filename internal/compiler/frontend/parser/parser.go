@@ -5,24 +5,30 @@ import (
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/expander"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Parser struct {
-	introspectionAPI introspection.API
-	expander         *expander.Expander
-	coreParser       *CoreParser
+	instrumentation compiler_introspection.Instrumentation
+	expander        *expander.Expander
+	coreParser      *CoreParser
 }
 
-func NewParser(introspectionAPI introspection.API) *Parser {
+func NewParser(instrumentation compiler_introspection.Instrumentation) *Parser {
 	return &Parser{
-		introspectionAPI: introspectionAPI,
+		instrumentation: instrumentation,
+		expander:        expander.NewExpander(instrumentation),
+		coreParser:      NewCoreParser(instrumentation),
 	}
 }
 
 func (p *Parser) Parse(data *reader.DatumAST) (*CoreAST, error) {
-	p.expander = expander.NewExpander(p.introspectionAPI)
-	p.coreParser = NewCoreParser(p.introspectionAPI)
+	p.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
+	defer p.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
+
+	p.expander = expander.NewExpander(p.instrumentation)
+	p.coreParser = NewCoreParser(p.instrumentation)
 	coreAst := NewCoreAST()
 
 	for _, datum := range data.Data {
@@ -39,7 +45,7 @@ func (p *Parser) Parse(data *reader.DatumAST) (*CoreAST, error) {
 	return coreAst, nil
 }
 
-func (p *Parser) doParse(data reader.Datum) (SchemeExpression, error) {
+func (p *Parser) doParse(data isa.Datum) (SchemeExpression, error) {
 	expanded, err := p.expander.Expand(data)
 	if err != nil {
 		return nil, err

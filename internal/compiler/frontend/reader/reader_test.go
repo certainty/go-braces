@@ -5,12 +5,13 @@ import (
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/isa"
 	"github.com/stretchr/testify/assert"
 )
 
 func ReadString(s string) (*reader.DatumAST, error) {
-	r := reader.NewReader(introspection.NullAPI())
+	r := reader.NewReader(compiler_introspection.NewNullInstrumentation())
 	return r.Read(input.NewStringInput("TESTS", s))
 }
 
@@ -47,7 +48,7 @@ func TestReadBoolean(t *testing.T) {
 		t.Run(rt.name, func(t *testing.T) {
 			result, err := ReadString(rt.input)
 			assert.NoError(t, err)
-			assert.Equal(t, rt.expected, result.Data[0].(reader.DatumBool).Value)
+			assert.Equal(t, rt.expected, result.Data[0].(isa.DatumBool).Value)
 		})
 	}
 }

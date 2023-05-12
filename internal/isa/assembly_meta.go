@@ -1,5 +1,7 @@
 package isa
 
+import "fmt"
+
 const CURRENT_ABI_VERSION uint64 = 1
 
 type AssemblyType uint8
@@ -21,4 +23,8 @@ func NewAssemblyMeta(name string, t AssemblyType) AssemblyMeta {
 		Name:       name,
 		Type:       t,
 	}
+}
+
+func (a AssemblyMeta) String() string {
+	return fmt.Sprintf("AssemblyMeta{ABIVersion: %d, Name: %s, Type: %d}", a.ABIVersion, a.Name, a.Type)
 }

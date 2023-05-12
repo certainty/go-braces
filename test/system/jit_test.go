@@ -13,7 +13,7 @@ import (
 // runJitTest compiles the given source code, executes it on the VM, and returns the result
 func runJitTest(sourceCode string) (interface{}, error) {
 	compiler := compiler.NewCompiler(compiler.DefaultOptions())
-	assemblyModule, err := compiler.CompileString(sourceCode)
+	assemblyModule, err := compiler.CompileString(sourceCode, "test")
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func runJitTest(sourceCode string) (interface{}, error) {
 		return nil, err
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 func assertCompilesAndRuns(t *testing.T, sourceCode string, expectedValue interface{}) {
@@ -62,4 +62,5 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
 	assertCompilesAndRuns(t, "#t", isa.BoolValue(true))
+	assertCompilesAndRuns(t, "#f", isa.BoolValue(false))
 }

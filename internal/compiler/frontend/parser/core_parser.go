@@ -1,25 +1,25 @@
 package parser
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type CoreParser struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 }
 
-func NewCoreParser(introspectionAPI introspection.API) *CoreParser {
-	return &CoreParser{introspectionAPI: introspectionAPI}
+func NewCoreParser(instrumentation compiler_introspection.Instrumentation) *CoreParser {
+	return &CoreParser{instrumentation: instrumentation}
 }
 
-func (p *CoreParser) Parse(data reader.Datum) (SchemeExpression, error) {
+func (p *CoreParser) Parse(data isa.Datum) (SchemeExpression, error) {
 	return p.parseLiteral(data)
 }
 
-func (p *CoreParser) parseLiteral(data reader.Datum) (SchemeExpression, error) {
+func (p *CoreParser) parseLiteral(data isa.Datum) (SchemeExpression, error) {
 	switch datum := data.(type) {
-	case reader.DatumBool:
+	case isa.DatumBool:
 		{
 			return LiteralExpression{Datum: datum}, nil
 		}

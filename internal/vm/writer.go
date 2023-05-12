@@ -1,6 +1,8 @@
 package vm
 
-import "github.com/certainty/go-braces/internal/isa"
+import (
+	"github.com/certainty/go-braces/internal/isa"
+)
 
 type Writer struct {
 	internedStrings *InternedStringTable

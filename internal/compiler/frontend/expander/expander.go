@@ -1,18 +1,18 @@
 package expander
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Expander struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 }
 
-func NewExpander(introspectionAPI introspection.API) *Expander {
-	return &Expander{introspectionAPI: introspectionAPI}
+func NewExpander(instrumentation compiler_introspection.Instrumentation) *Expander {
+	return &Expander{instrumentation: instrumentation}
 }
 
-func (e *Expander) Expand(data reader.Datum) (reader.Datum, error) {
+func (e *Expander) Expand(data isa.Datum) (isa.Datum, error) {
 	return data, nil
 }

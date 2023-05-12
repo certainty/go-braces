@@ -8,7 +8,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -20,7 +20,7 @@ import (
 // macro-expanded during the parsing process of the compiler.
 
 type CoreCompiler struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 
 	// semantic analysis
 	typechecker *typechecker.TypeChecker
@@ -32,12 +32,12 @@ type CoreCompiler struct {
 	codegen *codegen.Codegenerator
 }
 
-func NewCoreCompiler(introspectionAPI introspection.API) *CoreCompiler {
+func NewCoreCompiler(instrumentation compiler_introspection.Instrumentation) *CoreCompiler {
 	return &CoreCompiler{
-		introspectionAPI: introspectionAPI,
-		typechecker:      typechecker.NewTypeChecker(introspectionAPI),
-		optimizer:        optimization.NewOptimizer(introspectionAPI),
-		codegen:          codegen.NewCodegenerator(introspectionAPI),
+		instrumentation: instrumentation,
+		typechecker:     typechecker.NewTypeChecker(instrumentation),
+		optimizer:       optimization.NewOptimizer(instrumentation),
+		codegen:         codegen.NewCodegenerator(instrumentation),
 	}
 }
 

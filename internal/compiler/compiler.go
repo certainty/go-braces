@@ -2,11 +2,10 @@ package compiler
 
 import (
 	"fmt"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -18,25 +17,25 @@ import (
 // This struct is the main interface to the compiler and houses the compiler frontend
 // (syntactic analysises and macro expansion) as well as the core compiler which deals with the rest.
 type Compiler struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 }
 
 func NewCompiler(options CompilerOptions) *Compiler {
 	return &Compiler{
-		introspectionAPI: options.introspectionAPI,
+		instrumentation: options.instrumentation,
 	}
 }
 
-func (c *Compiler) CompileString(code string) (*isa.AssemblyModule, error) {
-	input := input.NewStringInput("ADHOC", code)
+func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule, error) {
+	input := input.NewStringInput(label, code)
 	return c.CompileModule(input)
 }
 
-func (c *Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
-	c.introspectionAPI.SendEvent(introspection.EventStartCompileModule())
-	reader := reader.NewReader(c.introspectionAPI)
-	parser := parser.NewParser(c.introspectionAPI)
-	coreCompiler := NewCoreCompiler(c.introspectionAPI)
+func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
+	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
+	reader := reader.NewReader(c.instrumentation)
+	parser := parser.NewParser(c.instrumentation)
+	coreCompiler := NewCoreCompiler(c.instrumentation)
 
 	datum, err := reader.Read(input)
 	if err != nil {
@@ -53,6 +52,6 @@ func (c *Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error
 		return nil, fmt.Errorf("CompilerBug: %w", err)
 	}
 
-	c.introspectionAPI.SendEvent(introspection.EventEndCompileModule())
+	c.instrumentation.LeaveCompilerModule(*assemblyModule)
 	return assemblyModule, nil
 }

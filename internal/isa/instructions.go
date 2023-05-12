@@ -3,7 +3,6 @@ package isa
 import "fmt"
 
 type OpCode uint8
-type Register uint32
 
 const (
 	OP_TRUE OpCode = iota
@@ -12,12 +11,16 @@ const (
 	OP_RET
 )
 
+type Operand interface{}
+
+type Register uint32
+
 type Instruction struct {
 	Opcode   OpCode
-	Operands []interface{}
+	Operands []Operand
 }
 
-func NewInstruction(code OpCode, operands ...interface{}) Instruction {
+func NewInstruction(code OpCode, operands ...Operand) Instruction {
 	return Instruction{
 		Opcode:   code,
 		Operands: operands,
@@ -30,6 +33,10 @@ func (i Instruction) String() string {
 
 func InstTrue(register Register) Instruction {
 	return NewInstruction(OP_TRUE, register)
+}
+
+func InstFalse(register Register) Instruction {
+	return NewInstruction(OP_FALSE, register)
 }
 
 func InstHalt(returnValueRegister Register) Instruction {

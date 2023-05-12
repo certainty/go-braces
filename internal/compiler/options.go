@@ -1,15 +1,21 @@
 package compiler
 
-import "github.com/certainty/go-braces/internal/introspection"
+import (
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+)
 
 type CompilerOptions struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
+}
+
+func NewCompilerOptions(instrumentation compiler_introspection.Instrumentation) CompilerOptions {
+	return CompilerOptions{
+		instrumentation: instrumentation,
+	}
 }
 
 func DefaultOptions() CompilerOptions {
-	api := introspection.NullAPI()
-
 	return CompilerOptions{
-		introspectionAPI: api,
+		instrumentation: compiler_introspection.NewNullInstrumentation(),
 	}
 }

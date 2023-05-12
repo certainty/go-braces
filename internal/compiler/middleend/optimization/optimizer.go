@@ -4,20 +4,23 @@ import (
 	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 )
 
 type Optimizer struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 }
 
-func NewOptimizer(introspectionAPI introspection.API) *Optimizer {
+func NewOptimizer(instrumentation compiler_introspection.Instrumentation) *Optimizer {
 	return &Optimizer{
-		introspectionAPI: introspectionAPI,
+		instrumentation: instrumentation,
 	}
 }
 
 func (o *Optimizer) Optimize(intermediate *ir.IR) (*ir.IR, error) {
+	o.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
+	defer o.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
+
 	log.Printf("opitmizing %v", intermediate)
 	return intermediate, nil
 }

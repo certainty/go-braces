@@ -14,6 +14,10 @@ type IRConstant struct {
 	Value isa.Value
 }
 
+func (c IRConstant) String() string {
+	return fmt.Sprintf("const %v", c.Value)
+}
+
 type IRLabel struct{}
 type IRGlobalRef struct{}
 type IRSet struct{}
@@ -36,6 +40,10 @@ func NewBlock(label string) *IRBlock {
 		Label:        label,
 		Instructions: make([]IRInstruction, 0),
 	}
+}
+
+func (b *IRBlock) String() string {
+	return fmt.Sprintf("block %s %v", b.Label, b.Instructions)
 }
 
 func (b *IRBlock) AddInstruction(instruction IRInstruction) {
@@ -65,8 +73,11 @@ func LowerToIR(coreAst *parser.CoreAST) (*IR, error) {
 	for _, expression := range coreAst.Expressions {
 		switch exp := expression.(type) {
 		case parser.LiteralExpression:
-			log.Printf("lowering literal expression %v", exp)
-			currentBlock.AddInstruction(NewConstant(exp.Datum))
+			value, err := isa.ValueFromDatum(exp.Datum)
+			if err != nil {
+				return nil, fmt.Errorf("could not convert literal to value: %w", err)
+			}
+			currentBlock.AddInstruction(NewConstant(value))
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", expression)
 		}

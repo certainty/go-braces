@@ -3,18 +3,19 @@ package reader
 import (
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/location"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Parser struct {
-	introspectionAPI introspection.API
-	scanner          *Scanner
-	errors           []ReadError
-	input            *input.Input
+	instrumentation compiler_introspection.Instrumentation
+	scanner         *Scanner
+	errors          []ReadError
+	input           *input.Input
 }
 
-func NewParser(introspectionAPI introspection.API) *Parser {
-	return &Parser{introspectionAPI: introspectionAPI}
+func NewParser(instrumentation compiler_introspection.Instrumentation) *Parser {
+	return &Parser{instrumentation: instrumentation}
 }
 
 func (p *Parser) Parse(input *input.Input) (*DatumAST, []ReadError) {
@@ -50,8 +51,8 @@ func (p *Parser) recover() error {
 	return nil
 }
 
-func (p *Parser) parseAll() []Datum {
-	data := []Datum{}
+func (p *Parser) parseAll() []isa.Datum {
+	data := []isa.Datum{}
 
 	for {
 		if err := p.scanner.SkipIrrelevant(); err != nil {
@@ -77,11 +78,11 @@ func (p *Parser) parseAll() []Datum {
 	}
 }
 
-func (p *Parser) parseDatum() Datum {
+func (p *Parser) parseDatum() isa.Datum {
 	return p.parseBoolean()
 }
 
-func (p *Parser) parseBoolean() Datum {
+func (p *Parser) parseBoolean() isa.Datum {
 	matched := false
 	var value bool
 
@@ -99,7 +100,7 @@ func (p *Parser) parseBoolean() Datum {
 
 	if matched {
 		pos := p.scanner.Position()
-		return NewDatumBool(value, p.makeLocation(pos.Line, prevPos, pos.Offset))
+		return isa.NewDatumBool(value, p.makeLocation(pos.Line, prevPos, pos.Offset))
 	}
 
 	return nil

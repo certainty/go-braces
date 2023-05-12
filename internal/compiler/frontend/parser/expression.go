@@ -2,9 +2,8 @@ package parser
 
 import (
 	"fmt"
-
-	"github.com/certainty/go-braces/internal/compiler/frontend/reader"
 	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type SchemeExpression interface {
@@ -12,7 +11,7 @@ type SchemeExpression interface {
 }
 
 type LiteralExpression struct {
-	Datum reader.Datum
+	Datum isa.Datum
 }
 
 func (l LiteralExpression) String() string {

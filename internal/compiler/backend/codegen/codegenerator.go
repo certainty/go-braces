@@ -2,9 +2,10 @@ package codegen
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -12,16 +13,16 @@ type ConstantAddress uint64
 
 type CodeUnitBuilder struct {
 	// refine representation of constants later to allow deduplication
-	constants        []isa.Value
-	instructions     []isa.Instruction
-	introspectionAPI introspection.API
+	constants       []isa.Value
+	instructions    []isa.Instruction
+	instrumentation compiler_introspection.Instrumentation
 }
 
-func newCodeUnitBuilder(introspectionAPI introspection.API) *CodeUnitBuilder {
+func newCodeUnitBuilder(instrumentation compiler_introspection.Instrumentation) *CodeUnitBuilder {
 	return &CodeUnitBuilder{
-		introspectionAPI: introspectionAPI,
-		instructions:     make([]isa.Instruction, 0),
-		constants:        make([]isa.Value, 0),
+		instrumentation: instrumentation,
+		instructions:    make([]isa.Instruction, 0),
+		constants:       make([]isa.Value, 0),
 	}
 }
 
@@ -42,15 +43,15 @@ func (c *CodeUnitBuilder) AddInstruction(instruction isa.Instruction) {
 }
 
 type Codegenerator struct {
-	introspectionAPI              introspection.API
+	instrumentation               compiler_introspection.Instrumentation
 	registerAccu                  isa.Register
 	generalPurposeRegisterOffset  uint8
 	currentGeneralPurposeRegister uint32
 }
 
-func NewCodegenerator(introspectionAPI introspection.API) *Codegenerator {
+func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *Codegenerator {
 	return &Codegenerator{
-		introspectionAPI:              introspectionAPI,
+		instrumentation:               instrumentation,
 		registerAccu:                  isa.Register(0),
 		generalPurposeRegisterOffset:  16,
 		currentGeneralPurposeRegister: 16,
@@ -63,7 +64,10 @@ func (c *Codegenerator) NextRegister() isa.Register {
 }
 
 func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule, error) {
-	codeBuilder := newCodeUnitBuilder(c.introspectionAPI)
+	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
+	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
+
+	codeBuilder := newCodeUnitBuilder(c.instrumentation)
 
 	for _, block := range intermediate.Blocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
@@ -87,8 +91,19 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 	for _, instruction := range block.Instructions {
 		switch instruction.(type) {
 		case ir.IRConstant:
-			// include register to use in IR?
-			builder.AddInstruction(isa.InstTrue(c.registerAccu))
+			value := instruction.(ir.IRConstant).Value
+			switch value.(type) {
+			case isa.BoolValue:
+				if value == isa.BoolValue(true) {
+					log.Printf("emitBlock: true")
+					builder.AddInstruction(isa.InstTrue(c.registerAccu))
+				} else {
+					log.Printf("emitBlock: false")
+					builder.AddInstruction(isa.InstFalse(c.registerAccu))
+				}
+			default:
+				return fmt.Errorf("unknown constant type: %T", value)
+			}
 		default:
 			return fmt.Errorf("unknown instruction type: %T", instruction)
 		}

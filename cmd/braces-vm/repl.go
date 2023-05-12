@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/certainty/go-braces/internal/compiler"
 	"github.com/certainty/go-braces/internal/repl"
-	"github.com/certainty/go-braces/internal/vm"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var replCmd = &cobra.Command{
@@ -15,33 +12,30 @@ var replCmd = &cobra.Command{
 	Short: "Start the VM in repl mode",
 	Long:  `More documentation still to come here`,
 	Run: func(cmd *cobra.Command, args []string) {
-		run()
+		run(cmd, args)
 	},
 }
 
-func run() {
-	vm := vm.NewVM(vm.DefaultOptions())
-	compiler := compiler.NewCompiler(compiler.DefaultOptions())
+func run(cmd *cobra.Command, args []string) {
+	enableCompilerIntrospection, _ := cmd.Flags().GetBool("introspect-compiler")
+	enableVMIntrospection, _ := cmd.Flags().GetBool("introspect-vm")
 
-	repl, err := repl.NewRepl(vm, compiler)
+	options := repl.Options{
+		IntrospectCompiler: enableCompilerIntrospection,
+		IntrospectVM:       enableVMIntrospection,
+	}
+
+	repl, err := repl.NewRepl(options)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-
 	repl.Run()
 }
 
 func init() {
 	rootCmd.AddCommand(replCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// replCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// replCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	replCmd.Flags().BoolP("introspect-compiler", "c", false, "Run the repl in introspection mode for the compiler")
+	replCmd.Flags().BoolP("introspect-vm", "m", false, "Run the repl in introspection mode for the vm")
 }

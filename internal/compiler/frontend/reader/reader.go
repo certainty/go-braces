@@ -4,16 +4,16 @@ import (
 	"fmt"
 
 	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 )
 
 type Reader struct {
-	introspectionAPI introspection.API
+	instrumentation compiler_introspection.Instrumentation
 }
 
-func NewReader(introspectionAPI introspection.API) *Reader {
+func NewReader(instrumentation compiler_introspection.Instrumentation) *Reader {
 	return &Reader{
-		introspectionAPI: introspectionAPI,
+		instrumentation: instrumentation,
 	}
 }
 
@@ -29,8 +29,11 @@ func (e ReaderError) Error() string {
 	return fmt.Sprintf("ReaderError: %s", details)
 }
 
-func (r *Reader) Read(input *input.Input) (*DatumAST, error) {
-	parser := NewParser(r.introspectionAPI)
+func (r Reader) Read(input *input.Input) (*DatumAST, error) {
+	r.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseRead)
+	defer r.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseRead)
+
+	parser := NewParser(r.instrumentation)
 	ast, errors := parser.Parse(input)
 
 	if len(errors) > 0 {
