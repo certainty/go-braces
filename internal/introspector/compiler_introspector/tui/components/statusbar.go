@@ -17,13 +17,13 @@ type StatusBarModel struct {
 	theme           theme.Theme
 	impl            statusbar.Bubble
 	Phase           string
-	Shortcuts       []key.Binding
+	Shortcuts       []*key.Binding
 	RequestState    IntrospectionRequestState
 	RequestSpinner  spinner.Model
 	Errors          string
 }
 
-func InitialStatusBarModel(theme theme.Theme, shortcuts []key.Binding) StatusBarModel {
+func InitialStatusBarModel(theme theme.Theme, shortcuts []*key.Binding) StatusBarModel {
 	sb := statusbar.New(
 		statusbar.ColorConfig{
 			Foreground: theme.Colors.Background,
@@ -72,6 +72,8 @@ func (m StatusBarModel) Update(msg tea.Msg) (StatusBarModel, tea.Cmd) {
 		return m, cmd
 	case messages.IntrospectionEventMsg:
 		switch evt := msg.Event.(type) {
+		case compiler_introspection.EventBreakpoint:
+			m.Phase = "Single stepping"
 		case compiler_introspection.EventEnterPhase:
 			m.Phase = string(evt.Phase)
 		case compiler_introspection.EventBeginCompileModule:
@@ -89,7 +91,7 @@ func (m StatusBarModel) View() string {
 	}
 
 	for _, shortcut := range m.Shortcuts {
-		renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(shortcut))
+		renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(*shortcut))
 	}
 
 	var errors string

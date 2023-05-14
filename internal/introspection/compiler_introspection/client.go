@@ -2,6 +2,8 @@ package compiler_introspection
 
 import (
 	"errors"
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspection"
 )
 
@@ -69,4 +71,47 @@ func (c *Client) PollEvent() (CompilerIntrospectionEvent, error) {
 	default:
 		return nil, errors.New("Not a CompilerIntrospectionEvent")
 	}
+}
+
+func (c *Client) SendControl(control CompilerIntrospectionControl) error {
+	if !c.IsConnected() {
+		return errors.New("No client connected")
+	}
+	c.control.Out <- control
+	return nil
+}
+
+func (c *Client) ReceiveControl() (CompilerIntrospectionControl, error) {
+	if !c.IsConnected() {
+		return nil, errors.New("No client connected")
+	}
+	control := <-c.control.In
+	return control, nil
+}
+
+func (c *Client) BreakpointContinue() error {
+	if !c.IsConnected() {
+		return errors.New("No client connected")
+	}
+
+	log.Println("Sending breakpoint continue command")
+	c.SendControl(BreakpointContinue{})
+	log.Println("Waiting for response")
+	response, err := c.ReceiveControl()
+	log.Printf("Received response %v", response)
+
+	if err != nil {
+		return err
+	}
+
+	switch response := response.(type) {
+	case CommandOk:
+		return nil
+	case CommandError:
+		return errors.New(response.Message)
+	default:
+		log.Printf("Unexpected response: %v", response)
+	}
+
+	return nil
 }

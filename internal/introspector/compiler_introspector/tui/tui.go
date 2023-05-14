@@ -79,17 +79,17 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 		Reset:                key.NewBinding(key.WithKeys("R"), key.WithHelp("[R]eset", "Reset introspection")),
 	}
 	introspectionKeyMap.Step.SetEnabled(false)
-	introspectionKeyMap.Continue.SetEnabled(false)
+	introspectionKeyMap.Continue.SetEnabled(true)
 	introspectionKeyMap.Reset.SetEnabled(false)
 
-	shortcuts := []key.Binding{
-		introspectionKeyMap.ToggleSingleStepping,
-		introspectionKeyMap.Step,
-		introspectionKeyMap.Continue,
-		introspectionKeyMap.Reset,
-		globalKeyMap.ToggleEventLog,
-		globalKeyMap.Quit,
-		globalKeyMap.Help,
+	shortcuts := []*key.Binding{
+		&introspectionKeyMap.ToggleSingleStepping,
+		&introspectionKeyMap.Step,
+		&introspectionKeyMap.Continue,
+		&introspectionKeyMap.Reset,
+		&globalKeyMap.ToggleEventLog,
+		&globalKeyMap.Quit,
+		&globalKeyMap.Help,
 	}
 
 	return TUIModel{
@@ -158,6 +158,9 @@ func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.globalKeyMap.ToggleEventLog):
 			m.eventLogVisible = !m.eventLogVisible
 			m.propagateSizeChange()
+		case key.Matches(msg, m.introspectionKeyMap.Continue):
+			m.singleStepMode = false
+			return m, commands.DoBreakpointContinue(m.client)
 		default:
 			m, cmds := m.propagateUpdate(msg)
 			return m, tea.Batch(cmds...)

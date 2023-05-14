@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"log"
 	"time"
 
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
@@ -22,6 +23,19 @@ func DoGetEvent(client *compiler_introspection.Client) tea.Cmd {
 			return nil // TODO: provider error message
 		} else {
 			return messages.IntrospectionEventMsg{Event: nextEvent}
+		}
+	}
+}
+
+func DoBreakpointContinue(client *compiler_introspection.Client) tea.Cmd {
+	return func() tea.Msg {
+		err := client.BreakpointContinue()
+		log.Printf("BreakpointContinue: %v", err)
+
+		if err != nil {
+			return messages.RequestErrorMsg{Err: err}
+		} else {
+			return messages.RequestSentMsg{}
 		}
 	}
 }

@@ -20,6 +20,12 @@ func RunIntrospector() error {
 		return fmt.Errorf("Failed to connect %w", err)
 	}
 
+	logFile, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		return fmt.Errorf("Failed to log to file %w", err)
+	}
+	defer logFile.Close()
+
 	_, err = tea.NewProgram(tui.InitialTUIModel(client), tea.WithAltScreen()).Run()
 	if err != nil {
 		fmt.Printf("Failed to start TUI: %v\n", err)

@@ -8,6 +8,9 @@ import (
 type TickMsg time.Time
 
 type RequestSentMsg struct{}
+type RequestErrorMsg struct {
+	Err error
+}
 
 type IntrospectionEventMsg struct {
 	Event compiler_introspection.CompilerIntrospectionEvent
