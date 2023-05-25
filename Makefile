@@ -35,7 +35,11 @@ build-debug-client:
 
 test:
 	@echo "Running tests..."
-	@gotestsum $(TEST)
+	@if [ $(IN_CI) = false ]; then \
+		gotestsum $(TEST); \
+	else \
+		go test $(TEST); \
+	fi
 
 lint:
 	@echo "Running linters..."
