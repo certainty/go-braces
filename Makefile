@@ -65,8 +65,8 @@ install-tools: install-linter install-gotestsum
 
 install-linter:
 	@if ! command -v golangci-lint &> /dev/null; then \
-	  @echo "Installing linter..."; \
-	  @go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
+	  echo "Installing linter..."; \
+	  go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi 
 
 install-gotestsum:
