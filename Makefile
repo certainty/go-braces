@@ -6,6 +6,7 @@ BINARY_DEBUG_CLIENT=debug-client
 TEST?='./...'
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
+IN_CI ?= false
 
 .PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto build-introspect
 
@@ -60,17 +61,22 @@ tidy:
 	@echo "Tidying up..."
 	@go mod tidy
 
-install-tools:
-	@echo "Installing tools..."
-	@go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-	@go get gotest.tools/gotestsum  
-	@go install gotest.tools/gotestsum  
+install-tools: install-linter install-gotestsum
 
-install-proto-tools:
-	@echo "Installing protobuf tools..."
-	@brew install protobuf
-	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+install-linter:
+	@if ! command -v golangci-lint &> /dev/null; then \
+	  @echo "Installing linter..."; \
+	  @go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
+	fi 
+
+install-gotestsum:
+	@if [ $(IN_CI) = false ]; then \
+    if ! command -v gotestsum &> /dev/null; then \
+		  echo "Installing gotestsum..."; \
+		  go get gotest.tools/gotestsum; \
+		  go install gotest.tools/gotestsum; \
+		fi \
+	fi
 
 repl: build
 	./target/braces-vm repl

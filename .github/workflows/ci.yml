@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOLANGCI_LINT_VERSION: v1.52.2
+      IN_CI: true
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -47,14 +48,7 @@ jobs:
             ${{ runner.os }}-gogetsum-
 
       - name: Install tools 
-        run: |
-          if ! command -v golangci-lint &> /dev/null; then
-            make install-tools
-          fi
-
-          if ! command -v gotestsum &> /dev/null; then
-            make install-tools
-          fi
+        run: make install-tools
       - name: Build
         run: make build 
       - name: Test
