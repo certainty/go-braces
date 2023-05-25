@@ -13,7 +13,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/mistakenelf/teacup v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 )
 
 require (
