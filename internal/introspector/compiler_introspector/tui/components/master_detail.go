@@ -1,19 +1,25 @@
 package components
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type MasterModel struct {
-	theme theme.Theme
+	containerWidth  int //nolint:unused,structcheck
+	containerHeight int //noilint:unused,structcheck
+	theme           theme.Theme
 }
 
 type DetailModel struct {
-	theme      theme.Theme
-	InputData  string
-	OutputData string
+	containerWidth  int //noilint:unused,structcheck
+	containerHeight int //noilint:unused,structcheck
+	theme           theme.Theme
+	InputData       string
+	OutputData      string
 }
 
 type MasterDetailModel struct {
@@ -36,7 +42,7 @@ func (m MasterDetailModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m MasterDetailModel) Update(msg tea.Msg) (MasterDetailModel, tea.Cmd) {
+func (m MasterDetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	cmds := []tea.Cmd{}
 
@@ -50,9 +56,10 @@ func (m MasterDetailModel) Update(msg tea.Msg) (MasterDetailModel, tea.Cmd) {
 }
 
 func (m MasterDetailModel) View() string {
+	log.Printf("MasterDetailModel.View: width=%d, height=%d\n", m.ContainerWidth, m.ContainerHeight)
 	masterWidth := 40 //m.containerWidth - 2
-	masterHeight := m.ContainerHeight - 2
 	detailWidth := m.ContainerWidth - masterWidth
+	masterHeight := m.ContainerHeight - 2
 	detailHeight := m.ContainerHeight - 2
 
 	masterBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true, true, true, false).BorderForeground(m.theme.Colors.ActiveBorder)

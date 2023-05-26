@@ -3,6 +3,7 @@ package tui
 import (
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/commands"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/messages"
@@ -27,6 +28,12 @@ type GlobalKeyMap struct {
 	ToggleEventLog key.Binding
 }
 
+type ActivityName string
+
+const (
+	InitialActivityName ActivityName = "Initial"
+)
+
 type TUIModel struct {
 	// tui state
 	width               int
@@ -38,7 +45,8 @@ type TUIModel struct {
 	// components
 	headerModel              components.HeaderModel
 	infoModel                components.InfoModel
-	mainModel                components.MasterDetailModel
+	activities               map[ActivityName]activities.Activity
+	currentActivity          ActivityName
 	statusBarModel           components.StatusBarModel
 	helpDialogModel          components.HelpDialogModel
 	documentationDialogModel components.DocumentationDialogModel
@@ -92,15 +100,21 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 		&globalKeyMap.Help,
 	}
 
+	activities := map[ActivityName]activities.Activity{
+		InitialActivityName: activities.NewInitialActivity(theme),
+	}
+
 	return TUIModel{
-		width:                    10,
-		height:                   80,
-		theme:                    theme,
-		globalKeyMap:             globalKeyMap,
-		introspectionKeyMap:      introspectionKeyMap,
+		width:               10,
+		height:              80,
+		theme:               theme,
+		globalKeyMap:        globalKeyMap,
+		introspectionKeyMap: introspectionKeyMap,
+
 		headerModel:              components.InitialHeaderModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
 		infoModel:                components.InitialInfoModel(theme, currentInput, currentCompilerOptions),
-		mainModel:                components.InitialMainModel(theme),
+		activities:               activities,
+		currentActivity:          InitialActivityName,
 		statusBarModel:           components.InitialStatusBarModel(theme, shortcuts),
 		helpDialogModel:          components.InitialHelpDialogModel(theme),
 		documentationDialogModel: components.InitialDocumentationDialogModel(theme),
@@ -201,7 +215,9 @@ func (m TUIModel) propagateUpdate(msg tea.Msg) (tea.Model, []tea.Cmd) {
 	m.infoModel, cmd = m.infoModel.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.mainModel, cmd = m.mainModel.Update(msg)
+	// update current activity
+	activityModel := m.activities[m.currentActivity].Model()
+	activityModel, cmd = activityModel.Update(msg)
 	cmds = append(cmds, cmd)
 
 	m.statusBarModel, cmd = m.statusBarModel.Update(msg)
@@ -231,8 +247,10 @@ func (m *TUIModel) propagateSizeChange() {
 	m.eventLogModel.ContainerWidth = width
 
 	// all but the heights above
-	m.mainModel.ContainerWidth = width - 2
-	m.mainModel.ContainerHeight = height - m.headerModel.ContainerHeight - m.infoModel.ContainerHeight - m.statusBarModel.ContainerHeight - m.eventLogModel.ContainerHeight
+	activity := m.activities[m.currentActivity]
+	activityContainerWidth := width - 2
+	activityContainerHeight := height - m.headerModel.ContainerHeight - m.infoModel.ContainerHeight - m.statusBarModel.ContainerHeight - m.eventLogModel.ContainerHeight
+	activity.UpdateSize(activityContainerWidth, activityContainerHeight)
 
 	m.helpDialogModel.ContainerWidth = width
 	m.helpDialogModel.ContainerHeight = height
@@ -249,9 +267,10 @@ func (m TUIModel) View() string {
 	headerView := m.headerModel.View()
 	infoView := m.infoModel.View()
 	statusBarView := m.statusBarModel.View()
-	mainView := m.mainModel.View()
 
-	components := []string{headerView, infoView, mainView}
+	activityView := m.activities[m.currentActivity].Model().View()
+
+	components := []string{headerView, infoView, activityView}
 	if m.eventLogVisible {
 		components = append(components, m.eventLogModel.View())
 	}
