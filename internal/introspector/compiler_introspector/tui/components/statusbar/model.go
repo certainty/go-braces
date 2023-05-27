@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mistakenelf/teacup/statusbar"
+	"github.com/philistino/teacup/statusbar"
 )
 
 type Model struct {

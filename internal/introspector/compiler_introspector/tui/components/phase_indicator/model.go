@@ -64,9 +64,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	phaseLabelWidth := m.containerWidth / len(m.phases)
 	phaseLabels := []string{}
-	activeLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Subtext0).Foreground(m.theme.Colors.Base).Bold(true).Width(phaseLabelWidth).Align(lipgloss.Center)
-	completedPhaseLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Green).Foreground(m.theme.Colors.Base).Width(phaseLabelWidth).Align(lipgloss.Center)
-	upcomingPhaseLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Overlay0).Width(phaseLabelWidth).Align(lipgloss.Center).Faint(true)
+	activeLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Subtext0).Foreground(m.theme.Colors.Base).Bold(true).Width(phaseLabelWidth).Align(lipgloss.Center).MarginRight(1)
+	completedPhaseLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Green).Foreground(m.theme.Colors.Base).Width(phaseLabelWidth).Align(lipgloss.Center).MarginRight(1)
+	upcomingPhaseLabelStyle := lipgloss.NewStyle().Background(m.theme.Colors.Overlay0).Width(phaseLabelWidth).Align(lipgloss.Center).Faint(true).MarginRight(1)
 
 	for i, phase := range m.phases {
 		if i == m.currentPhase && !m.finished {
