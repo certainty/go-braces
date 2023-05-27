@@ -1,7 +1,8 @@
-package components
+package statusbar
 
 import (
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/messages"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/theme"
 	"github.com/charmbracelet/bubbles/key"
@@ -11,19 +12,19 @@ import (
 	"github.com/mistakenelf/teacup/statusbar"
 )
 
-type StatusBarModel struct {
-	ContainerWidth  int
-	ContainerHeight int
+type Model struct {
+	containerWidth  int
+	containerHeight int
 	theme           theme.Theme
 	impl            statusbar.Bubble
 	Phase           string
 	Shortcuts       []*key.Binding
-	RequestState    IntrospectionRequestState
+	RequestState    components.IntrospectionRequestState
 	RequestSpinner  spinner.Model
 	Errors          string
 }
 
-func InitialStatusBarModel(theme theme.Theme, shortcuts []*key.Binding) StatusBarModel {
+func NewModel(theme theme.Theme, shortcuts []*key.Binding) Model {
 	sb := statusbar.New(
 		statusbar.ColorConfig{
 			Foreground: theme.Colors.Background,
@@ -46,7 +47,7 @@ func InitialStatusBarModel(theme theme.Theme, shortcuts []*key.Binding) StatusBa
 	requestSpinner := spinner.New()
 	requestSpinner.Spinner = spinner.Dot
 
-	return StatusBarModel{
+	return Model{
 		theme:          theme,
 		Phase:          "waiting",
 		Errors:         "",
@@ -56,15 +57,15 @@ func InitialStatusBarModel(theme theme.Theme, shortcuts []*key.Binding) StatusBa
 	}
 }
 
-func (m StatusBarModel) RenderShortCut(shortcut key.Binding) string {
+func (m Model) RenderShortCut(shortcut key.Binding) string {
 	return m.theme.Statusbar.Copy().Faint(!shortcut.Enabled()).PaddingRight(2).Render(shortcut.Help().Key)
 }
 
-func (m StatusBarModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return m.RequestSpinner.Tick
 }
 
-func (m StatusBarModel) Update(msg tea.Msg) (StatusBarModel, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -85,7 +86,7 @@ func (m StatusBarModel) Update(msg tea.Msg) (StatusBarModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m StatusBarModel) View() string {
+func (m Model) View() string {
 	renderedShortcuts := []string{
 		"\uF11C  ",
 	}
@@ -102,12 +103,26 @@ func (m StatusBarModel) View() string {
 	}
 
 	connectionStatus := ""
-	if m.RequestState != NoRequest {
+	if m.RequestState != components.NoRequest {
 		connectionStatus = m.RequestSpinner.View()
 	}
 
-	m.impl.SetSize(m.ContainerWidth)
+	m.impl.SetSize(m.containerWidth)
 	m.impl.SetContent(m.Phase, errors, lipgloss.JoinHorizontal(lipgloss.Top, renderedShortcuts...), connectionStatus)
 
 	return m.impl.View()
+}
+
+func (m Model) Resize(width, height int) components.Model {
+	m.containerWidth = width
+	m.containerHeight = height
+	return m
+}
+
+func (m Model) ContainerHeight() int {
+	return m.containerHeight
+}
+
+func (m Model) ContainerWidth() int {
+	return m.containerWidth
 }

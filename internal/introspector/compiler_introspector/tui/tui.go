@@ -1,11 +1,16 @@
 package tui
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities/initial_activity"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/commands"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/header"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/statusbar"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/messages"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/theme"
 	shared_components "github.com/certainty/go-braces/internal/introspector/tui_shared/components"
@@ -28,10 +33,10 @@ type GlobalKeyMap struct {
 	ToggleEventLog key.Binding
 }
 
-type ActivityName string
+type ActivityName int
 
 const (
-	InitialActivityName ActivityName = "Initial"
+	InitialActivityName ActivityName = iota
 )
 
 type TUIModel struct {
@@ -43,14 +48,14 @@ type TUIModel struct {
 	introspectionKeyMap IntrospectionKeyMap
 
 	// components
-	headerModel              components.HeaderModel
-	infoModel                components.InfoModel
-	activities               map[ActivityName]activities.Activity
-	currentActivity          ActivityName
-	statusBarModel           components.StatusBarModel
-	helpDialogModel          components.HelpDialogModel
-	documentationDialogModel components.DocumentationDialogModel
-	eventLogModel            shared_components.EventLogModel
+	headerModel    header.Model
+	infoModel      components.InfoModel
+	statusBarModel statusbar.Model
+	eventLogModel  shared_components.EventLogModel
+
+	// activities
+	activities          []activities.Model
+	currentActivityName ActivityName
 
 	eventLogVisible bool
 
@@ -100,8 +105,8 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 		&globalKeyMap.Help,
 	}
 
-	activities := map[ActivityName]activities.Activity{
-		InitialActivityName: activities.NewInitialActivity(theme),
+	activities := []activities.Model{
+		initial_activity.NewModel(theme),
 	}
 
 	return TUIModel{
@@ -110,15 +115,13 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 		theme:               theme,
 		globalKeyMap:        globalKeyMap,
 		introspectionKeyMap: introspectionKeyMap,
+		headerModel:         header.NewModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
+		infoModel:           components.InitialInfoModel(theme, currentInput, currentCompilerOptions),
+		statusBarModel:      statusbar.NewModel(theme, shortcuts),
+		eventLogModel:       shared_components.InitialEventLogModel(),
 
-		headerModel:              components.InitialHeaderModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
-		infoModel:                components.InitialInfoModel(theme, currentInput, currentCompilerOptions),
-		activities:               activities,
-		currentActivity:          InitialActivityName,
-		statusBarModel:           components.InitialStatusBarModel(theme, shortcuts),
-		helpDialogModel:          components.InitialHelpDialogModel(theme),
-		documentationDialogModel: components.InitialDocumentationDialogModel(theme),
-		eventLogModel:            shared_components.InitialEventLogModel(),
+		activities:          activities,
+		currentActivityName: InitialActivityName,
 
 		eventLogVisible:        false,
 		client:                 client,
@@ -134,6 +137,10 @@ func (m TUIModel) Init() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, commands.DoGetEvent(m.client))
 	cmds = append(cmds, commands.DoTick())
+
+	for i := range m.activities {
+		cmds = append(cmds, m.activities[i].Init())
+	}
 
 	// Do I need to do this?
 	cmd := m.statusBarModel.Init()
@@ -165,10 +172,6 @@ func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.globalKeyMap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.globalKeyMap.Help):
-			m.helpDialogModel.Active = !m.helpDialogModel.Active
-		case key.Matches(msg, m.globalKeyMap.Documentation):
-			m.documentationDialogModel.Active = !m.documentationDialogModel.Active
 		case key.Matches(msg, m.globalKeyMap.ToggleEventLog):
 			m.eventLogVisible = !m.eventLogVisible
 			m.propagateSizeChange()
@@ -209,36 +212,42 @@ func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m TUIModel) propagateUpdate(msg tea.Msg) (tea.Model, []tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
-	m.headerModel, cmd = m.headerModel.Update(msg)
+
+	newHeaderModel, cmd := m.headerModel.Update(msg)
+	m.headerModel = newHeaderModel.(header.Model)
 	cmds = append(cmds, cmd)
 
 	m.infoModel, cmd = m.infoModel.Update(msg)
 	cmds = append(cmds, cmd)
 
 	// update current activity
-	activityModel := m.activities[m.currentActivity].Model()
-	activityModel, cmd = activityModel.Update(msg)
+	activityModel, cmd := m.activities[m.currentActivityName].Update(msg)
+	m.activities[m.currentActivityName] = activityModel.(activities.Model)
 	cmds = append(cmds, cmd)
 
-	m.statusBarModel, cmd = m.statusBarModel.Update(msg)
+	newStatusbarModel, cmd := m.statusBarModel.Update(msg)
+	m.statusBarModel = newStatusbarModel.(statusbar.Model)
 	cmds = append(cmds, cmd)
 
 	return m, cmds
+}
+
+func (m *TUIModel) currentActivity() activities.Model {
+	return m.activities[m.currentActivityName]
 }
 
 func (m *TUIModel) propagateSizeChange() {
 	width := m.width
 	height := m.height
 
-	m.headerModel.ContainerWidth = width
-	m.headerModel.ContainerHeight = 1
+	m.headerModel.Resize(width, 1)
 
 	m.infoModel.ContainerWidth = width
 	m.infoModel.ContainerHeight = 3
 
-	m.statusBarModel.ContainerWidth = width
-	m.statusBarModel.ContainerHeight = 1
+	m.statusBarModel = m.statusBarModel.Resize(width, 1).(statusbar.Model)
 
+	log.Printf("Event log visible: %v\n", m.eventLogVisible)
 	if m.eventLogVisible {
 		m.eventLogModel.ContainerHeight = 20
 	} else {
@@ -247,17 +256,9 @@ func (m *TUIModel) propagateSizeChange() {
 	m.eventLogModel.ContainerWidth = width
 
 	// all but the heights above
-	activity := m.activities[m.currentActivity]
 	activityContainerWidth := width - 2
-	activityContainerHeight := height - m.headerModel.ContainerHeight - m.infoModel.ContainerHeight - m.statusBarModel.ContainerHeight - m.eventLogModel.ContainerHeight
-	activity.UpdateSize(activityContainerWidth, activityContainerHeight)
-
-	m.helpDialogModel.ContainerWidth = width
-	m.helpDialogModel.ContainerHeight = height
-
-	m.documentationDialogModel.ContainerWidth = width
-	m.documentationDialogModel.ContainerHeight = height
-
+	activityContainerHeight := height - m.headerModel.ContainerHeight() - m.infoModel.ContainerHeight - m.statusBarModel.ContainerHeight() - m.eventLogModel.ContainerHeight
+	m.activities[m.currentActivityName] = m.currentActivity().Resize(activityContainerWidth, activityContainerHeight)
 }
 
 func (m TUIModel) View() string {
@@ -268,7 +269,7 @@ func (m TUIModel) View() string {
 	infoView := m.infoModel.View()
 	statusBarView := m.statusBarModel.View()
 
-	activityView := m.activities[m.currentActivity].Model().View()
+	activityView := m.currentActivity().View()
 
 	components := []string{headerView, infoView, activityView}
 	if m.eventLogVisible {
@@ -281,14 +282,6 @@ func (m TUIModel) View() string {
 		Width(termWidth).
 		Height(termHeight).
 		Render(lipgloss.JoinVertical(lipgloss.Top, components...))
-
-	// Render help and documentation dialogs if they are active
-	// if m.helpDialogModel.active {
-	// 	content = lipgloss.Stack(content, m.helpDialogModel.View())
-	// }
-	// if m.documentationDialogModel.active {
-	// 	content = lipgloss.Stack(content, m.documentationDialogModel.View())
-	// }
 
 	return content
 }
