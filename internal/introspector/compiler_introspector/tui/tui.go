@@ -1,19 +1,19 @@
 package tui
 
 import (
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities/compile_activity"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/activities/initial_activity"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/commands"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/compilation_info"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/eventlog"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/header"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/components/statusbar"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/messages"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui/theme"
-	shared_components "github.com/certainty/go-braces/internal/introspector/tui_shared/components"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -36,7 +36,8 @@ type GlobalKeyMap struct {
 type ActivityName int
 
 const (
-	InitialActivityName ActivityName = iota
+	InitialActivity ActivityName = iota
+	CompileActivity
 )
 
 type TUIModel struct {
@@ -49,9 +50,9 @@ type TUIModel struct {
 
 	// components
 	headerModel    header.Model
-	infoModel      components.InfoModel
+	infoModel      compilation_info.Model
 	statusBarModel statusbar.Model
-	eventLogModel  shared_components.EventLogModel
+	eventLogModel  eventlog.Model
 
 	// activities
 	activities          []activities.Model
@@ -107,29 +108,29 @@ func InitialTUIModel(client *compiler_introspection.Client) TUIModel {
 
 	activities := []activities.Model{
 		initial_activity.NewModel(theme),
+		compile_activity.NewModel(theme),
 	}
 
 	return TUIModel{
-		width:               10,
-		height:              80,
-		theme:               theme,
-		globalKeyMap:        globalKeyMap,
-		introspectionKeyMap: introspectionKeyMap,
-		headerModel:         header.NewModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
-		infoModel:           components.InitialInfoModel(theme, currentInput, currentCompilerOptions),
-		statusBarModel:      statusbar.NewModel(theme, shortcuts),
-		eventLogModel:       shared_components.InitialEventLogModel(),
-
-		activities:          activities,
-		currentActivityName: InitialActivityName,
-
+		width:                  10,
+		height:                 80,
+		theme:                  theme,
+		globalKeyMap:           globalKeyMap,
+		introspectionKeyMap:    introspectionKeyMap,
+		headerModel:            header.NewModel(theme, "(Go-Braces-Introspect 'Compiler)", connected),
+		infoModel:              compilation_info.NewModel(theme, currentInput, currentCompilerOptions),
+		statusBarModel:         statusbar.NewModel(theme, shortcuts),
+		eventLogModel:          eventlog.NewModel(),
+		activities:             activities,
+		currentActivityName:    InitialActivity,
 		eventLogVisible:        false,
 		client:                 client,
 		currentCompilerOptions: currentCompilerOptions,
-		singleStepMode:         false,
-		requestState:           components.NoRequest,
 		currentInput:           currentInput,
 		currentPhase:           "waiting",
+		requestState:           components.NoRequest,
+		singleStepMode:         false,
+		connected:              connected,
 	}
 }
 
@@ -193,9 +194,16 @@ func (m TUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.statusBarModel.Errors = msg.Err.Error()
 
 	case messages.IntrospectionEventMsg:
-		m.eventLogModel, _ = m.eventLogModel.Update(shared_components.NewEventMessage(msg))
-		cmds = append(cmds, commands.DoGetEvent(m.client))
+		newEventlogModel, _ := m.eventLogModel.Update(eventlog.NewEventMessage(msg))
+		m.eventLogModel = newEventlogModel.(eventlog.Model)
 
+		switch msg.Event.(type) {
+		case compiler_introspection.EventBeginCompileModule:
+			if m.currentActivityName != CompileActivity {
+				m.switchActivity(CompileActivity)
+			}
+		}
+		cmds = append(cmds, commands.DoGetEvent(m.client))
 		m, propagatedCommands := m.propagateUpdate(msg)
 		cmds = append(cmds, propagatedCommands...)
 
@@ -217,7 +225,8 @@ func (m TUIModel) propagateUpdate(msg tea.Msg) (tea.Model, []tea.Cmd) {
 	m.headerModel = newHeaderModel.(header.Model)
 	cmds = append(cmds, cmd)
 
-	m.infoModel, cmd = m.infoModel.Update(msg)
+	newInfoModel, cmd := m.infoModel.Update(msg)
+	m.infoModel = newInfoModel.(compilation_info.Model)
 	cmds = append(cmds, cmd)
 
 	// update current activity
@@ -236,28 +245,28 @@ func (m *TUIModel) currentActivity() activities.Model {
 	return m.activities[m.currentActivityName]
 }
 
+func (m *TUIModel) switchActivity(name ActivityName) {
+	m.currentActivityName = name
+	m.propagateSizeChange()
+}
+
 func (m *TUIModel) propagateSizeChange() {
 	width := m.width
 	height := m.height
 
-	m.headerModel.Resize(width, 1)
-
-	m.infoModel.ContainerWidth = width
-	m.infoModel.ContainerHeight = 3
-
+	m.headerModel = m.headerModel.Resize(width, 1).(header.Model)
+	m.infoModel = m.infoModel.Resize(width, 3).(compilation_info.Model)
 	m.statusBarModel = m.statusBarModel.Resize(width, 1).(statusbar.Model)
 
-	log.Printf("Event log visible: %v\n", m.eventLogVisible)
 	if m.eventLogVisible {
-		m.eventLogModel.ContainerHeight = 20
+		m.eventLogModel = m.eventLogModel.Resize(width, 20).(eventlog.Model)
 	} else {
-		m.eventLogModel.ContainerHeight = 0
+		m.eventLogModel = m.eventLogModel.Resize(width, 0).(eventlog.Model)
 	}
-	m.eventLogModel.ContainerWidth = width
 
 	// all but the heights above
 	activityContainerWidth := width - 2
-	activityContainerHeight := height - m.headerModel.ContainerHeight() - m.infoModel.ContainerHeight - m.statusBarModel.ContainerHeight() - m.eventLogModel.ContainerHeight
+	activityContainerHeight := height - m.headerModel.ContainerHeight() - m.infoModel.ContainerHeight() - m.statusBarModel.ContainerHeight() - m.eventLogModel.ContainerHeight()
 	m.activities[m.currentActivityName] = m.currentActivity().Resize(activityContainerWidth, activityContainerHeight)
 }
 
