@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/tui"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/frame"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -26,9 +26,9 @@ func RunIntrospector() error {
 	}
 	defer logFile.Close()
 
-	_, err = tea.NewProgram(tui.InitialTUIModel(client), tea.WithAltScreen()).Run()
+	_, err = tea.NewProgram(frame.New(client), tea.WithAltScreen()).Run()
 	if err != nil {
-		fmt.Printf("Failed to start TUI: %v\n", err)
+		fmt.Printf("Failed to start UI: %v\n", err)
 		os.Exit(1)
 	}
 
