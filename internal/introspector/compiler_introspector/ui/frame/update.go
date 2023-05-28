@@ -5,6 +5,7 @@ import (
 
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/eventlog"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/statusbar"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/topbar"
 	"github.com/charmbracelet/bubbles/key"
@@ -64,6 +65,7 @@ func (m model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keyMap.ToggleEventLog):
 		updatedEventlog, _ := m.eventLog.Update(eventlog.MsgToggleVisibility{})
 		m.eventLog = updatedEventlog.(eventlog.Model)
+		m = m.propagateResize().(model)
 	}
 	return m, nil
 }
@@ -77,6 +79,14 @@ func (m model) propagateResize() tea.Model {
 
 	updatedStatus, _ := m.statusBar.Update(common.MsgResize{Width: m.width, Height: 1})
 	m.statusBar = updatedStatus.(statusbar.Model)
+
+	mainContentHeight := m.height - 2 //statusBar, topBar
+	if m.eventLog.IsVisible() {
+		mainContentHeight -= 20
+	}
+
+	updatedMainContent, _ := m.mainSection.Update(common.MsgResize{Width: m.width, Height: mainContentHeight})
+	m.mainSection = updatedMainContent.(main_section.Model)
 
 	return m
 }
@@ -97,6 +107,11 @@ func (m model) propagateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	updated, cmd = m.topBar.Update(common.MsgClientConnected(isConnected))
 	m.topBar = updated.(topbar.Model)
+	cmds = append(cmds, cmd)
+
+	// mainSection
+	updated, cmd = m.mainSection.Update(msg)
+	m.mainSection = updated.(main_section.Model)
 	cmds = append(cmds, cmd)
 
 	// eventlog

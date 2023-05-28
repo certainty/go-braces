@@ -15,10 +15,10 @@ func RunIntrospector() error {
 		return err
 	}
 
-	err = client.Connect()
-	if err != nil {
-		return fmt.Errorf("Failed to connect %w", err)
-	}
+	// err = client.Connect()
+	// if err != nil {
+	// 	return fmt.Errorf("Failed to connect %w", err)
+	// }
 
 	logFile, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {

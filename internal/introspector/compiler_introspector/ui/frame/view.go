@@ -7,23 +7,18 @@ func (m model) View() string {
 	termWidth := m.width
 
 	topBarView := m.topBar.View()
-	topBarHeight := lipgloss.Height(topBarView)
-
-	eventLogView := m.eventLog.View()
-	eventlogHeight := lipgloss.Height(eventLogView)
-
+	mainSectionView := m.mainSection.View()
 	statusBarView := m.statusBar.View()
-	statusBarHeight := lipgloss.Height(statusBarView)
 
-	mainView := m.mainContainerStyle.
-		Copy().
-		Width(termWidth).
-		Height(termHeight - topBarHeight - eventlogHeight - statusBarHeight).
-		Render("Main container")
+	views := []string{topBarView, mainSectionView}
+	if m.eventLog.IsVisible() {
+		views = append(views, m.eventLog.View())
+	}
+	views = append(views, statusBarView)
 
 	return m.frameStyle.
 		Copy().
 		Width(termWidth).
 		Height(termHeight).
-		Render(lipgloss.JoinVertical(lipgloss.Top, topBarView, mainView, eventLogView, statusBarView))
+		Render(lipgloss.JoinVertical(lipgloss.Top, views...))
 }

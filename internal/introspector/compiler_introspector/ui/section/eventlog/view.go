@@ -2,12 +2,15 @@ package eventlog
 
 import (
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
+	"log"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
 	if !m.isVisible {
+		log.Printf("not visible")
 		return ""
 	}
 
@@ -25,7 +28,6 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Bold(true).Width(m.containerWidth-2).Render("Events"),
-		"",
 		m.viewport.View(),
 	)
 }
