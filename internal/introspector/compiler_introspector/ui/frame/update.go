@@ -66,6 +66,10 @@ func (m model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		updatedEventlog, _ := m.eventLog.Update(eventlog.MsgToggleVisibility{})
 		m.eventLog = updatedEventlog.(eventlog.Model)
 		m = m.propagateResize().(model)
+		// TODO: handle this in the main section
+		// use an event to load the available shortcuts
+	case key.Matches(msg, m.keyMap.Continue):
+		return m, CmdBreakpointContinue(m.client)
 	}
 	return m, nil
 }

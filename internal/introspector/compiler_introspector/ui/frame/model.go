@@ -52,6 +52,7 @@ func New(client *compiler_introspection.Client) model {
 
 	// statusbar
 	shortcuts := []*key.Binding{
+		&keyMap.Continue,
 		&keyMap.ToggleEventLog,
 		&keyMap.Quit,
 		&keyMap.Help,

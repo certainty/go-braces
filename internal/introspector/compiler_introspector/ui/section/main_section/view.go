@@ -3,12 +3,15 @@ package main_section
 import "github.com/charmbracelet/lipgloss"
 
 func (m Model) View() string {
-	if !m.isCompiling {
+	if !m.isCompiling && !m.isFinished {
 		return m.waitingView()
 	}
 
-	phaseView := m.phaseIndicator.View()
-	return lipgloss.JoinVertical(lipgloss.Top, phaseView, "Details")
+	phaseIndicatorView := m.phaseIndicator.View()
+	infoView := m.compilationInfo.View()
+	phaseView := m.phasePanes[m.activePhaseIndex].View()
+
+	return lipgloss.JoinVertical(lipgloss.Top, infoView, phaseIndicatorView, phaseView)
 }
 
 func (m Model) waitingView() string {
