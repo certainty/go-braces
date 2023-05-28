@@ -7,7 +7,8 @@ func (m Model) View() string {
 		return m.waitingView()
 	}
 
-	return ""
+	phaseView := m.phaseIndicator.View()
+	return lipgloss.JoinVertical(lipgloss.Top, phaseView, "Details")
 }
 
 func (m Model) waitingView() string {

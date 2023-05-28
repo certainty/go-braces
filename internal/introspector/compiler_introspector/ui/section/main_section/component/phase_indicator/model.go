@@ -22,6 +22,7 @@ func New(theme theme.Theme) Model {
 		compiler_introspection.CompilationPhaseOptimize,
 		compiler_introspection.CompilationPhaseCodegen,
 	}
+
 	return Model{
 		containerWidth:  0,
 		containerHeight: 0,
