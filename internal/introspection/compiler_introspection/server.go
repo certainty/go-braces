@@ -64,14 +64,18 @@ func (s *Server) SendEvents(events ...CompilerIntrospectionEvent) error {
 	return nil
 }
 
-func (s *Server) SendEventsSync(events ...CompilerIntrospectionEvent) error {
+func (s *Server) ReceiveControl() (CompilerIntrospectionControl, error) {
+	if !s.IsConnected() {
+		return nil, errors.New("No client connected")
+	}
+	control := <-s.control.In
+	return control, nil
+}
+
+func (s *Server) SendControl(control CompilerIntrospectionControl) error {
 	if !s.IsConnected() {
 		return errors.New("No client connected")
 	}
-
-	for _, event := range events {
-		s.events.Channel <- event
-	}
-
+	s.control.Out <- control
 	return nil
 }

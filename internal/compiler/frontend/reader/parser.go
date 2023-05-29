@@ -79,10 +79,13 @@ func (p *Parser) parseAll() []isa.Datum {
 }
 
 func (p *Parser) parseDatum() isa.Datum {
+	p.instrumentation.Breakpoint("reader::parse_datum", p)
+
 	return p.parseBoolean()
 }
 
 func (p *Parser) parseBoolean() isa.Datum {
+	p.instrumentation.Breakpoint("reader::parse_boolean", p)
 	matched := false
 	var value bool
 

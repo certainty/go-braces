@@ -2,8 +2,6 @@ module github.com/certainty/go-braces
 
 go 1.20
 
-replace github.com/mistakenelf/teacup => github.com/knipferrc/teacup v0.3.0
-
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/participle/v2 v2.0.0
@@ -11,15 +9,17 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.1
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/chzyer/readline v1.5.1
-	github.com/mistakenelf/teacup v0.0.0-00010101000000-000000000000
+	github.com/philistino/teacup v0.0.0-20230407173306-0aed529e2eaa
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.3
 )
 
 require (
+	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

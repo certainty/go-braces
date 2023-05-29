@@ -2,6 +2,7 @@ package compiler_introspection
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/isa"
@@ -65,7 +66,28 @@ func (e EventLeavePhase) String() string {
 	return fmt.Sprintf("EventLeavePhase{Phase: %s}", e.Phase)
 }
 
+type EventBreakpoint struct {
+	ID BreakpointID
+}
+
+func (e EventBreakpoint) String() string {
+	return fmt.Sprintf("EventBreakpoint{ID: %s}", e.ID)
+}
+
 // control stuff
+
+type CompilerIntrospectionControl interface{}
+
+// TODO: do we need a correlation ID?
+type CommandOk struct {
+	Value CompilerIntrospectionControl
+}
+
+type CommandError struct {
+	Message string
+}                                // error
+type BreakpointContinue struct{} // continue execution
+
 type Instrumentation interface {
 	EnterPhase(phase CompilationPhase)
 	LeavePhase(phase CompilationPhase)
@@ -75,11 +97,12 @@ type Instrumentation interface {
 }
 
 type InstrumentationFromServer struct {
-	server *Server
+	haltOnBreakpoint bool
+	server           *Server
 }
 
 func NewInstrumentationFromServer(server *Server) Instrumentation {
-	return &InstrumentationFromServer{server}
+	return &InstrumentationFromServer{server: server, haltOnBreakpoint: true}
 }
 
 func (s *InstrumentationFromServer) EnterPhase(phase CompilationPhase) {
@@ -107,4 +130,35 @@ func (s *InstrumentationFromServer) LeaveCompilerModule(module isa.AssemblyModul
 }
 
 func (s *InstrumentationFromServer) Breakpoint(id BreakpointID, subject IntrospectionSubject) {
+	if !s.haltOnBreakpoint {
+		return
+	}
+
+	if s.server != nil && s.server.IsConnected() {
+		s.server.SendEvents(EventBreakpoint{id}) //nolint:errcheck
+		s.breakpointRepl(id, subject)
+		log.Printf("Breakpoint resumed  %s", id)
+	}
+}
+
+func (s *InstrumentationFromServer) breakpointRepl(id BreakpointID, subject IntrospectionSubject) {
+	log.Printf("Breakpoint %s hit. Entering REPL for breakpoint", id)
+	log.Printf("Subject: %v", subject)
+
+	for {
+		nextCommand, err := s.server.ReceiveControl()
+		if err != nil {
+			log.Printf("Error receiving control: %s", err)
+			continue
+		}
+
+		switch nextCommand.(type) {
+		case BreakpointContinue:
+			log.Printf("Continuing execution")
+			s.server.SendControl(CommandOk{})
+			return
+		default:
+			log.Printf("Unknown command: %v", nextCommand)
+		}
+	}
 }

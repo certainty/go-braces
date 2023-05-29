@@ -37,16 +37,19 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	parser := parser.NewParser(c.instrumentation)
 	coreCompiler := NewCoreCompiler(c.instrumentation)
 
+	c.instrumentation.Breakpoint("compiler::before_read", &c)
 	datum, err := reader.Read(input)
 	if err != nil {
 		return nil, fmt.Errorf("ReadError: %w", err)
 	}
 
+	c.instrumentation.Breakpoint("compiler::before_parse", &c)
 	coreAst, err := parser.Parse(datum)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
 
+	c.instrumentation.Breakpoint("compiler::before_core_compile", &c)
 	assemblyModule, err := coreCompiler.CompileModule(coreAst)
 	if err != nil {
 		return nil, fmt.Errorf("CompilerBug: %w", err)

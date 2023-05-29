@@ -16,10 +16,14 @@ func RegisterTypes() {
 	gob.Register(EventLeavePhase{})
 	gob.Register(EventBeginCompileModule{})
 	gob.Register(EventEndCompileModule{})
+	gob.Register(EventBreakpoint{})
 
 	// events
 
 	// contol stuff
+	gob.Register(BreakpointContinue{})
+	gob.Register(CommandOk{})
+	gob.Register(CommandError{})
 
 	// data
 	gob.Register(location.StringOrigin{})
