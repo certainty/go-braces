@@ -9,49 +9,35 @@ import (
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-
 	switch msg := msg.(type) {
 	case common.MsgResize:
 		m.containerHeight = msg.Height
 		m.containerWidth = msg.Width
-		return m.propagateResize(), nil
+		m.propagateResize()
+		return m, nil
 
 	case common.MsgIntrospectionEvent:
 		var (
-			updatedPhaseIndicator tea.Model = m.phaseIndicator
-			updatedInfo           tea.Model = m.compilationInfo
-			cmd                   tea.Cmd
-			cmds                  []tea.Cmd
+			cmd  tea.Cmd
+			cmds []tea.Cmd
 		)
 
-		m.phasePanes[m.activePhaseIndex], cmd = m.phasePanes[m.activePhaseIndex].Update(msg)
+		m.phasePanes[m.activePhasePane], cmd = m.phasePanes[m.activePhasePane].Update(msg)
 		cmds = append(cmds, cmd)
 
 		switch evt := msg.Event.(type) {
 		case compiler_introspection.EventBeginCompileModule:
-			m.isCompiling = true
-			m.isFinished = false
-			updatedPhaseIndicator, cmd = m.phaseIndicator.Update(phase_indicator.MsgReset{})
-			cmds = append(cmds, cmd)
-
-			updatedInfo, cmd = m.compilationInfo.Update(compilation_info.MsgNewCompilation{
-				Options: []string{},
-				Origin:  evt.Origin,
-			})
+			cmd = m.onBeginCompileModule(evt)
 			cmds = append(cmds, cmd)
 
 		case compiler_introspection.EventEndCompileModule:
-			m.isCompiling = false
-			m.isFinished = true
-			updatedPhaseIndicator, cmd = m.phaseIndicator.Update(phase_indicator.MsgFinish{})
+			cmd = m.onEndCompileModule(evt)
 			cmds = append(cmds, cmd)
 
 		case compiler_introspection.EventEnterPhase:
-			updatedPhaseIndicator, cmd = m.phaseIndicator.Update(phase_indicator.MsgPhase(evt.Phase))
+			cmd = m.onEnterPhase(evt)
 			cmds = append(cmds, cmd)
 		}
-		m.phaseIndicator = updatedPhaseIndicator.(phase_indicator.Model)
-		m.compilationInfo = updatedInfo.(compilation_info.Model)
 
 		return m, tea.Batch(cmds...)
 	}
@@ -59,22 +45,68 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) propagateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	updatedInfo, cmd := m.compilationInfo.Update(msg)
-	m.compilationInfo = updatedInfo.(compilation_info.Model)
-
-	return m, cmd
+func (m *Model) propagateResize() {
+	m.updateSection(SectionPhaseIndicator, common.NewMsgResize(m.containerWidth, 1))
+	m.updateSection(SectionCompilationInfo, common.NewMsgResize(m.containerWidth, 3))
+	m.updatedPhasePane(m.activePhasePane, common.NewMsgResize(m.containerWidth, m.containerHeight-4))
 }
 
-func (m Model) propagateResize() tea.Model {
-	updatedPhaseIndicator, _ := m.phaseIndicator.Update(common.MsgResize{Width: m.containerWidth, Height: 1})
-	m.phaseIndicator = updatedPhaseIndicator.(phase_indicator.Model)
+func (m *Model) propagateUpdate(msg tea.Msg) tea.Cmd {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
-	updatedInfo, _ := m.compilationInfo.Update(common.MsgResize{Width: m.containerWidth, Height: 3})
-	m.compilationInfo = updatedInfo.(compilation_info.Model)
+	for idx := range m.sections {
+		cmd = m.updateSection(section(idx), msg)
+		cmds = append(cmds, cmd)
+	}
 
-	updatedPhasePane, _ := m.phasePanes[m.activePhaseIndex].Update(common.MsgResize{Width: m.containerWidth, Height: m.containerHeight - 4})
-	m.phasePanes[m.activePhaseIndex] = updatedPhasePane
+	cmd = m.updatedPhasePane(m.activePhasePane, msg)
+	cmds = append(cmds, cmd)
 
-	return m
+	return tea.Batch(cmds...)
+}
+
+func (m *Model) updateSection(sect section, msg tea.Msg) tea.Cmd {
+	updatedSection, cmd := m.sections[sect].Update(msg)
+	m.sections[sect] = updatedSection
+	return cmd
+}
+
+func (m *Model) updatedPhasePane(pane Pane, msg tea.Msg) tea.Cmd {
+	updatedPane, cmd := m.phasePanes[pane].Update(msg)
+	m.phasePanes[pane] = updatedPane
+	return cmd
+}
+
+func (m *Model) onBeginCompileModule(evt compiler_introspection.EventBeginCompileModule) tea.Cmd {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	m.isCompiling = true
+	m.isFinished = false
+
+	cmd = m.updateSection(SectionPhaseIndicator, phase_indicator.MsgReset{})
+	cmds = append(cmds, cmd)
+
+	cmd = m.updateSection(SectionCompilationInfo, compilation_info.MsgNewCompilation{
+		Options: []string{},
+		Origin:  evt.Origin,
+	})
+
+	return tea.Batch(append(cmds, cmd)...)
+}
+
+func (m *Model) onEndCompileModule(evt compiler_introspection.EventEndCompileModule) tea.Cmd {
+	m.isCompiling = false
+	m.isFinished = true
+
+	return m.updateSection(SectionPhaseIndicator, phase_indicator.MsgFinish{})
+}
+
+func (m *Model) onEnterPhase(evt compiler_introspection.EventEnterPhase) tea.Cmd {
+	return m.updateSection(SectionPhaseIndicator, phase_indicator.MsgPhase(evt.Phase))
 }

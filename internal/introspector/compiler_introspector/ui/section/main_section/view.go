@@ -7,9 +7,9 @@ func (m Model) View() string {
 		return m.waitingView()
 	}
 
-	phaseIndicatorView := m.phaseIndicator.View()
-	infoView := m.compilationInfo.View()
-	phaseView := m.phasePanes[m.activePhaseIndex].View()
+	phaseIndicatorView := m.sections[SectionPhaseIndicator].View()
+	infoView := m.sections[SectionCompilationInfo].View()
+	phaseView := m.phasePanes[m.activePhasePane].View()
 
 	return lipgloss.JoinVertical(lipgloss.Top, infoView, phaseIndicatorView, phaseView)
 }

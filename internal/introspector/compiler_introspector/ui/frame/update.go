@@ -13,15 +13,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd  tea.Cmd
 	)
 
+	propagateUpdates := true
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		propagateUpdates = false
 		m.propagateResize()
 	case common.MsgTick:
 		cmds = append(cmds, common.CmdTick())
-		cmd = m.propagateUpdate(msg)
-		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		cmd = m.handleKeys(msg)
 		cmds = append(cmds, cmd)
@@ -32,18 +33,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = Disconnected
 		}
 		cmds = append(cmds, CmdCheckClientConnection(m.client), CmdGetEvent(m.client))
-		cmd = m.propagateUpdate(msg)
-		cmds = append(cmds, cmd)
 	case common.MsgIntrospectionEvent:
 		cmds = append(cmds, CmdGetEvent(m.client))
-		cmd = m.propagateUpdate(msg)
-		cmds = append(cmds, cmd)
 	case common.MsgError:
 		m.status = Error
 		m.err = msg.Err
-		cmd = m.propagateUpdate(msg)
-		cmds = append(cmds, cmd)
-	default:
+	}
+
+	if propagateUpdates {
 		cmd = m.propagateUpdate(msg)
 		cmds = append(cmds, cmd)
 	}
@@ -85,7 +82,7 @@ func (m *model) propagateUpdate(msg tea.Msg) tea.Cmd {
 		cmds []tea.Cmd
 	)
 
-	for idx, _ := range m.sections {
+	for idx := range m.sections {
 		cmd = m.updateSection(Section(idx), msg)
 		cmds = append(cmds, cmd)
 	}

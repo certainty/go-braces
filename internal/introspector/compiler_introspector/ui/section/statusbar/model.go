@@ -12,8 +12,8 @@ import (
 type Model struct {
 	containerWidth  int
 	containerHeight int
+	theme           theme.Theme
 
-	theme        theme.Theme
 	Phase        compiler_introspection.CompilationPhase
 	Mode         common.Mode
 	Shortcuts    []*key.Binding

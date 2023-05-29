@@ -8,36 +8,47 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type section int
+
+const (
+	SectionCompilationInfo section = iota
+	SectionPhaseIndicator
+)
+
+type Pane int
+
+const (
+	PaneReadPhase      = 0
+	PaneCompilePhase   = 1
+	PaneTypeCheckPhase = 2
+	PaneOptimizePhase  = 3
+	PaneCodeGenPhase   = 4
+)
+
 type Model struct {
 	containerWidth, containerHeight int
 	theme                           theme.Theme
-	compilationInfo                 compilation_info.Model
-	phaseIndicator                  phase_indicator.Model
+	sections                        []tea.Model
 	phasePanes                      []tea.Model
-	activePhaseIndex                int
+	activePhasePane                 Pane
 	isCompiling                     bool
 	isFinished                      bool
 }
-
-const (
-	readPhaseIndex      = 0
-	compilePhaseIndex   = 1
-	typeCheckPhaseIndex = 2
-	optimizePhaseIndex  = 3
-	codeGenPhaseIndex   = 4
-)
 
 func New(theme theme.Theme) Model {
 	phasePanes := []tea.Model{
 		read.New(theme),
 	}
 
+	sections := make([]tea.Model, 2)
+	sections[SectionCompilationInfo] = compilation_info.New(theme, nil, nil)
+	sections[SectionPhaseIndicator] = phase_indicator.New(theme)
+
 	return Model{
-		compilationInfo:  compilation_info.New(theme, nil, nil),
-		isCompiling:      false,
-		phaseIndicator:   phase_indicator.New(theme),
-		isFinished:       false,
-		phasePanes:       phasePanes,
-		activePhaseIndex: 0,
+		sections:        sections,
+		phasePanes:      phasePanes,
+		isCompiling:     false,
+		isFinished:      false,
+		activePhasePane: 0,
 	}
 }
