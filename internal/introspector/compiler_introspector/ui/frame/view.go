@@ -6,17 +6,17 @@ func (m model) View() string {
 	termHeight := m.height
 	termWidth := m.width
 
-	topBarView := m.topBar.View()
-	mainSectionView := m.mainSection.View()
-	statusBarView := m.statusBar.View()
+	topBarView := m.sectionTopBar.View()
+	mainSectionView := m.sectionMain.View()
+	statusBarView := m.sectionStatusBar.View()
 
 	views := []string{topBarView, mainSectionView}
-	if m.eventLog.IsVisible() {
-		views = append(views, m.eventLog.View())
+	if m.sectionEventLog.IsVisible() {
+		views = append(views, m.sectionEventLog.View())
 	}
 	views = append(views, statusBarView)
 
-	return m.frameStyle.
+	return m.styleFrame.
 		Copy().
 		Width(termWidth).
 		Height(termHeight).

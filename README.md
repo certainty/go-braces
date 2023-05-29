@@ -3,6 +3,13 @@
 # Go-Braces
 A comprehensive compiler and VM implementation for programming language enthusiasts.
 
+## Project state
+
+While I'm making good progress most of this is in very very early development and many of the features only exist in my head.
+I totally expect this to take maybe a year till this is somewhere in a state I can show it, at the current rate of development.
+Well I guess that's just it. If you still feel interested or even want to contribute, please get in contact. I'm happy to
+nerd out about this :) 
+
 ## Overview
 
 Go-Braces is a dialect of the Scheme programming language, offering a compiler and virtual machine (VM) designed as a learning platform for individuals interested in building programming languages and compilers.
@@ -38,6 +45,8 @@ The primary objectives of the tools provided here are:
 
 ## Getting Started
 
+The first thing you'll have to do currently is building everything.
+
 ### Building the Project
 
 Build the entire project with a simple invocation of make:
@@ -53,6 +62,34 @@ Again testing is simple and you can run the harness with:
 ```
 make test
 ```
+
+### Introspecting a compiler run
+
+The introspector and the compiler not packed into one executable. This is so that you can attach to arbitrary 
+compilations including the ones taking place during interaction with the repl. And this is in fact also
+the easiest (at the time of this writing only way to do it).
+
+You will need two terminals, either one separate instancs or if you're using tmux two panes would also do.
+In one pane you're going to start the repl like so:
+
+```
+./target/braces-vm repl -c
+```
+
+This will open up the repl and it will also start it in introspection mode.
+You'll be greeted by a little banner saying that it's waiting for a client to connect.
+So let's do that now. In a separate terminal or pane, execute:
+
+```
+./target/braces-introspect compiler 
+```
+
+This starts the introspector for the compiler. If everything went smoothly, the repl should have gotton out of 
+the waiting state an dropped you into the prompt. Here you can interact with the repl now as usual, but what you
+will observe is that the introspector picks up the compilation events and gives you insights into what's happening.
+
+By default the compiler is in single-stepping mode, meaning that it will stop at strategic points during compilation
+and allow you to interact with it and see its state. You will see that also in the introspector.
 
 ## References
 

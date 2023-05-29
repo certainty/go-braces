@@ -63,8 +63,8 @@ func (m model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keyMap.Quit):
 		return m, tea.Quit
 	case key.Matches(msg, m.keyMap.ToggleEventLog):
-		updatedEventlog, _ := m.eventLog.Update(eventlog.MsgToggleVisibility{})
-		m.eventLog = updatedEventlog.(eventlog.Model)
+		updatedEventlog, _ := m.sectionEventLog.Update(eventlog.MsgToggleVisibility{})
+		m.sectionEventLog = updatedEventlog.(eventlog.Model)
 		m = m.propagateResize().(model)
 		// TODO: handle this in the main section
 		// use an event to load the available shortcuts
@@ -75,62 +75,41 @@ func (m model) handleKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) propagateResize() tea.Model {
-	updatedTopBar, _ := m.topBar.Update(common.MsgResize{Width: m.width, Height: 1})
-	m.topBar = updatedTopBar.(topbar.Model)
+	updatedTopBar, _ := m.sectionTopBar.Update(common.MsgResize{Width: m.width, Height: 1})
+	m.sectionTopBar = updatedTopBar.(topbar.Model)
 
-	updatedEventLog, _ := m.eventLog.Update(common.MsgResize{Width: m.width, Height: 20})
-	m.eventLog = updatedEventLog.(eventlog.Model)
+	updatedEventLog, _ := m.sectionEventLog.Update(common.MsgResize{Width: m.width, Height: 20})
+	m.sectionEventLog = updatedEventLog.(eventlog.Model)
 
-	updatedStatus, _ := m.statusBar.Update(common.MsgResize{Width: m.width, Height: 1})
-	m.statusBar = updatedStatus.(statusbar.Model)
+	updatedStatus, _ := m.sectionStatusBar.Update(common.MsgResize{Width: m.width, Height: 1})
+	m.sectionStatusBar = updatedStatus.(statusbar.Model)
 
 	mainContentHeight := m.height - 2 //statusBar, topBar
-	if m.eventLog.IsVisible() {
+	if m.sectionEventLog.IsVisible() {
 		mainContentHeight -= 20
 	}
 
-	updatedMainContent, _ := m.mainSection.Update(common.MsgResize{Width: m.width, Height: mainContentHeight})
-	m.mainSection = updatedMainContent.(main_section.Model)
+	updatedMainContent, _ := m.sectionMain.Update(common.MsgResize{Width: m.width, Height: mainContentHeight})
+	m.sectionMain = updatedMainContent.(main_section.Model)
 
 	return m
 }
 
 func (m model) propagateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd     tea.Cmd
-		cmds    []tea.Cmd
-		updated tea.Model
+		cmd  tea.Cmd
+		cmds []tea.Cmd
 	)
 
 	isConnected := m.client.IsConnected()
 
-	//topbar
-	updated, cmd = m.topBar.Update(msg)
-	m.topBar = updated.(topbar.Model)
-	cmds = append(cmds, cmd)
+	for idx, section := range m.sections {
+		m.sections[idx], cmd = section.Update(common.MsgClientConnected(isConnected))
+		cmds = append(cmds, cmd)
 
-	updated, cmd = m.topBar.Update(common.MsgClientConnected(isConnected))
-	m.topBar = updated.(topbar.Model)
-	cmds = append(cmds, cmd)
-
-	// mainSection
-	updated, cmd = m.mainSection.Update(msg)
-	m.mainSection = updated.(main_section.Model)
-	cmds = append(cmds, cmd)
-
-	// eventlog
-	updated, cmd = m.eventLog.Update(msg)
-	m.eventLog = updated.(eventlog.Model)
-	cmds = append(cmds, cmd)
-
-	// statusbar
-	updated, cmd = m.statusBar.Update(msg)
-	m.statusBar = updated.(statusbar.Model)
-	cmds = append(cmds, cmd)
-
-	updated, cmd = m.statusBar.Update(common.MsgClientConnected(isConnected))
-	m.statusBar = updated.(statusbar.Model)
-	cmds = append(cmds, cmd)
+		m.sections[idx], cmd = section.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	return m, nil
 }

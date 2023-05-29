@@ -12,7 +12,7 @@ func (m model) Init() tea.Cmd {
 
 	cmds = append(cmds, CmdConnectClient(m.client))
 	cmds = append(cmds, common.CmdTick())
-	cmds = append(cmds, m.statusBar.Init())
+	cmds = append(cmds, m.sectionStatusBar.Init())
 
 	return tea.Batch(cmds...)
 }

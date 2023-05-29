@@ -8,6 +8,7 @@ import (
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/topbar"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
 	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -30,14 +31,15 @@ type model struct {
 	err           error
 
 	// sections
-	topBar      topbar.Model
-	mainSection main_section.Model
-	eventLog    eventlog.Model
-	statusBar   statusbar.Model
+	sectionTopBar    topbar.Model
+	sectionMain      main_section.Model
+	sectionEventLog  eventlog.Model
+	sectionStatusBar statusbar.Model
+	sections         []tea.Model
 
 	// styles
-	frameStyle         lipgloss.Style
-	mainContainerStyle lipgloss.Style
+	styleFrame       lipgloss.Style
+	styleSectionMain lipgloss.Style
 
 	client *compiler_introspection.Client
 }
@@ -47,8 +49,13 @@ func New(client *compiler_introspection.Client) model {
 	keyMap := NewGlobalKeyMap()
 
 	//topbar
+	sectionTopBar := topbar.New(theme, "(Go-Braces-Introspect 'Compiler)")
 
 	//main
+	sectionMain := main_section.New(theme)
+
+	// sectionEventLog
+	sectionEventLog := eventlog.New()
 
 	// statusbar
 	shortcuts := []*key.Binding{
@@ -57,10 +64,14 @@ func New(client *compiler_introspection.Client) model {
 		&keyMap.Quit,
 		&keyMap.Help,
 	}
-	topBar := topbar.New(theme, "(Go-Braces-Introspect 'Compiler)")
-	mainSection := main_section.New(theme)
-	eventlog := eventlog.New()
-	statusBar := statusbar.New(theme, shortcuts)
+	sectionStatusBar := statusbar.New(theme, shortcuts)
+
+	sections := []tea.Model{
+		sectionTopBar,
+		sectionMain,
+		sectionEventLog,
+		sectionStatusBar,
+	}
 
 	return model{
 		width:  100,
@@ -70,12 +81,13 @@ func New(client *compiler_introspection.Client) model {
 		status: Disconnected,
 		client: client,
 
-		topBar:      topBar,
-		mainSection: mainSection,
-		eventLog:    eventlog,
-		statusBar:   statusBar,
+		sectionTopBar:    sectionTopBar,
+		sectionMain:      sectionMain,
+		sectionEventLog:  sectionEventLog,
+		sectionStatusBar: sectionStatusBar,
+		sections:         sections,
 
-		frameStyle:         lipgloss.NewStyle(),
-		mainContainerStyle: lipgloss.NewStyle(),
+		styleFrame:       lipgloss.NewStyle(),
+		styleSectionMain: lipgloss.NewStyle(),
 	}
 }
