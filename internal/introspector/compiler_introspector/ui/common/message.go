@@ -48,3 +48,5 @@ type MsgRequestStatus struct {
 func NewMsgRequestStatus(requestStatus RequestStatus) MsgRequestStatus {
 	return MsgRequestStatus{RequestStatus: requestStatus}
 }
+
+type MsgActivateKeyMap KeyMap

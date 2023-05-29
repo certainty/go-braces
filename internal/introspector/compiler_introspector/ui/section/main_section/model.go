@@ -1,6 +1,8 @@
 package main_section
 
 import (
+	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/component/compilation_info"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/component/phase_indicator"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/phase/read"
@@ -30,12 +32,15 @@ type Model struct {
 	theme                           theme.Theme
 	sections                        []tea.Model
 	phasePanes                      []tea.Model
-	activePhasePane                 Pane
-	isCompiling                     bool
-	isFinished                      bool
+	keyMap                          common.KeyMap
+
+	client          *compiler_introspection.Client
+	activePhasePane Pane
+	isCompiling     bool
+	isFinished      bool
 }
 
-func New(theme theme.Theme) Model {
+func New(theme theme.Theme, client *compiler_introspection.Client) Model {
 	phasePanes := []tea.Model{
 		read.New(theme),
 	}
@@ -50,5 +55,6 @@ func New(theme theme.Theme) Model {
 		isCompiling:     false,
 		isFinished:      false,
 		activePhasePane: 0,
+		client:          client,
 	}
 }

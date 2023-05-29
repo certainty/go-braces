@@ -5,6 +5,7 @@ import (
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/component/compilation_info"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/component/phase_indicator"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -15,6 +16,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.containerWidth = msg.Width
 		m.propagateResize()
 		return m, nil
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, KeyContinue):
+			return m, CmdBreakpointContinue(m.client)
+		}
 
 	case common.MsgIntrospectionEvent:
 		var (
@@ -88,6 +94,9 @@ func (m *Model) onBeginCompileModule(evt compiler_introspection.EventBeginCompil
 
 	m.isCompiling = true
 	m.isFinished = false
+
+	// activate keymap for this mode
+	cmds = append(cmds, common.CmdActivateKeyMap(CompileKeyMap))
 
 	cmd = m.updateSection(SectionPhaseIndicator, phase_indicator.MsgReset{})
 	cmds = append(cmds, cmd)

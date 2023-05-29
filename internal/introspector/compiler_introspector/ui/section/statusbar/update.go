@@ -28,6 +28,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case compiler_introspection.EventBeginCompileModule:
 			m.Mode = common.CompileMode
 		}
+	case common.MsgActivateKeyMap:
+		m.contextKeyMap = common.KeyMap(msg)
 	case common.MsgError:
 		m.err = msg.Err
 	}

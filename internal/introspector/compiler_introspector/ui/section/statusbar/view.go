@@ -1,8 +1,6 @@
 package statusbar
 
 import (
-	"log"
-
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
@@ -17,10 +15,16 @@ func (m Model) View() string {
 		"\uF11C  ",
 	}
 
-	log.Printf("Status in view is %v", m.IsConnected)
+	if len(m.contextKeyMap.ShortCuts) > 0 {
+		for _, shortcut := range m.contextKeyMap.ShortCuts {
+			renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(shortcut))
+		}
 
-	for _, shortcut := range m.Shortcuts {
-		renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(*shortcut))
+		renderedShortcuts = append(renderedShortcuts, m.theme.Statusbar.Render("|"))
+	}
+
+	for _, shortcut := range m.globalKeyMap.ShortCuts {
+		renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(shortcut))
 	}
 
 	var statusMessage string

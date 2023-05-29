@@ -10,3 +10,9 @@ func CmdTick() tea.Cmd {
 		return MsgTick(t)
 	})
 }
+
+func CmdActivateKeyMap(keyMap KeyMap) tea.Cmd {
+	return func() tea.Msg {
+		return MsgActivateKeyMap(keyMap)
+	}
+}

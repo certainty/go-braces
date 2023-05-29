@@ -50,13 +50,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) handleKeys(msg tea.KeyMsg) tea.Cmd {
 	switch {
-	case key.Matches(msg, m.keyMap.Quit):
+	case key.Matches(msg, KeyQuit):
 		return tea.Quit
-	case key.Matches(msg, m.keyMap.ToggleEventLog):
+	case key.Matches(msg, KeyToggleEventLog):
 		m.updateSection(SectionEventLog, eventlog.MsgToggleVisibility{})
 		m.propagateResize()
-	case key.Matches(msg, m.keyMap.Continue):
-		return CmdBreakpointContinue(m.client)
 	default:
 		return nil
 	}

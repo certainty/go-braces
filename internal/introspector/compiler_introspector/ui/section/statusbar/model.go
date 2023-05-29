@@ -4,7 +4,6 @@ import (
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/philistino/teacup/statusbar"
 )
@@ -14,10 +13,11 @@ type Model struct {
 	containerHeight int
 	theme           theme.Theme
 
-	Phase        compiler_introspection.CompilationPhase
-	Mode         common.Mode
-	Shortcuts    []*key.Binding
-	RequestState common.RequestStatus
+	Phase         compiler_introspection.CompilationPhase
+	Mode          common.Mode
+	globalKeyMap  common.KeyMap
+	contextKeyMap common.KeyMap
+	RequestState  common.RequestStatus
 
 	IsConnected    bool
 	err            error
@@ -25,7 +25,7 @@ type Model struct {
 	impl           statusbar.Bubble
 }
 
-func New(theme theme.Theme, shortcuts []*key.Binding) Model {
+func New(theme theme.Theme, globalKeyMap common.KeyMap, contextKeyMap common.KeyMap) Model {
 	sb := statusbar.New(
 		statusbar.ColorConfig{
 			Foreground: theme.Colors.Background,
@@ -54,7 +54,8 @@ func New(theme theme.Theme, shortcuts []*key.Binding) Model {
 		Mode:           common.WaitingMode,
 		err:            nil,
 		IsConnected:    false,
-		Shortcuts:      shortcuts,
+		globalKeyMap:   globalKeyMap,
+		contextKeyMap:  contextKeyMap,
 		RequestSpinner: requestSpinner,
 		impl:           sb,
 	}

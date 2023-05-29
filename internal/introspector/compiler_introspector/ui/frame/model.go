@@ -2,6 +2,7 @@ package frame
 
 import (
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/eventlog"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/statusbar"
@@ -35,7 +36,6 @@ const (
 type model struct {
 	width, height int
 	theme         theme.Theme
-	keyMap        GlobalKeyMap
 	status        State
 	err           error
 
@@ -55,25 +55,19 @@ type model struct {
 
 func New(client *compiler_introspection.Client) model {
 	theme := theme.NewCatpuccinTheme()
-	keyMap := NewGlobalKeyMap()
 
 	//topbar
 	sectionTopBar := topbar.New(theme, "(Go-Braces-Introspect 'Compiler)")
 
 	//main
-	sectionMain := main_section.New(theme)
+	sectionMain := main_section.New(theme, client)
 
 	// sectionEventLog
 	sectionEventLog := eventlog.New()
 
-	// statusbar
-	shortcuts := []*key.Binding{
-		&keyMap.Continue,
-		&keyMap.ToggleEventLog,
-		&keyMap.Quit,
-		&keyMap.Help,
-	}
-	sectionStatusBar := statusbar.New(theme, shortcuts)
+	globalKeyMap := common.NewKeyMap("global", AllBindings, Shortcuts)
+	contextKeyMap := common.NewKeyMap("", []key.Binding{}, []key.Binding{})
+	sectionStatusBar := statusbar.New(theme, globalKeyMap, contextKeyMap)
 
 	sections := make([]tea.Model, 4)
 	sections[SectionTopBar] = sectionTopBar
@@ -85,7 +79,6 @@ func New(client *compiler_introspection.Client) model {
 		width:  100,
 		height: 80,
 		theme:  theme,
-		keyMap: keyMap,
 		status: Disconnected,
 		client: client,
 

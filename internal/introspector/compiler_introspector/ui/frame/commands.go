@@ -1,7 +1,6 @@
 package frame
 
 import (
-	"log"
 	"time"
 
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
@@ -29,19 +28,6 @@ func CmdConnectClient(client *compiler_introspection.Client) tea.Cmd {
 			return common.MsgError{Err: err}
 		} else {
 			return common.MsgClientConnected(true)
-		}
-	}
-}
-
-func CmdBreakpointContinue(client *compiler_introspection.Client) tea.Cmd {
-	return func() tea.Msg {
-		err := client.BreakpointContinue()
-		log.Printf("BreakpointContinue: %v", err)
-
-		if err != nil {
-			return common.MsgError{Err: err}
-		} else {
-			return common.MsgRequestStatus{RequestStatus: common.RequestSent}
 		}
 	}
 }
