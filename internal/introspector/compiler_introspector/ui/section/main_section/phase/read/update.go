@@ -26,7 +26,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) propagateResize() tea.Model {
-	updatedSourceCodePane, _ := m.sourceCodePane.Update(common.MsgResize{Height: m.containerHeight, Width: m.containerWidth / 3})
+	paneWidth := m.containerWidth / 3
+
+	updatedSourceCodePane, _ := m.sourceCodePane.Update(common.MsgResize{Height: m.containerHeight, Width: paneWidth})
 	m.sourceCodePane = updatedSourceCodePane.(source_code.Model)
 
 	return m

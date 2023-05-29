@@ -1,5 +1,7 @@
 package source_code
 
+import "github.com/charmbracelet/lipgloss"
+
 func (m Model) View() string {
 	content := m.codeContentStyle.
 		Copy().
@@ -8,5 +10,10 @@ func (m Model) View() string {
 		Render(m.code)
 
 	m.codeViewer.SetContent(content)
-	return m.codeViewer.View()
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		" Source",
+		m.codeViewer.View(),
+	)
 }
