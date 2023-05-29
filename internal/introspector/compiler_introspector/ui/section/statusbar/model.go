@@ -19,7 +19,7 @@ type Model struct {
 	Shortcuts    []*key.Binding
 	RequestState common.RequestStatus
 
-	isConnected    bool
+	IsConnected    bool
 	err            error
 	RequestSpinner spinner.Model
 	impl           statusbar.Bubble
@@ -53,7 +53,7 @@ func New(theme theme.Theme, shortcuts []*key.Binding) Model {
 		Phase:          "",
 		Mode:           common.WaitingMode,
 		err:            nil,
-		isConnected:    false,
+		IsConnected:    false,
 		Shortcuts:      shortcuts,
 		RequestSpinner: requestSpinner,
 		impl:           sb,

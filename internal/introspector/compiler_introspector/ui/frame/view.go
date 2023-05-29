@@ -1,18 +1,21 @@
 package frame
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/eventlog"
+	"github.com/charmbracelet/lipgloss"
+)
 
 func (m model) View() string {
 	termHeight := m.height
 	termWidth := m.width
 
-	topBarView := m.sectionTopBar.View()
-	mainSectionView := m.sectionMain.View()
-	statusBarView := m.sectionStatusBar.View()
+	topBarView := m.sections[SectionTopBar].View()
+	mainSectionView := m.sections[SectionMain].View()
+	statusBarView := m.sections[SectionStatusBar].View()
 
 	views := []string{topBarView, mainSectionView}
-	if m.sectionEventLog.IsVisible() {
-		views = append(views, m.sectionEventLog.View())
+	if m.sections[SectionEventLog].(eventlog.Model).IsVisible() {
+		views = append(views, m.sections[SectionEventLog].View())
 	}
 	views = append(views, statusBarView)
 

@@ -1,6 +1,8 @@
 package statusbar
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -19,7 +21,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.MsgModeChange:
 		m.Mode = msg.ActiveMode
 	case common.MsgClientConnected:
-		m.isConnected = bool(msg)
+		log.Printf("Statusbar connected status to %v", msg)
+		m.IsConnected = bool(msg)
 	case common.MsgIntrospectionEvent:
 		switch msg.Event.(type) {
 		case compiler_introspection.EventBeginCompileModule:

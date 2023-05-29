@@ -1,6 +1,8 @@
 package statusbar
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
@@ -15,6 +17,8 @@ func (m Model) View() string {
 		"\uF11C  ",
 	}
 
+	log.Printf("Status in view is %v", m.IsConnected)
+
 	for _, shortcut := range m.Shortcuts {
 		renderedShortcuts = append(renderedShortcuts, m.RenderShortCut(*shortcut))
 	}
@@ -23,7 +27,7 @@ func (m Model) View() string {
 	if m.err != nil {
 		statusMessage = m.theme.Statusbar.Copy().Foreground(m.theme.Colors.Error).Render(m.err.Error())
 	} else {
-		if m.isConnected {
+		if m.IsConnected {
 			statusMessage = m.theme.Statusbar.Copy().Foreground(m.theme.Colors.Success).Render("Connected to introspection server")
 		} else {
 			statusMessage = m.theme.Statusbar.Copy().Render("No connection to introspection server")

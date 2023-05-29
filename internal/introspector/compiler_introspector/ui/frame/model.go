@@ -23,6 +23,15 @@ const (
 	Error
 )
 
+type Section int
+
+const (
+	SectionTopBar Section = iota
+	SectionMain
+	SectionEventLog
+	SectionStatusBar
+)
+
 type model struct {
 	width, height int
 	theme         theme.Theme
@@ -31,11 +40,11 @@ type model struct {
 	err           error
 
 	// sections
-	sectionTopBar    topbar.Model
-	sectionMain      main_section.Model
-	sectionEventLog  eventlog.Model
-	sectionStatusBar statusbar.Model
-	sections         []tea.Model
+	// sectionTopBar    topbar.Model
+	// sectionMain      main_section.Model
+	// sectionEventLog  eventlog.Model
+	// sectionStatusBar statusbar.Model
+	sections []tea.Model
 
 	// styles
 	styleFrame       lipgloss.Style
@@ -66,12 +75,11 @@ func New(client *compiler_introspection.Client) model {
 	}
 	sectionStatusBar := statusbar.New(theme, shortcuts)
 
-	sections := []tea.Model{
-		sectionTopBar,
-		sectionMain,
-		sectionEventLog,
-		sectionStatusBar,
-	}
+	sections := make([]tea.Model, 4)
+	sections[SectionTopBar] = sectionTopBar
+	sections[SectionMain] = sectionMain
+	sections[SectionEventLog] = sectionEventLog
+	sections[SectionStatusBar] = sectionStatusBar
 
 	return model{
 		width:  100,
@@ -81,12 +89,7 @@ func New(client *compiler_introspection.Client) model {
 		status: Disconnected,
 		client: client,
 
-		sectionTopBar:    sectionTopBar,
-		sectionMain:      sectionMain,
-		sectionEventLog:  sectionEventLog,
-		sectionStatusBar: sectionStatusBar,
 		sections:         sections,
-
 		styleFrame:       lipgloss.NewStyle(),
 		styleSectionMain: lipgloss.NewStyle(),
 	}

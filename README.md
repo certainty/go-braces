@@ -91,6 +91,10 @@ will observe is that the introspector picks up the compilation events and gives 
 By default the compiler is in single-stepping mode, meaning that it will stop at strategic points during compilation
 and allow you to interact with it and see its state. You will see that also in the introspector.
 
+## Todo
+
+- [ ] Snapshot tests for the TUI elements
+
 ## References
 
 This implementation is heavily based on an earlier version written in rust, which can be found here: https://github.com/certainty/braces

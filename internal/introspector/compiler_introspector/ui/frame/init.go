@@ -6,13 +6,5 @@ import (
 )
 
 func (m model) Init() tea.Cmd {
-	var (
-		cmds []tea.Cmd
-	)
-
-	cmds = append(cmds, CmdConnectClient(m.client))
-	cmds = append(cmds, common.CmdTick())
-	cmds = append(cmds, m.sectionStatusBar.Init())
-
-	return tea.Batch(cmds...)
+	return tea.Batch(common.CmdTick(), CmdConnectClient(m.client), m.sections[SectionStatusBar].Init())
 }

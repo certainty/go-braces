@@ -2,6 +2,7 @@ package frame
 
 import (
 	"log"
+	"time"
 
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
@@ -42,5 +43,13 @@ func CmdBreakpointContinue(client *compiler_introspection.Client) tea.Cmd {
 		} else {
 			return common.MsgRequestStatus{RequestStatus: common.RequestSent}
 		}
+	}
+}
+
+func CmdCheckClientConnection(client *compiler_introspection.Client) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(100 * time.Millisecond)
+		connected := client.IsConnected()
+		return common.MsgClientConnected(connected)
 	}
 }
