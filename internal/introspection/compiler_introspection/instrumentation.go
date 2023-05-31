@@ -22,6 +22,24 @@ const (
 
 type BreakpointID string
 
+const (
+	BPCompilerBeforeRead BreakpointID = "compiler:before:read"
+	BPCompilerAfterRead  BreakpointID = "compiler:after:read"
+	BPReaderParseDatum   BreakpointID = "reader:parse:datum"
+
+	BPCompilerBeforeParse BreakpointID = "compiler:before:parse"
+	BPCompilerAfterParse  BreakpointID = "compiler:after:parse"
+
+	BPCompilerBeforeCoreCompile BreakpointID = "compiler:before:corecompile"
+
+	BPCompilerBeforeTypeCheck BreakpointID = "compiler:before:typecheck"
+	BPCompilerAfterTypeCheck  BreakpointID = "compiler:after:typecheck"
+	BPCompilerBeforeOptimize  BreakpointID = "compiler:before:optimize"
+	BPCompilerAfterOptimize   BreakpointID = "compiler:after:optimize"
+	BPCompilerBeforeCodegen   BreakpointID = "compiler:before:codegen"
+	BPCompilerAfterCodegen    BreakpointID = "compiler:after:codegen"
+)
+
 // events
 type CompilerIntrospectionEvent interface{}
 

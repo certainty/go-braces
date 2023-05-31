@@ -32,7 +32,7 @@ func (e ReaderError) Error() string {
 func (r Reader) Read(input *input.Input) (*DatumAST, error) {
 	r.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseRead)
 	defer r.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseRead)
-	r.instrumentation.Breakpoint("before_reader_parse", &r)
+	r.instrumentation.Breakpoint(compiler_introspection.BPCompilerBeforeRead, &r)
 
 	parser := NewParser(r.instrumentation)
 	ast, errors := parser.Parse(input)
