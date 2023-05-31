@@ -11,7 +11,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/philistino/teacup v0.0.0-20230407173306-0aed529e2eaa
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
