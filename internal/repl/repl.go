@@ -95,13 +95,12 @@ func (r *Repl) doRun() {
 		} else {
 			result, err := r.compileAndRun(input)
 			if err != nil {
-				fmt.Println(err.Error())
+				compiler.PrintCompilerError(err)
 			} else {
 				fmt.Printf("%s\n", r.vmInstance.WriteValue(result))
 			}
 		}
 	}
-
 }
 
 func (r *Repl) handleCommand(input string) (bool, bool, error) {

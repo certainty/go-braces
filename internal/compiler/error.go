@@ -101,3 +101,8 @@ type CompilerError struct {
 func (e CompilerError) Error() string {
 	return "Compiler error"
 }
+
+// print errors in a nice way
+func PrintCompilerError(err error) {
+	fmt.Printf("Error: %s\n", err.Error())
+}

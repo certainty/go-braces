@@ -31,8 +31,7 @@ func (p *Parser) Parse(input *input.Input) (*DatumAST, []ReadError) {
 	}
 }
 
-func (p *Parser) error(msg string) {
-	pos := p.scanner.Position()
+func (p *Parser) error(msg string, pos Position) {
 	p.errors = append(p.errors, ReadError{Msg: msg, pos: pos})
 }
 
@@ -55,14 +54,16 @@ func (p *Parser) parseAll() []isa.Datum {
 	data := []isa.Datum{}
 
 	for {
+		pos := p.scanner.Position()
+
 		if err := p.scanner.SkipIrrelevant(); err != nil {
-			p.error(err.Error())
+			p.error(err.Error(), pos)
 			return nil
 		}
 
 		datum := p.parseDatum()
 		if datum == nil && !p.scanner.IsEof() {
-			p.error("expected datum")
+			p.error("expected datum", pos)
 			if err := p.recover(); err != nil {
 				return nil
 			}
