@@ -82,6 +82,9 @@ func (p *Parser) parseAll() []isa.Datum {
 func (p *Parser) parseDatum() isa.Datum {
 	p.instrumentation.Breakpoint(compiler_introspection.BPReaderParseDatum, p)
 
+	// the contract for the following parsers is that they only consume input if they match.
+	//If not they have to take care of restoring the scanner's state.
+
 	datum := p.parseBoolean()
 	if datum != nil {
 		return datum

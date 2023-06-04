@@ -49,7 +49,6 @@ func (s *Scanner) ReleaseSavePoint() {
 		return
 	}
 	s.posStack = s.posStack[:len(s.posStack)-1]
-	return
 }
 
 func (s *Scanner) RestorePosition() error {
@@ -142,8 +141,8 @@ func (s *Scanner) skipEOL() (bool, error) {
 }
 
 func (s *Scanner) SkipIrrelevant() error {
-	var accepted bool = false
-	var err error = nil
+	var accepted bool
+	var err error
 
 	for {
 		accepted, err = s.skipWhitespace()

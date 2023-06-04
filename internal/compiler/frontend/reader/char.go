@@ -6,6 +6,7 @@ import (
 )
 
 func (p *Parser) parseChar() isa.Datum {
+	p.scanner.SavePosition()
 	startPos := p.scanner.Position()
 	nextToken, err := p.scanner.PeekN(2)
 	if err != nil {
@@ -15,32 +16,32 @@ func (p *Parser) parseChar() isa.Datum {
 	if nextToken != "#\\" {
 		return nil
 	}
-	p.scanner.Skip()
-	p.scanner.Skip()
+	p.scanner.Skip() // nolint
+	p.scanner.Skip() // nolint
 
 	if char := p.parseHexLiteral(); char != -1 {
+		p.scanner.ReleaseSavePoint()
 		return isa.NewDatumChar(char, p.locationFromPositions(startPos, p.scanner.Position()))
 	} else if char = p.parseNamedCharLiteral(); char != -1 {
+		p.scanner.ReleaseSavePoint()
 		return isa.NewDatumChar(char, p.locationFromPositions(startPos, p.scanner.Position()))
 	} else if char = p.parseCharLiteral(); char != -1 {
+		p.scanner.ReleaseSavePoint()
 		return isa.NewDatumChar(char, p.locationFromPositions(startPos, p.scanner.Position()))
 	}
 
+	p.scanner.RestorePosition()
 	return nil
 }
 
 // parse a sequence of up to 3 bytes hex encoded
 func (p *Parser) parseHexLiteral() rune {
-	p.scanner.SavePosition()
-	defer p.scanner.ReleaseSavePoint()
-
 	if !p.scanner.Attempt("x") {
 		return -1
 	}
 
 	digit := p.parseHexDigit()
 	if digit == -1 {
-		p.scanner.RestorePosition()
 		return -1
 	}
 	return rune(digit)
