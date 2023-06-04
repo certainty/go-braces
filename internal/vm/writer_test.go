@@ -24,6 +24,11 @@ func TestWrite(t *testing.T) {
 			input:    isa.BoolValue(false),
 			expected: "#f",
 		},
+		{
+			name:     "Write #\\c CharValue",
+			input:    isa.CharValue('c'),
+			expected: "#\\c",
+		},
 	}
 
 	emptyStringTable := vm.NewInternedStringTable()

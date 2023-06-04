@@ -44,6 +44,14 @@ func (s *Scanner) SavePosition() error {
 	return nil
 }
 
+func (s *Scanner) ReleaseSavePoint() {
+	if len(s.posStack) == 0 {
+		return
+	}
+	s.posStack = s.posStack[:len(s.posStack)-1]
+	return
+}
+
 func (s *Scanner) RestorePosition() error {
 	if len(s.posStack) == 0 {
 		return io.ErrUnexpectedEOF
@@ -55,23 +63,30 @@ func (s *Scanner) RestorePosition() error {
 }
 
 func (s *Scanner) Peek() (rune, error) {
-	return s.PeekN(1)
+	return s.PeekAt(0)
 }
 
-func (s *Scanner) PeekN(n uint64) (rune, error) {
+func (s *Scanner) PeekAt(n uint64) (rune, error) {
 	if s.pos+n >= s.bufferLen {
 		return 0, io.EOF
 	}
 	return (*s.buffer)[s.pos+n], nil
 }
 
+func (s *Scanner) PeekN(n uint64) (string, error) {
+	if s.pos+n >= s.bufferLen {
+		return "", io.EOF
+	}
+	return string((*s.buffer)[s.pos : s.pos+n]), nil
+}
+
 func (s *Scanner) Next() (rune, error) {
-	s.pos++
 	if s.IsEof() {
 		return 0, io.EOF
 	}
 
 	ch := (*s.buffer)[s.pos]
+	s.pos++
 	if ch == '\n' {
 		s.line++
 		s.col = 0
@@ -88,17 +103,16 @@ func (s *Scanner) Skip() error {
 }
 
 func (s *Scanner) skipWhitespace() (bool, error) {
-	ch, err := s.Peek()
-	if err != nil {
-		return false, err
-	}
-
-	if ch == ' ' || ch == '\t' {
-		if err := s.Skip(); err != nil {
-			return false, err
-		}
+	accepted := s.Attempt(" ")
+	if accepted {
 		return true, nil
 	}
+
+	accepted = s.Attempt("\t")
+	if accepted {
+		return true, nil
+	}
+
 	return false, nil
 }
 
@@ -128,8 +142,11 @@ func (s *Scanner) skipEOL() (bool, error) {
 }
 
 func (s *Scanner) SkipIrrelevant() error {
+	var accepted bool = false
+	var err error = nil
+
 	for {
-		accepted, err := s.skipWhitespace()
+		accepted, err = s.skipWhitespace()
 		if err != nil {
 			return err
 		}
@@ -149,7 +166,6 @@ func (s *Scanner) SkipIrrelevant() error {
 		if err != nil {
 			return err
 		}
-
 		if accepted {
 			continue
 		}
@@ -161,7 +177,6 @@ func (s *Scanner) SkipIrrelevant() error {
 		if accepted {
 			continue
 		}
-
 		break
 	}
 	return nil
@@ -174,7 +189,10 @@ func (s *Scanner) skipMultiLineComment() (bool, error) {
 	}
 
 	if ch == '#' {
-		if err := s.SavePosition(); err != nil {
+		err := s.SavePosition()
+		defer s.ReleaseSavePoint()
+
+		if err != nil {
 			return false, err
 		}
 
@@ -247,6 +265,8 @@ func (s *Scanner) skipSkipLineComment() (bool, error) {
 	return false, nil
 }
 
+// Attempts to consume the input stream with the expected string.
+// If the string matches, the input stream is advanced and true is returned.
 func (s *Scanner) Attempt(expected string) bool {
 	expectedLen := uint64(len(expected))
 
