@@ -9,8 +9,6 @@ import (
 	"github.com/certainty/go-braces/internal/isa"
 )
 
-type ConstantAddress uint64
-
 type CodeUnitBuilder struct {
 	// refine representation of constants later to allow deduplication
 	constants       []isa.Value
@@ -33,9 +31,9 @@ func (c *CodeUnitBuilder) BuildCodeUnit() *isa.CodeUnit {
 	}
 }
 
-func (c *CodeUnitBuilder) AddConstant(constant *isa.Value) ConstantAddress {
+func (c *CodeUnitBuilder) AddConstant(constant *isa.Value) isa.ConstantAddress {
 	c.constants = append(c.constants, *constant)
-	return ConstantAddress(len(c.constants) - 1)
+	return isa.ConstantAddress(len(c.constants) - 1)
 }
 
 func (c *CodeUnitBuilder) AddInstruction(instruction isa.Instruction) {
@@ -52,7 +50,7 @@ type Codegenerator struct {
 func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *Codegenerator {
 	return &Codegenerator{
 		instrumentation:               instrumentation,
-		registerAccu:                  isa.Register(0),
+		registerAccu:                  isa.Register(isa.REG_SP_ACCU),
 		generalPurposeRegisterOffset:  16,
 		currentGeneralPurposeRegister: 16,
 	}
@@ -101,6 +99,10 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 					log.Printf("emitBlock: false")
 					builder.AddInstruction(isa.InstFalse(c.registerAccu))
 				}
+			case isa.CharValue:
+				log.Printf("emitBlock: Constant(char)")
+				address := builder.AddConstant(&value)
+				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
 			default:
 				return fmt.Errorf("unknown constant type: %T", value)
 			}

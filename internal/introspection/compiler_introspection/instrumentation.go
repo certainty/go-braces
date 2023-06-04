@@ -26,6 +26,7 @@ const (
 	BPCompilerBeforeRead BreakpointID = "compiler:before:read"
 	BPCompilerAfterRead  BreakpointID = "compiler:after:read"
 	BPReaderParseDatum   BreakpointID = "reader:parse:datum"
+	BPReaderAccepted     BreakpointID = "reader:accepted:datum"
 
 	BPCompilerBeforeParse BreakpointID = "compiler:before:parse"
 	BPCompilerAfterParse  BreakpointID = "compiler:after:parse"

@@ -7,6 +7,7 @@ type OpCode uint8
 const (
 	OP_TRUE OpCode = iota
 	OP_FALSE
+	OP_CONST
 	OP_HALT
 	OP_RET
 )
@@ -14,6 +15,8 @@ const (
 type Operand interface{}
 
 type Register uint32
+
+type ConstantAddress uint64
 
 type Instruction struct {
 	Opcode   OpCode
@@ -41,4 +44,9 @@ func InstFalse(register Register) Instruction {
 
 func InstHalt(returnValueRegister Register) Instruction {
 	return NewInstruction(OP_HALT, returnValueRegister)
+}
+
+// loads the constant into the given register
+func InstConst(address ConstantAddress, target Register) Instruction {
+	return NewInstruction(OP_CONST, address, target)
 }

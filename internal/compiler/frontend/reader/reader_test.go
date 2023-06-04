@@ -61,24 +61,24 @@ func TestSkipIrrelevantTokens(t *testing.T) {
 	}{
 		{
 			name:     "Skip intraline whitespace",
-			input:    "   \t\t  1",
-			expected: '1',
+			input:    "   \t\t  #t",
+			expected: '#',
 		},
 		{
 			name:     "Skip line endings",
-			input:    "\n\n\r\n1",
+			input:    "\n\n\r\n#t",
+			expected: '#',
+		},
+		{
+			name:     "Skip comments",
+			input:    "; comment line 1\n; comment line 2\n1",
 			expected: '1',
 		},
-		// {
-		// 	name:     "Skip comments",
-		// 	input:    "; comment line 1\n; comment line 2\n1",
-		// 	expected: '1',
-		// },
-		// {
-		// 	name:     "Skip nested comments",
-		// 	input:    "#| comment |# 1",
-		// 	expected: '1',
-		// },
+		{
+			name:     "Skip nested comments",
+			input:    "#| comment |# 1",
+			expected: '1',
+		},
 		{
 			name:     "Skip mixed irrelevant tokens",
 			input:    "  ;comment\n\n\t#| comment |#\n \t 1",
@@ -93,7 +93,7 @@ func TestSkipIrrelevantTokens(t *testing.T) {
 			err := scanner.SkipIrrelevant()
 
 			assert.NoError(t, err)
-			tok, err := scanner.Next()
+			tok, err := scanner.Peek()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, tok)
 		})

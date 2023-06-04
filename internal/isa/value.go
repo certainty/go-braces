@@ -21,6 +21,12 @@ func (b BoolValue) Inspect() string {
 	return "BoolValue"
 }
 
+type CharValue rune
+
+func (v CharValue) Inspect() string {
+	return "CharValue"
+}
+
 type ProcedureValue struct {
 	Code CodeUnit
 	// more to come later: like arity
@@ -40,10 +46,12 @@ func (c *ClosureValue) Inspect() string {
 }
 
 func ValueFromDatum(datum Datum) (Value, error) {
+	// at this point location information is stripped
 	switch datum := datum.(type) {
 	case DatumBool:
-		// at this point location information is stripped
 		return BoolValue(datum.Value), nil
+	case DatumChar:
+		return CharValue(datum.Value), nil
 	default:
 		return nil, fmt.Errorf("Can't convert datum to value")
 	}

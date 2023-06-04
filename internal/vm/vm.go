@@ -6,20 +6,13 @@ import (
 	"log"
 )
 
-const (
-	REG_GP_COUNT = 256
-	REG_SP_COUNT = 16
-	REG_SP_HALT  = 0
-	REG_SP_ACCU  = 1
-)
-
 type VmOptions struct {
 	instrumentation vm_introspection.Instrumentation
 }
 
 type VM struct {
 	instrumentation vm_introspection.Instrumentation
-	registers       [REG_SP_COUNT + REG_GP_COUNT]isa.Value
+	registers       [isa.REG_SP_COUNT + isa.REG_GP_COUNT]isa.Value
 	writer          *Writer
 	// read only reference
 	internedStrings *InternedStringTable
@@ -69,16 +62,31 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		log.Printf("Executing instruction %s", instr)
 		switch instr.Opcode {
 		case isa.OP_TRUE:
-			vm.registers[REG_SP_ACCU] = isa.BoolValue(true)
+			register := instr.Operands[0].(isa.Register)
+			vm.registers[register] = isa.BoolValue(true)
 		case isa.OP_FALSE:
-			vm.registers[REG_SP_ACCU] = isa.BoolValue(false)
+			register := instr.Operands[0].(isa.Register)
+			vm.registers[register] = isa.BoolValue(false)
+		case isa.OP_CONST:
+			address := instr.Operands[0].(isa.ConstantAddress)
+			register := instr.Operands[1].(isa.Register)
+			value, err := vm.code.ReadConstant(address)
+			if err != nil {
+				vm.panic("invalid constant")
+			}
+			vm.registers[register] = value
 		case isa.OP_HALT:
-			vm.registers[REG_SP_HALT] = vm.registers[REG_SP_ACCU]
-			return vm.registers[REG_SP_HALT], nil
+			vm.registers[isa.REG_SP_HALT] = vm.registers[isa.REG_SP_ACCU]
+			return vm.registers[isa.REG_SP_HALT], nil
 		default:
 			panic("unimplemented opcode")
 		}
 	}
 
-	return vm.registers[REG_SP_HALT], nil
+	return vm.registers[isa.REG_SP_HALT], nil
+}
+
+func (vm *VM) panic(message string) {
+	// just panic for now
+	panic(message)
 }

@@ -69,6 +69,7 @@ func (p *Parser) parseAll() []isa.Datum {
 		}
 
 		if datum != nil {
+			p.instrumentation.Breakpoint(compiler_introspection.BPReaderAccepted, p)
 			data = append(data, datum)
 		}
 
@@ -80,28 +81,18 @@ func (p *Parser) parseAll() []isa.Datum {
 
 func (p *Parser) parseDatum() isa.Datum {
 	p.instrumentation.Breakpoint(compiler_introspection.BPReaderParseDatum, p)
-	return p.parseBoolean()
-}
 
-func (p *Parser) parseBoolean() isa.Datum {
-	matched := false
-	var value bool
+	// the contract for the following parsers is that they only consume input if they match.
+	//If not they have to take care of restoring the scanner's state.
 
-	prevPos := p.scanner.Position().Offset
-
-	if p.scanner.Attempt("#true") || p.scanner.Attempt("#t") {
-		matched = true
-		value = true
+	datum := p.parseBoolean()
+	if datum != nil {
+		return datum
 	}
 
-	if p.scanner.Attempt("#false") || p.scanner.Attempt("#f") {
-		matched = true
-		value = false
-	}
-
-	if matched {
-		pos := p.scanner.Position()
-		return isa.NewDatumBool(value, p.makeLocation(pos.Line, prevPos, pos.Offset))
+	datum = p.parseChar()
+	if datum != nil {
+		return datum
 	}
 
 	return nil
@@ -114,4 +105,8 @@ func (p *Parser) makeLocation(line, start, end uint64) location.Location {
 		StartOffset: start,
 		EndOffset:   end,
 	}
+}
+
+func (p *Parser) locationFromPositions(start Position, end Position) location.Location {
+	return p.makeLocation(start.Line, start.Offset, end.Offset)
 }

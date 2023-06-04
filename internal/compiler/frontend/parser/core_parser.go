@@ -20,9 +20,9 @@ func (p *CoreParser) Parse(data isa.Datum) (SchemeExpression, error) {
 func (p *CoreParser) parseLiteral(data isa.Datum) (SchemeExpression, error) {
 	switch datum := data.(type) {
 	case isa.DatumBool:
-		{
-			return LiteralExpression{Datum: datum}, nil
-		}
+		return LiteralExpression{Datum: datum}, nil
+	case isa.DatumChar:
+		return LiteralExpression{Datum: datum}, nil
 	default:
 		return nil, nil
 	}
