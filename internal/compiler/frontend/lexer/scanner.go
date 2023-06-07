@@ -147,13 +147,16 @@ func (s *Scanner) scanString() (Token, error) {
 		if s.isEof() {
 			return s.unterminatedLiteralError()
 		}
+
 		if s.peek() == '"' {
 			s.advance()
 			break
 		}
+
 		if s.peek() == '\n' {
 			s.line++
 		}
+
 		s.advance()
 	}
 	return s.makeToken(TOKEN_STRING), nil
@@ -161,17 +164,23 @@ func (s *Scanner) scanString() (Token, error) {
 
 // TODO: add support for unicode escapes \uXXXX
 func (s *Scanner) scanChar() (Token, error) {
-	for !s.isEof() && s.peek() != '\'' {
+	for {
+		if s.isEof() {
+			return s.unterminatedLiteralError()
+		}
+
+		if s.peek() == '\'' {
+			s.advance()
+			break
+		}
+
 		if s.peek() == '\n' {
 			s.line++
 		}
+
 		s.advance()
 	}
-	if s.isEof() {
-		return s.unterminatedLiteralError()
-	}
-	// consume closing single quote
-	s.advance()
+
 	return s.makeToken(TOKEN_CHARACTER), nil
 }
 
