@@ -143,24 +143,26 @@ func (s *Scanner) NextToken() (Token, error) {
 
 // TODO: add support for escaped quaracters
 func (s *Scanner) scanString() (Token, error) {
-	for !s.isEof() && s.peek(0) != '"' {
-		if s.peek(0) == '\n' {
+	for {
+		if s.isEof() {
+			return s.unterminatedLiteralError()
+		}
+		if s.peek() == '"' {
+			s.advance()
+			break
+		}
+		if s.peek() == '\n' {
 			s.line++
 		}
 		s.advance()
 	}
-	if s.isEof() {
-		return s.unterminatedLiteralError()
-	}
-	// consume closing quote
-	s.advance()
 	return s.makeToken(TOKEN_STRING), nil
 }
 
 // TODO: add support for unicode escapes \uXXXX
 func (s *Scanner) scanChar() (Token, error) {
-	for !s.isEof() && s.peek(0) != '\'' {
-		if s.peek(0) == '\n' {
+	for !s.isEof() && s.peek() != '\'' {
+		if s.peek() == '\n' {
 			s.line++
 		}
 		s.advance()
@@ -176,13 +178,13 @@ func (s *Scanner) scanChar() (Token, error) {
 // TODO: add support for scientific notation and literals for binary, octal and hex notation
 // See also scheme's number literals
 func (s *Scanner) scanNumber() (Token, error) {
-	for !s.isEof() && unicode.IsDigit(s.peek(0)) {
+	for !s.isEof() && unicode.IsDigit(s.peek()) {
 		s.advance()
 	}
-	if s.peek(0) == '.' && unicode.IsDigit(s.peek(1)) {
+	if s.peek() == '.' && unicode.IsDigit(s.peekN(1)) {
 		// consume the '.'
 		s.advance()
-		for !s.isEof() && unicode.IsDigit(s.peek(0)) {
+		for !s.isEof() && unicode.IsDigit(s.peek()) {
 			s.advance()
 		}
 	}
@@ -190,7 +192,7 @@ func (s *Scanner) scanNumber() (Token, error) {
 }
 
 func (s *Scanner) scanIdentifier() (Token, error) {
-	for !s.isEof() && (unicode.IsLetter(s.peek(0)) || unicode.IsDigit(s.peek(0)) || s.peek(0) == '_' || s.peek(0) == '\'') {
+	for !s.isEof() && (unicode.IsLetter(s.peek()) || unicode.IsDigit(s.peek()) || s.peek() == '_' || s.peek() == '\'') {
 		s.advance()
 	}
 	return s.makeToken(s.identifierType()), nil
@@ -297,15 +299,15 @@ func (s *Scanner) match(expected rune) bool {
 
 func (s *Scanner) skipWhitespace() {
 	for !s.isEof() {
-		switch s.peek(0) {
+		switch s.peek() {
 		case ' ', '\r', '\t':
 			s.advance()
 		case '\n':
 			s.advance()
 			s.line++
 		case '/':
-			if s.peek(1) == '/' {
-				for !s.isEof() && s.peek(0) != '\n' {
+			if s.peekN(1) == '/' {
+				for !s.isEof() && s.peek() != '\n' {
 					s.advance()
 				}
 			} else {
@@ -317,7 +319,11 @@ func (s *Scanner) skipWhitespace() {
 	}
 }
 
-func (s *Scanner) peek(offset uint64) rune {
+func (s Scanner) peek() rune {
+	return s.peekN(0)
+}
+
+func (s *Scanner) peekN(offset uint64) rune {
 	nextCursor := s.cursor + offset
 
 	if s.isEof() || nextCursor >= uint64(len(*s.buffer)) {
