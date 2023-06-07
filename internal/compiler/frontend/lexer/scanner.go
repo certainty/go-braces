@@ -56,6 +56,9 @@ func (s *Scanner) NextToken() (Token, error) {
 
 	next := s.advance()
 
+	if unicode.IsLetter(next) || next == '_' {
+		return s.scanIdentifier()
+	}
 	if unicode.IsDigit(next) {
 		return s.scanNumber()
 	}
@@ -186,6 +189,91 @@ func (s *Scanner) scanNumber() (Token, error) {
 	return s.makeToken(TOKEN_NUMBER), nil
 }
 
+func (s *Scanner) scanIdentifier() (Token, error) {
+	for !s.isEof() && (unicode.IsLetter(s.peek(0)) || unicode.IsDigit(s.peek(0)) || s.peek(0) == '_' || s.peek(0) == '\'') {
+		s.advance()
+	}
+	return s.makeToken(s.identifierType()), nil
+}
+
+func (s *Scanner) identifierType() TokenType {
+	switch (*s.buffer)[s.start] {
+	case 'd':
+		return s.checkKeyword(1, 4, "efer", TOKEN_DEFER)
+	case 'e':
+		if s.cursor-s.start > 1 {
+			switch (*s.buffer)[s.start+1] {
+			case 'x':
+				// export
+				return s.checkKeyword(2, 4, "port", TOKEN_EXPORT)
+			case 'l':
+				// else
+				return s.checkKeyword(2, 2, "se", TOKEN_ELSE)
+			}
+		}
+	case 'p':
+		if s.cursor-s.start > 1 {
+			switch (*s.buffer)[s.start+1] {
+			case 'a':
+				// package
+				return s.checkKeyword(2, 5, "ckage", TOKEN_PACKAGE)
+			case 'r':
+				// proc
+				return s.checkKeyword(2, 2, "oc", TOKEN_PROC)
+			}
+		}
+	case 'f':
+		if s.cursor-s.start > 1 {
+			switch (*s.buffer)[s.start+1] {
+			case 'a':
+				// false
+				return s.checkKeyword(2, 3, "lse", TOKEN_FALSE)
+			case 'u':
+				// fun
+				return s.checkKeyword(2, 1, "n", TOKEN_FUN)
+			case 'o':
+				// for
+				return s.checkKeyword(2, 1, "r", TOKEN_FOR)
+			}
+		}
+	case 't':
+		return s.checkKeyword(1, 3, "rue", TOKEN_TRUE)
+	case 'i':
+		if s.cursor-s.start > 1 {
+			switch (*s.buffer)[s.start+1] {
+			case 'f':
+				// if
+				return s.checkKeyword(2, 0, "", TOKEN_IF)
+			case 'm':
+				// import
+				return s.checkKeyword(2, 4, "port", TOKEN_IMPORT)
+			default:
+				fmt.Printf("handling %v", (*s.buffer)[s.start+1])
+			}
+		}
+	case 'l':
+		return s.checkKeyword(1, 2, "et", TOKEN_LET)
+	case 'm':
+		return s.checkKeyword(1, 4, "atch", TOKEN_MATCH)
+	case 'o':
+		return s.checkKeyword(1, 8, "therwise", TOKEN_OTHERWISE)
+	case 'r':
+		return s.checkKeyword(1, 5, "eturn", TOKEN_RETURN)
+	case 'v':
+		return s.checkKeyword(1, 2, "ar", TOKEN_VAR)
+	}
+	return TOKEN_IDENTIFIER
+}
+
+func (s *Scanner) checkKeyword(start uint64, length uint64, rest string, tokenType TokenType) TokenType {
+	if s.cursor-s.start == start+length {
+		if string((*s.buffer)[s.start+start:s.start+start+length]) == rest {
+			return tokenType
+		}
+	}
+	return TOKEN_IDENTIFIER
+}
+
 func (s *Scanner) isEof() bool {
 	return s.cursor >= uint64(len(*s.buffer))
 }
@@ -230,10 +318,12 @@ func (s *Scanner) skipWhitespace() {
 }
 
 func (s *Scanner) peek(offset uint64) rune {
-	if s.isEof() {
+	nextCursor := s.cursor + offset
+
+	if s.isEof() || nextCursor >= uint64(len(*s.buffer)) {
 		return 0
 	}
-	return (*s.buffer)[s.cursor+offset]
+	return (*s.buffer)[nextCursor]
 }
 
 func (s *Scanner) location() location.Location {

@@ -112,6 +112,92 @@ func TestScanner(t *testing.T) {
 			expectedType: lexer.TOKEN_CHARACTER,
 			expectedText: "'a'",
 		},
+		// keywords
+		{
+			input:        "defer",
+			expectedType: lexer.TOKEN_DEFER,
+			expectedText: "defer",
+		},
+		{
+			input:        "true",
+			expectedType: lexer.TOKEN_TRUE,
+			expectedText: "true",
+		},
+		{
+			input:        "false",
+			expectedType: lexer.TOKEN_FALSE,
+			expectedText: "false",
+		},
+		{
+			input:        "otherwise",
+			expectedType: lexer.TOKEN_OTHERWISE,
+			expectedText: "otherwise",
+		},
+		{
+			input:        "for",
+			expectedType: lexer.TOKEN_FOR,
+			expectedText: "for",
+		},
+		{
+			input:        "return",
+			expectedType: lexer.TOKEN_RETURN,
+			expectedText: "return",
+		},
+		{
+			input:        "proc",
+			expectedType: lexer.TOKEN_PROC,
+			expectedText: "proc",
+		},
+		{
+			input:        "if",
+			expectedType: lexer.TOKEN_IF,
+			expectedText: "if",
+		},
+		{
+			input:        "else",
+			expectedType: lexer.TOKEN_ELSE,
+			expectedText: "else",
+		},
+		{
+			input:        "var",
+			expectedType: lexer.TOKEN_VAR,
+			expectedText: "var",
+		},
+		{
+			input:        "let",
+			expectedType: lexer.TOKEN_LET,
+			expectedText: "let",
+		},
+		{
+			input:        "export",
+			expectedType: lexer.TOKEN_EXPORT,
+			expectedText: "export",
+		},
+		{
+			input:        "import",
+			expectedType: lexer.TOKEN_IMPORT,
+			expectedText: "import",
+		},
+		{
+			input:        "someIdentifier",
+			expectedType: lexer.TOKEN_IDENTIFIER,
+			expectedText: "someIdentifier",
+		},
+		{
+			input:        "someIdent3_3_3_ifier",
+			expectedType: lexer.TOKEN_IDENTIFIER,
+			expectedText: "someIdent3_3_3_ifier",
+		},
+		{
+			input:        "foo'",
+			expectedType: lexer.TOKEN_IDENTIFIER,
+			expectedText: "foo'",
+		},
+		{
+			input:        "_",
+			expectedType: lexer.TOKEN_IDENTIFIER,
+			expectedText: "_",
+		},
 	}
 
 	for _, tc := range testCases {
