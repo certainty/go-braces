@@ -1,0 +1,82 @@
+package lexer
+
+import "github.com/certainty/go-braces/internal/compiler/location"
+
+type TokenType uint8
+type Token struct {
+	Type     TokenType
+	Text     []rune
+	Location location.Location
+}
+
+const (
+	TOKEN_EOF TokenType = iota
+	TOKEN_ERROR
+
+	// single char tokens
+	TOKEN_LPAREN
+	TOKEN_RPAREN
+	TOKEN_LBRACE
+	TOKEN_RBRACE
+	TOKEN_LBRACKET
+	TOKEN_RBRACKET
+	TOKEN_COMMA
+	TOKEN_PLUS
+	TOKEN_MINUS
+	TOKEN_STAR
+	TOKEN_SLASH
+	TOKEN_QUESTION_MARK
+	TOKEN_COLON
+
+	// one or two
+	TOKEN_EQUAL
+	TOKEN_EQUAL_EQUAL
+	TOKEN_BANG
+	TOKEN_BANG_EQUAL
+	TOKEN_GT
+	TOKEN_GT_EQUAL
+	TOKEN_LT
+	TOKEN_LT_EQUAL
+	TOKEN_AMPERSAND
+	TOKEN_AMPERSAND_AMPERSAND
+	TOKEN_PIPE
+	TOKEN_PIPE_PIPE
+	TOKEN_COLON_COLON
+
+	// literal
+	TOKEN_IDENTIFIER
+	TOKEN_STRING
+	TOKEN_NUMBER
+	TOKEN_BOOLEAN
+	TOKEN_CHARACTER
+	TOKEN_SYMBOL
+
+	// keywords
+	TOKEN_FUN
+	TOKEN_PROC
+	TOKEN_PACKAGE
+	TOKEN_IMPORT
+	TOKEN_EXPORT
+
+	TOKEN_IF
+	TOKEN_ELSE
+	TOKEN_LET
+	TOKEN_VAR
+	TOKEN_RETURN
+
+	TOKEN_MATCH
+	TOKEN_CASE
+	TOKEN_DEFAULT
+
+	TOKEN_FOR
+	TOKEN_DEFER
+
+	TOKEN_ELIPSIS
+
+	TOKEN_TRUE
+	TOKEN_FALSE
+)
+
+func MakeToken(tokenType TokenType, text []rune, location location.Location) Token {
+	return Token{Type: tokenType, Text: text, Location: location}
+}

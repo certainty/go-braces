@@ -15,6 +15,10 @@ type StringOrigin struct {
 	Label string
 }
 
+func NewStringOrigin(label string) StringOrigin {
+	return StringOrigin{Label: label}
+}
+
 type ReplOrigin struct {
 	InputCount uint64
 }
