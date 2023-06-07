@@ -84,6 +84,34 @@ func TestScanner(t *testing.T) {
 			expectedType: lexer.TOKEN_GT_EQUAL,
 			expectedText: ">=",
 		},
+
+		// numbers
+		{
+
+			input:        "35",
+			expectedType: lexer.TOKEN_NUMBER,
+			expectedText: "35",
+		},
+		{
+
+			input:        "35.34",
+			expectedType: lexer.TOKEN_NUMBER,
+			expectedText: "35.34",
+		},
+		// strings
+		{
+
+			input:        "\"hello world\"",
+			expectedType: lexer.TOKEN_STRING,
+			expectedText: "\"hello world\"",
+		},
+
+		// chars
+		{
+			input:        "'a'",
+			expectedType: lexer.TOKEN_CHARACTER,
+			expectedText: "'a'",
+		},
 	}
 
 	for _, tc := range testCases {

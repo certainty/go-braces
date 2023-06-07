@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+	"unicode"
 
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
@@ -12,6 +13,14 @@ type UnknownTokenError struct {
 
 func (m UnknownTokenError) Error() string {
 	return fmt.Sprintf("Unknown token at %v", m.location)
+}
+
+type UnterminatedLiteralError struct {
+	location location.Location
+}
+
+func (m UnterminatedLiteralError) Error() string {
+	return fmt.Sprintf("Unterminated literal at %v", m.location)
 }
 
 type Scanner struct {
@@ -46,6 +55,11 @@ func (s *Scanner) NextToken() (Token, error) {
 	}
 
 	next := s.advance()
+
+	if unicode.IsDigit(next) {
+		return s.scanNumber()
+	}
+
 	switch next {
 	case '{':
 		return s.makeToken(TOKEN_LBRACE), nil
@@ -71,6 +85,8 @@ func (s *Scanner) NextToken() (Token, error) {
 		return s.makeToken(TOKEN_SLASH), nil
 	case '?':
 		return s.makeToken(TOKEN_QUESTION_MARK), nil
+
+		// multi char tokens
 	case ':':
 		if s.match(':') {
 			return s.makeToken(TOKEN_COLON_COLON), nil
@@ -113,8 +129,61 @@ func (s *Scanner) NextToken() (Token, error) {
 		} else {
 			return s.makeToken(TOKEN_PIPE), nil
 		}
+	// literals
+	case '"':
+		return s.scanString()
+	case '\'':
+		return s.scanChar()
 	}
 	return s.unknownTokenError()
+}
+
+// TODO: add support for escaped quaracters
+func (s *Scanner) scanString() (Token, error) {
+	for !s.isEof() && s.peek(0) != '"' {
+		if s.peek(0) == '\n' {
+			s.line++
+		}
+		s.advance()
+	}
+	if s.isEof() {
+		return s.unterminatedLiteralError()
+	}
+	// consume closing quote
+	s.advance()
+	return s.makeToken(TOKEN_STRING), nil
+}
+
+// TODO: add support for unicode escapes \uXXXX
+func (s *Scanner) scanChar() (Token, error) {
+	for !s.isEof() && s.peek(0) != '\'' {
+		if s.peek(0) == '\n' {
+			s.line++
+		}
+		s.advance()
+	}
+	if s.isEof() {
+		return s.unterminatedLiteralError()
+	}
+	// consume closing single quote
+	s.advance()
+	return s.makeToken(TOKEN_CHARACTER), nil
+}
+
+// TODO: add support for scientific notation and literals for binary, octal and hex notation
+// See also scheme's number literals
+func (s *Scanner) scanNumber() (Token, error) {
+	for !s.isEof() && unicode.IsDigit(s.peek(0)) {
+		s.advance()
+	}
+	if s.peek(0) == '.' && unicode.IsDigit(s.peek(1)) {
+		// consume the '.'
+		s.advance()
+		for !s.isEof() && unicode.IsDigit(s.peek(0)) {
+			s.advance()
+		}
+	}
+	return s.makeToken(TOKEN_NUMBER), nil
 }
 
 func (s *Scanner) isEof() bool {
@@ -176,6 +245,11 @@ func (s *Scanner) makeToken(tokenType TokenType) Token {
 	text := (*s.buffer)[s.start:s.cursor]
 	return MakeToken(tokenType, text, loc)
 }
+
 func (s *Scanner) unknownTokenError() (Token, error) {
 	return Token{}, UnknownTokenError{location: s.location()}
+}
+
+func (s *Scanner) unterminatedLiteralError() (Token, error) {
+	return Token{}, UnterminatedLiteralError{location: s.location()}
 }
