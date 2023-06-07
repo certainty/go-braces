@@ -149,11 +149,12 @@ func (s *Scanner) scanString() (Token, error) {
 		} else if s.match('\n') {
 			s.line++
 		} else if s.match('"') {
-			return s.makeToken(TOKEN_STRING), nil
+			break
 		} else {
 			s.advance()
 		}
 	}
+	return s.makeToken(TOKEN_STRING), nil
 }
 
 // TODO: add support for unicode escapes \uXXXX
@@ -162,13 +163,15 @@ func (s *Scanner) scanChar() (Token, error) {
 		if s.isEof() {
 			return s.unterminatedLiteralError()
 		} else if s.match('\'') {
-			return s.makeToken(TOKEN_CHARACTER), nil
+			break
 		} else if s.match('\n') {
 			s.line++
 		} else {
 			s.advance()
 		}
 	}
+
+	return s.makeToken(TOKEN_CHARACTER), nil
 }
 
 // TODO: add support for scientific notation and literals for binary, octal and hex notation
