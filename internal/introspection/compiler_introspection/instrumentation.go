@@ -16,6 +16,7 @@ const (
 	CompilationPhaseRead      CompilationPhase = "read"
 	CompilationPhaseParse     CompilationPhase = "parse"
 	CompilationPhaseTypeCheck CompilationPhase = "typecheck"
+	CompilationPhaseLowerToIR CompilationPhase = "lowertoir"
 	CompilationPhaseOptimize  CompilationPhase = "optimize"
 	CompilationPhaseCodegen   CompilationPhase = "codegen"
 )
@@ -23,10 +24,10 @@ const (
 type BreakpointID string
 
 const (
-	BPCompilerBeforeRead BreakpointID = "compiler:before:read"
-	BPCompilerAfterRead  BreakpointID = "compiler:after:read"
-	BPReaderParseDatum   BreakpointID = "reader:parse:datum"
-	BPReaderAccepted     BreakpointID = "reader:accepted:datum"
+	BPCompilerBeforeLex BreakpointID = "compiler:before:lex"
+	BPCompilerAfterLex  BreakpointID = "compiler:after:lex"
+	BPReaderParseDatum  BreakpointID = "lexer:parse"
+	BPReaderAccepted    BreakpointID = "lexer:accepted"
 
 	BPCompilerBeforeParse BreakpointID = "compiler:before:parse"
 	BPCompilerAfterParse  BreakpointID = "compiler:after:parse"

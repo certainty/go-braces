@@ -2,20 +2,20 @@ package parser
 
 import "fmt"
 
-type CoreAST struct {
-	Expressions []SchemeExpression
+type AST struct {
+	Expressions []Expression
 }
 
-func NewCoreAST() *CoreAST {
-	return &CoreAST{
-		Expressions: []SchemeExpression{},
+func New() *AST {
+	return &AST{
+		Expressions: []Expression{},
 	}
 }
 
-func (ast *CoreAST) String() string {
+func (ast *AST) String() string {
 	return fmt.Sprintf("CoreAST %s ", ast.Expressions)
 }
 
-func (ast *CoreAST) AddExpression(expression SchemeExpression) {
+func (ast *AST) AddExpression(expression Expression) {
 	ast.Expressions = append(ast.Expressions, expression)
 }

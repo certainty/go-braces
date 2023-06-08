@@ -64,20 +64,16 @@ func (ir *IR) AddBlock(name string) *IRBlock {
 	return block
 }
 
-func LowerToIR(coreAst *parser.CoreAST) (*IR, error) {
+func LowerToIR(ast *parser.AST) (*IR, error) {
 	var ir IR = NewIR()
 	var currentBlock *IRBlock = ir.AddBlock("entry")
 
-	log.Printf("lowering %v", coreAst)
+	log.Printf("lowering %v", ast)
 
-	for _, expression := range coreAst.Expressions {
+	for _, expression := range ast.Expressions {
 		switch exp := expression.(type) {
 		case parser.LiteralExpression:
-			value, err := isa.ValueFromDatum(exp.Datum)
-			if err != nil {
-				return nil, fmt.Errorf("could not convert literal to value: %w", err)
-			}
-			currentBlock.AddInstruction(NewConstant(value))
+			currentBlock.AddInstruction(NewConstant(exp.Value))
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", expression)
 		}

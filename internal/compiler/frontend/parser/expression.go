@@ -2,22 +2,24 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
-type SchemeExpression interface {
+type Expression interface {
 	Location() location.Location
 }
 
 type LiteralExpression struct {
-	Datum isa.Datum
+	Value    isa.Value
+	location location.Location
 }
 
 func (l LiteralExpression) String() string {
-	return fmt.Sprintf("Lit{ %s }[%d:%d]", l.Datum, l.Location().Line, l.Location().StartOffset)
+	return fmt.Sprintf("Lit{ %s }[%d:%d]", l.Value, l.Location().Line, l.Location().StartOffset)
 }
 
 func (l LiteralExpression) Location() location.Location {
-	return l.Datum.Location()
+	return l.location
 }

@@ -1,0 +1,51 @@
+package example
+
+// reference types and value types
+// pass by reference
+// strict applicative order evaluation
+
+// structs
+data myStruct {
+  fieldOne Int
+  fieldTwo Int 
+}
+
+// enum
+data MyEnum [
+   Foo, 
+   Bar,
+   Baz
+]
+
+let a_set    {1,3,4}
+let an_array [1,2,3] // dynamically sized
+let a_map    1 -> 2, 3 -> 4 
+let a_tuple  (1, 3, 4)
+
+// pattern match in single and multiline
+match (a, b) x // fails when the pattern doesn't match
+match x { 
+  Ok(3): 4
+  _:  3
+}
+
+let x 3 // binds or rebinds x
+set x 4 // sets the place x to 4 - only allowed in mutable scope
+
+// pure function must not have side-effects
+// may have mutable state inside but no mutation is observable outside
+fun pureOne(x Int, y Int) Int {
+  x + y
+}
+
+// pipes
+3 |> pureOne(3) 
+
+// proc may have side-effects
+proc DoThings() {
+  print("%v", pureOne(3, 4))
+}
+
+proc main() {
+  DoThings()
+}

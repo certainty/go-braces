@@ -13,7 +13,7 @@ func NewTypeChecker(Instrumentation compiler_introspection.Instrumentation) *Typ
 	return &TypeChecker{instrumentation: Instrumentation}
 }
 
-func (t *TypeChecker) Check(ast *parser.CoreAST) error {
+func (t *TypeChecker) Check(ast *parser.AST) error {
 	t.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer t.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 

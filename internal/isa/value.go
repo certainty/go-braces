@@ -1,9 +1,5 @@
 package isa
 
-import (
-	"fmt"
-)
-
 // Values are not actullay part of the ISA normally
 // and this file will go away eventually, but in the
 // beginning it's very helpful to take some shortcuts
@@ -43,16 +39,4 @@ type ClosureValue struct {
 
 func (c *ClosureValue) Inspect() string {
 	return "ClosureValue"
-}
-
-func ValueFromDatum(datum Datum) (Value, error) {
-	// at this point location information is stripped
-	switch datum := datum.(type) {
-	case DatumBool:
-		return BoolValue(datum.Value), nil
-	case DatumChar:
-		return CharValue(datum.Value), nil
-	default:
-		return nil, fmt.Errorf("Can't convert datum to value")
-	}
 }

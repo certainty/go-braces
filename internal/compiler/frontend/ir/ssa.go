@@ -16,6 +16,6 @@ func NewSSATransformer(instrumentation compiler_introspection.Instrumentation) *
 	return &SSATransformer{instrumentation: instrumentation}
 }
 
-func (c *SSATransformer) Transform(coreAst *parser.CoreAST) (*SSA, error) {
+func (c *SSATransformer) Transform(coreAst *parser.AST) (*SSA, error) {
 	return nil, nil
 }
