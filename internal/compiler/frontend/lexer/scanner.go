@@ -2,6 +2,8 @@ package lexer
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"unicode"
 
 	"github.com/certainty/go-braces/internal/compiler/location"
@@ -21,6 +23,22 @@ type UnterminatedLiteralError struct {
 
 func (m UnterminatedLiteralError) Error() string {
 	return fmt.Sprintf("Unterminated literal at %v", m.location)
+}
+
+type InvalidCharacterLiteralError struct {
+	location location.Location
+}
+
+func (m InvalidCharacterLiteralError) Error() string {
+	return fmt.Sprintf("Invalid character literal at %v", m.location)
+}
+
+type InvalidNumberLiteralError struct {
+	location location.Location
+}
+
+func (m InvalidNumberLiteralError) Error() string {
+	return fmt.Sprintf("Invalid number literal at %v", m.location)
 }
 
 type Scanner struct {
@@ -54,15 +72,15 @@ func (s *Scanner) NextToken() (Token, error) {
 		return s.makeToken(TOKEN_EOF), nil
 	}
 
-	next := s.advance()
-
+	next := s.peek()
 	if unicode.IsLetter(next) || next == '_' {
 		return s.scanIdentifier()
 	}
-	if unicode.IsDigit(next) {
+	if unicode.IsDigit(next) || (next == '#' && s.peekN(1) != '\\') {
 		return s.scanNumber()
 	}
 
+	next = s.advance()
 	switch next {
 	case '{':
 		return s.makeToken(TOKEN_LBRACE), nil
@@ -81,6 +99,9 @@ func (s *Scanner) NextToken() (Token, error) {
 	case '+':
 		return s.makeToken(TOKEN_PLUS), nil
 	case '-':
+		if s.match('>') {
+			return s.makeToken(TOKEN_ARROW), nil
+		}
 		return s.makeToken(TOKEN_MINUS), nil
 	case '*':
 		return s.makeToken(TOKEN_STAR), nil
@@ -88,8 +109,12 @@ func (s *Scanner) NextToken() (Token, error) {
 		return s.makeToken(TOKEN_SLASH), nil
 	case '?':
 		return s.makeToken(TOKEN_QUESTION_MARK), nil
+	case '#':
+		if s.match('\\') {
+			return s.scanChar()
+		}
 
-		// multi char tokens
+	// multi char tokens
 	case ':':
 		if s.match(':') {
 			return s.makeToken(TOKEN_COLON_COLON), nil
@@ -129,14 +154,14 @@ func (s *Scanner) NextToken() (Token, error) {
 	case '|':
 		if s.match('|') {
 			return s.makeToken(TOKEN_PIPE_PIPE), nil
+		} else if s.match('>') {
+			return s.makeToken(TOKEN_PIPE_GT), nil
 		} else {
 			return s.makeToken(TOKEN_PIPE), nil
 		}
 	// literals
 	case '"':
 		return s.scanString()
-	case '\'':
-		return s.scanChar()
 	}
 	return s.unknownTokenError()
 }
@@ -149,127 +174,175 @@ func (s *Scanner) scanString() (Token, error) {
 		} else if s.match('\n') {
 			s.line++
 		} else if s.match('"') {
-			return s.makeToken(TOKEN_STRING), nil
+			value := strings.Trim(string(s.tokenText()), "\"")
+			return s.makeTokenWithValue(TOKEN_STRING, value), nil
 		} else {
 			s.advance()
 		}
 	}
 }
 
-// TODO: add support for unicode escapes \uXXXX
+var (
+	namedChars = map[string]rune{
+		"newline":   '\n',
+		"space":     ' ',
+		"tab":       '\t',
+		"backspace": '\b',
+		"null":      '\000',
+		"return":    '\r',
+		"escape":    '\033',
+		"delete":    '\177',
+	}
+)
+
 func (s *Scanner) scanChar() (Token, error) {
-	for {
-		if s.isEof() {
-			return s.unterminatedLiteralError()
-		} else if s.match('\'') {
-			return s.makeToken(TOKEN_CHARACTER), nil
-		} else if s.match('\n') {
-			s.line++
-		} else {
-			s.advance()
+	if s.isEof() {
+		return s.unterminatedLiteralError()
+	}
+
+	for name, char := range namedChars {
+		if s.matchString(name) {
+			return s.makeTokenWithValue(TOKEN_CHARACTER, char), nil
 		}
+	}
+
+	next := s.advance()
+	if next == 'u' && unicode.IsDigit(s.peek()) {
+		return s.scanCharUnicodeEscape()
+	} else if next == 'x' && isHexCharacter(s.peek()) {
+		return s.scanCharHexEscape()
+	} else if unicode.IsPrint(next) {
+		return s.makeTokenWithValue(TOKEN_CHARACTER, next), nil
+	} else {
+		return s.invalidCharacterLiteral()
 	}
 }
 
-// TODO: add support for scientific notation and literals for binary, octal and hex notation
-// See also scheme's number literals
+func isHexCharacter(c rune) bool {
+	return unicode.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+}
+
+func (s *Scanner) scanCharUnicodeEscape() (Token, error) {
+	// exactly 4 digits (leading zeros are expected)
+	for i := 0; i < 4; i++ {
+		if s.isEof() {
+			return s.invalidCharacterLiteral()
+		} else if !unicode.IsDigit(s.peek()) {
+			return s.invalidCharacterLiteral()
+		}
+		s.advance()
+	}
+
+	text := strings.Trim(string(s.tokenText()[3:]), "0") // remove leading zeros
+	value, err := strconv.ParseInt(text, 10, 32)
+	if err != nil {
+		return s.invalidCharacterLiteral()
+	}
+	return s.makeTokenWithValue(TOKEN_CHARACTER, rune(value)), nil
+}
+
+func (s *Scanner) scanCharHexEscape() (Token, error) {
+	// exactly 3 bytes hex encoded, so six chars
+	for i := 0; i < 6; i++ {
+		if s.isEof() {
+			return s.invalidCharacterLiteral()
+		} else if !isHexCharacter(s.peek()) {
+			return s.invalidCharacterLiteral()
+		}
+		s.advance()
+	}
+
+	text := string(s.tokenText()[3:])
+	value, err := strconv.ParseInt(text, 16, 32)
+	if err != nil {
+		return s.invalidCharacterLiteral()
+	}
+	return s.makeTokenWithValue(TOKEN_CHARACTER, rune(value)), nil
+}
+
 func (s *Scanner) scanNumber() (Token, error) {
 	for !s.isEof() && unicode.IsDigit(s.peek()) {
 		s.advance()
 	}
+
+	// dot followed by digit?
 	if s.peek() == '.' && unicode.IsDigit(s.peekN(1)) {
-		// consume the '.'
 		s.advance()
+
+		// all digits after the dot
 		for !s.isEof() && unicode.IsDigit(s.peek()) {
 			s.advance()
 		}
 	}
-	return s.makeToken(TOKEN_NUMBER), nil
+
+	text := string(s.tokenText())
+	if strings.Contains(text, ".") {
+		value, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return s.invalidNumberLiteral()
+		}
+		return s.makeTokenWithValue(TOKEN_NUMBER, value), nil
+	} else {
+		value, err := strconv.ParseInt(text, 10, 64)
+		if err != nil {
+			return s.invalidNumberLiteral()
+		}
+		return s.makeTokenWithValue(TOKEN_NUMBER, value), nil
+	}
+
+}
+
+var keywords = map[string]TokenType{
+	"fun":     TOKEN_FUN,
+	"proc":    TOKEN_PROC,
+	"package": TOKEN_PACKAGE,
+	"import":  TOKEN_IMPORT,
+	"export":  TOKEN_EXPORT,
+	"data":    TOKEN_DATA,
+	"alias":   TOKEN_ALIAS,
+	"var":     TOKEN_VAR,
+	"if":      TOKEN_IF,
+	"else":    TOKEN_ELSE,
+	"let":     TOKEN_LET,
+	"set":     TOKEN_SET,
+	"match":   TOKEN_MATCH,
+	"for":     TOKEN_FOR,
+	"return":  TOKEN_RETURN,
+	"defer":   TOKEN_DEFER,
+	"...":     TOKEN_ELLIPSIS,
+	"true":    TOKEN_TRUE,
+	"false":   TOKEN_FALSE,
 }
 
 func (s *Scanner) scanIdentifier() (Token, error) {
-	for !s.isEof() && (unicode.IsLetter(s.peek()) || unicode.IsDigit(s.peek()) || s.peek() == '_' || s.peek() == '\'') {
-		s.advance()
+	// keywords
+	for kw, token := range keywords {
+		if s.matchString(kw) {
+			if token == TOKEN_TRUE {
+				return s.makeTokenWithValue(TOKEN_TRUE, true), nil
+			} else if token == TOKEN_FALSE {
+				return s.makeTokenWithValue(TOKEN_FALSE, false), nil
+			} else {
+				return s.makeToken(token), nil
+			}
+		}
 	}
-	return s.makeToken(s.identifierType()), nil
-}
 
-func (s *Scanner) identifierType() TokenType {
-	switch (*s.buffer)[s.start] {
-	case 'd':
-		return s.checkKeyword(1, 4, "efer", TOKEN_DEFER)
-	case 'e':
-		if s.cursor-s.start > 1 {
-			switch (*s.buffer)[s.start+1] {
-			case 'x':
-				// export
-				return s.checkKeyword(2, 4, "port", TOKEN_EXPORT)
-			case 'l':
-				// else
-				return s.checkKeyword(2, 2, "se", TOKEN_ELSE)
+	// identifiers
+	for {
+		if s.isEof() {
+			break
+		} else {
+			next := s.peek()
+			if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' || next == '\'' {
+				s.advance()
+			} else {
+				break
 			}
 		}
-	case 'p':
-		if s.cursor-s.start > 1 {
-			switch (*s.buffer)[s.start+1] {
-			case 'a':
-				// package
-				return s.checkKeyword(2, 5, "ckage", TOKEN_PACKAGE)
-			case 'r':
-				// proc
-				return s.checkKeyword(2, 2, "oc", TOKEN_PROC)
-			}
-		}
-	case 'f':
-		if s.cursor-s.start > 1 {
-			switch (*s.buffer)[s.start+1] {
-			case 'a':
-				// false
-				return s.checkKeyword(2, 3, "lse", TOKEN_FALSE)
-			case 'u':
-				// fun
-				return s.checkKeyword(2, 1, "n", TOKEN_FUN)
-			case 'o':
-				// for
-				return s.checkKeyword(2, 1, "r", TOKEN_FOR)
-			}
-		}
-	case 't':
-		return s.checkKeyword(1, 3, "rue", TOKEN_TRUE)
-	case 'i':
-		if s.cursor-s.start > 1 {
-			switch (*s.buffer)[s.start+1] {
-			case 'f':
-				// if
-				return s.checkKeyword(2, 0, "", TOKEN_IF)
-			case 'm':
-				// import
-				return s.checkKeyword(2, 4, "port", TOKEN_IMPORT)
-			default:
-				fmt.Printf("handling %v", (*s.buffer)[s.start+1])
-			}
-		}
-	case 'l':
-		return s.checkKeyword(1, 2, "et", TOKEN_LET)
-	case 'm':
-		return s.checkKeyword(1, 4, "atch", TOKEN_MATCH)
-	case 'o':
-		return s.checkKeyword(1, 8, "therwise", TOKEN_OTHERWISE)
-	case 'r':
-		return s.checkKeyword(1, 5, "eturn", TOKEN_RETURN)
-	case 'v':
-		return s.checkKeyword(1, 2, "ar", TOKEN_VAR)
 	}
-	return TOKEN_IDENTIFIER
-}
 
-func (s *Scanner) checkKeyword(start uint64, length uint64, rest string, tokenType TokenType) TokenType {
-	if s.cursor-s.start == start+length {
-		if string((*s.buffer)[s.start+start:s.start+start+length]) == rest {
-			return tokenType
-		}
-	}
-	return TOKEN_IDENTIFIER
+	return s.makeToken(TOKEN_IDENTIFIER), nil
 }
 
 func (s *Scanner) isEof() bool {
@@ -290,6 +363,20 @@ func (s *Scanner) match(expected rune) bool {
 		return false
 	}
 	s.cursor++
+	return true
+}
+
+func (s *Scanner) matchString(expected string) bool {
+	start := s.cursor
+	end := start + uint64(len(expected))
+	if s.isEof() {
+		return false
+	} else if end > uint64(len(*s.buffer)) {
+		return false
+	} else if string((*s.buffer)[start:end]) != expected {
+		return false
+	}
+	s.cursor = end
 	return true
 }
 
@@ -333,9 +420,15 @@ func (s *Scanner) location() location.Location {
 }
 
 func (s *Scanner) makeToken(tokenType TokenType) Token {
-	loc := s.location()
-	text := (*s.buffer)[s.start:s.cursor]
-	return MakeToken(tokenType, text, loc)
+	return MakeToken(tokenType, s.tokenText(), s.location())
+}
+
+func (s *Scanner) makeTokenWithValue(tokenType TokenType, value interface{}) Token {
+	return MakeTokenWithValue(tokenType, s.tokenText(), value, s.location())
+}
+
+func (s *Scanner) tokenText() []rune {
+	return (*s.buffer)[s.start:s.cursor]
 }
 
 func (s *Scanner) unknownTokenError() (Token, error) {
@@ -344,4 +437,12 @@ func (s *Scanner) unknownTokenError() (Token, error) {
 
 func (s *Scanner) unterminatedLiteralError() (Token, error) {
 	return Token{}, UnterminatedLiteralError{location: s.location()}
+}
+
+func (s *Scanner) invalidCharacterLiteral() (Token, error) {
+	return Token{}, InvalidCharacterLiteralError{location: s.location()}
+}
+
+func (s *Scanner) invalidNumberLiteral() (Token, error) {
+	return Token{}, InvalidNumberLiteralError{location: s.location()}
 }

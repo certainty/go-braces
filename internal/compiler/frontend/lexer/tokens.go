@@ -6,6 +6,7 @@ type TokenType uint8
 type Token struct {
 	Type     TokenType
 	Text     []rune
+	Value    interface{} // optionally we can also transport values back
 	Location location.Location
 }
 
@@ -41,7 +42,9 @@ const (
 	TOKEN_AMPERSAND_AMPERSAND
 	TOKEN_PIPE
 	TOKEN_PIPE_PIPE
+	TOKEN_PIPE_GT
 	TOKEN_COLON_COLON
+	TOKEN_ARROW
 
 	// literal
 	TOKEN_IDENTIFIER
@@ -58,25 +61,30 @@ const (
 	TOKEN_IMPORT
 	TOKEN_EXPORT
 
+	TOKEN_DATA
+	TOKEN_ALIAS
+
+	TOKEN_VAR
 	TOKEN_IF
 	TOKEN_ELSE
 	TOKEN_LET
-	TOKEN_VAR
-	TOKEN_RETURN
-
+	TOKEN_SET
 	TOKEN_MATCH
-	TOKEN_CASE
-	TOKEN_OTHERWISE
-
 	TOKEN_FOR
+
+	TOKEN_RETURN
 	TOKEN_DEFER
 
-	TOKEN_ELIPSIS
+	TOKEN_ELLIPSIS
 
 	TOKEN_TRUE
 	TOKEN_FALSE
 )
 
 func MakeToken(tokenType TokenType, text []rune, location location.Location) Token {
-	return Token{Type: tokenType, Text: text, Location: location}
+	return Token{Type: tokenType, Text: text, Value: nil, Location: location}
+}
+
+func MakeTokenWithValue(tokenType TokenType, text []rune, value interface{}, location location.Location) Token {
+	return Token{Type: tokenType, Text: text, Value: value, Location: location}
 }
