@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -76,7 +77,19 @@ func (s *Scanner) NextToken() (Token, error) {
 	if unicode.IsLetter(next) || next == '_' {
 		return s.scanIdentifier()
 	}
-	if unicode.IsDigit(next) || (next == '#' && s.peekN(1) != '\\') {
+
+	//numbers
+	if unicode.IsDigit(next) {
+		return s.scanNumber()
+	}
+
+	// different base numbers
+	if next == '#' && s.peekN(1) != '\\' {
+		return s.scanNumber()
+	}
+
+	// signed numbers
+	if (next == '-' && s.peekN(1) != '>') || next == '+' {
 		return s.scanNumber()
 	}
 
@@ -209,7 +222,7 @@ func (s *Scanner) scanChar() (Token, error) {
 	next := s.advance()
 	if next == 'u' && unicode.IsDigit(s.peek()) {
 		return s.scanCharUnicodeEscape()
-	} else if next == 'x' && isHexCharacter(s.peek()) {
+	} else if next == 'x' && isHexDigit(s.peek()) {
 		return s.scanCharHexEscape()
 	} else if unicode.IsPrint(next) {
 		return s.makeTokenWithValue(TOKEN_CHARACTER, next), nil
@@ -218,8 +231,31 @@ func (s *Scanner) scanChar() (Token, error) {
 	}
 }
 
-func isHexCharacter(c rune) bool {
+func isHexDigit(c rune) bool {
 	return unicode.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+}
+
+func isBinaryDigit(c rune) bool {
+	return c == '0' || c == '1'
+}
+
+func isOctalDigit(c rune) bool {
+	return c >= '0' && c <= '7'
+}
+
+func isDigit(c rune, base uint) bool {
+	switch base {
+	case 2:
+		return isBinaryDigit(c)
+	case 8:
+		return isOctalDigit(c)
+	case 10:
+		return unicode.IsDigit(c)
+	case 16:
+		return isHexDigit(c)
+	default:
+		return false
+	}
 }
 
 func (s *Scanner) scanCharUnicodeEscape() (Token, error) {
@@ -246,7 +282,7 @@ func (s *Scanner) scanCharHexEscape() (Token, error) {
 	for i := 0; i < 6; i++ {
 		if s.isEof() {
 			return s.invalidCharacterLiteral()
-		} else if !isHexCharacter(s.peek()) {
+		} else if !isHexDigit(s.peek()) {
 			return s.invalidCharacterLiteral()
 		}
 		s.advance()
@@ -261,18 +297,59 @@ func (s *Scanner) scanCharHexEscape() (Token, error) {
 }
 
 func (s *Scanner) scanNumber() (Token, error) {
-	for !s.isEof() && unicode.IsDigit(s.peek()) {
+	if s.match('#') {
+		return s.scanIntWithBase()
+	} else if s.matchString("+nan.0") || s.matchString("-nan.0") {
+		return s.makeTokenWithValue(TOKEN_FLOAT, math.NaN()), nil
+	} else if s.matchString("+inf.0") {
+		return s.makeTokenWithValue(TOKEN_FLOAT, math.Inf(1)), nil
+	} else if s.matchString("-inf.0") {
+		return s.makeTokenWithValue(TOKEN_FLOAT, math.Inf(-1)), nil
+	} else {
+		return s.scanFloatOrInt()
+	}
+}
+
+func (s *Scanner) scanIntWithBase() (Token, error) {
+	base := uint(10)
+	baseSign := s.peek()
+
+	switch baseSign {
+	case 'b':
+		base = 2
+	case 'o':
+		base = 8
+	case 'x':
+		base = 16
+	case 'd':
+		base = 10
+	default:
+		return s.invalidNumberLiteral()
+	}
+
+	s.advance()
+	s.scanDigits(base)
+	text := string(s.tokenText())[2:]
+	value, err := strconv.ParseInt(text, int(base), 64)
+	if err != nil {
+		return s.invalidNumberLiteral()
+	}
+	return s.makeTokenWithValue(TOKEN_INTEGER, value), nil
+}
+
+func (s *Scanner) scanFloatOrInt() (Token, error) {
+	sign := s.peek()
+
+	if sign == '+' || sign == '-' {
 		s.advance()
 	}
+
+	s.scanDigits(10)
 
 	// dot followed by digit?
 	if s.peek() == '.' && unicode.IsDigit(s.peekN(1)) {
 		s.advance()
-
-		// all digits after the dot
-		for !s.isEof() && unicode.IsDigit(s.peek()) {
-			s.advance()
-		}
+		s.scanDigits(10)
 	}
 
 	text := string(s.tokenText())
@@ -281,15 +358,20 @@ func (s *Scanner) scanNumber() (Token, error) {
 		if err != nil {
 			return s.invalidNumberLiteral()
 		}
-		return s.makeTokenWithValue(TOKEN_NUMBER, value), nil
+		return s.makeTokenWithValue(TOKEN_FLOAT, value), nil
 	} else {
 		value, err := strconv.ParseInt(text, 10, 64)
 		if err != nil {
 			return s.invalidNumberLiteral()
 		}
-		return s.makeTokenWithValue(TOKEN_NUMBER, value), nil
+		return s.makeTokenWithValue(TOKEN_INTEGER, value), nil
 	}
+}
 
+func (s *Scanner) scanDigits(base uint) {
+	for !s.isEof() && isDigit(s.peek(), base) {
+		s.advance()
+	}
 }
 
 var keywords = map[string]TokenType{
