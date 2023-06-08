@@ -1,6 +1,10 @@
 package lexer
 
-import "github.com/certainty/go-braces/internal/compiler/location"
+import (
+	"fmt"
+
+	"github.com/certainty/go-braces/internal/compiler/location"
+)
 
 type TokenType uint8
 type Token struct {
@@ -12,7 +16,6 @@ type Token struct {
 
 const (
 	TOKEN_EOF TokenType = iota
-	TOKEN_ERROR
 
 	// single char tokens
 	TOKEN_LPAREN
@@ -88,4 +91,12 @@ func MakeToken(tokenType TokenType, text []rune, location location.Location) Tok
 
 func MakeTokenWithValue(tokenType TokenType, text []rune, value interface{}, location location.Location) Token {
 	return Token{Type: tokenType, Text: text, Value: value, Location: location}
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("(%s, %s)", t.Type.String(), string(t.Text))
+}
+
+func (t TokenType) String() string {
+	return fmt.Sprintf("%d", t)
 }

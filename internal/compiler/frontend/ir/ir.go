@@ -70,7 +70,7 @@ func LowerToIR(ast *parser.AST) (*IR, error) {
 
 	log.Printf("lowering %v", ast)
 
-	for _, expression := range ast.Expressions {
+	for _, expression := range ast.Nodes {
 		switch exp := expression.(type) {
 		case parser.LiteralExpression:
 			currentBlock.AddInstruction(NewConstant(exp.Value))

@@ -99,8 +99,17 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 					log.Printf("emitBlock: false")
 					builder.AddInstruction(isa.InstFalse(c.registerAccu))
 				}
+			case isa.IntegerValue:
+				address := builder.AddConstant(&value)
+				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
+			case isa.StringValue:
+				// todo intern strings
+				address := builder.AddConstant(&value)
+				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
+			case isa.FloatValue:
+				address := builder.AddConstant(&value)
+				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
 			case isa.CharValue:
-				log.Printf("emitBlock: Constant(char)")
 				address := builder.AddConstant(&value)
 				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
 			default:
