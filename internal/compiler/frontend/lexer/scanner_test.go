@@ -312,6 +312,25 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
+			input:         "setter",
+			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedText:  "setter",
+			expectedValue: nil,
+		},
+		{
+			input:         "set'",
+			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedText:  "set'",
+			expectedValue: nil,
+		},
+		{
+			input:         "relse",
+			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedText:  "relse",
+			expectedValue: nil,
+		},
+
+		{
 			input:         "foo'",
 			expectedType:  lexer.TOKEN_IDENTIFIER,
 			expectedText:  "foo'",

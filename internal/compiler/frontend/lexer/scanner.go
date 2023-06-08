@@ -439,19 +439,6 @@ var keywords = map[string]TokenType{
 }
 
 func (s *Scanner) scanIdentifier() (Token, error) {
-	// keywords
-	for kw, token := range keywords {
-		if s.matchString(kw) {
-			if token == TOKEN_TRUE {
-				return s.makeTokenWithValue(TOKEN_TRUE, true), nil
-			} else if token == TOKEN_FALSE {
-				return s.makeTokenWithValue(TOKEN_FALSE, false), nil
-			} else {
-				return s.makeToken(token), nil
-			}
-		}
-	}
-
 	// identifiers
 	for {
 		if s.isEof() {
@@ -462,6 +449,19 @@ func (s *Scanner) scanIdentifier() (Token, error) {
 				s.advance()
 			} else {
 				break
+			}
+		}
+	}
+
+	// keywords
+	for kw, token := range keywords {
+		if string(s.tokenText()) == kw {
+			if token == TOKEN_TRUE {
+				return s.makeTokenWithValue(TOKEN_TRUE, true), nil
+			} else if token == TOKEN_FALSE {
+				return s.makeTokenWithValue(TOKEN_FALSE, false), nil
+			} else {
+				return s.makeToken(token), nil
 			}
 		}
 	}
