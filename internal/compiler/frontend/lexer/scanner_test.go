@@ -173,6 +173,14 @@ func TestScanner(t *testing.T) {
 			expectedValue: "hello world",
 		},
 
+		{
+
+			input:         "\"hello \\\" world\"",
+			expectedType:  lexer.TOKEN_STRING,
+			expectedText:  "\"hello \\\" world\"",
+			expectedValue: "hello \" world",
+		},
+
 		// chars
 		{
 			input:         "#\\a",

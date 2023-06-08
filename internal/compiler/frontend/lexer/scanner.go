@@ -34,6 +34,14 @@ func (m InvalidCharacterLiteralError) Error() string {
 	return fmt.Sprintf("Invalid character literal at %v", m.location)
 }
 
+type InvalidStringLiteralError struct {
+	location location.Location
+}
+
+func (m InvalidStringLiteralError) Error() string {
+	return fmt.Sprintf("Invalid string literal at %v", m.location)
+}
+
 type InvalidNumberLiteralError struct {
 	location location.Location
 }
@@ -179,21 +187,49 @@ func (s *Scanner) NextToken() (Token, error) {
 	return s.unknownTokenError()
 }
 
-// TODO: add support for escaped quaracters
+////////////////////////////////////////////////////////////////////
+// Strings
+////////////////////////////////////////////////////////////////////
+
 func (s *Scanner) scanString() (Token, error) {
+	value := ""
 	for {
 		if s.isEof() {
 			return s.unterminatedLiteralError()
 		} else if s.match('\n') {
+			value += "\n"
 			s.line++
+		} else if s.match('\\') {
+			switch s.peek() {
+			case '"':
+				value += "\""
+			case 'n':
+				value += "\n"
+			case 't':
+				value += "\t"
+			case 'b':
+				value += "\b"
+			case '0':
+				value += "\000"
+			case 'r':
+				value += "\r"
+			case '\\':
+				value += "\\"
+			default:
+				return s.invalidStringLiteral()
+			}
+			s.advance()
 		} else if s.match('"') {
-			value := strings.Trim(string(s.tokenText()), "\"")
 			return s.makeTokenWithValue(TOKEN_STRING, value), nil
 		} else {
-			s.advance()
+			value += string(s.advance())
 		}
 	}
 }
+
+// //////////////////////////////////////////////////////////////////
+// Chars
+// //////////////////////////////////////////////////////////////////
 
 var (
 	namedChars = map[string]rune{
@@ -228,33 +264,6 @@ func (s *Scanner) scanChar() (Token, error) {
 		return s.makeTokenWithValue(TOKEN_CHARACTER, next), nil
 	} else {
 		return s.invalidCharacterLiteral()
-	}
-}
-
-func isHexDigit(c rune) bool {
-	return unicode.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
-}
-
-func isBinaryDigit(c rune) bool {
-	return c == '0' || c == '1'
-}
-
-func isOctalDigit(c rune) bool {
-	return c >= '0' && c <= '7'
-}
-
-func isDigit(c rune, base uint) bool {
-	switch base {
-	case 2:
-		return isBinaryDigit(c)
-	case 8:
-		return isOctalDigit(c)
-	case 10:
-		return unicode.IsDigit(c)
-	case 16:
-		return isHexDigit(c)
-	default:
-		return false
 	}
 }
 
@@ -296,6 +305,9 @@ func (s *Scanner) scanCharHexEscape() (Token, error) {
 	return s.makeTokenWithValue(TOKEN_CHARACTER, rune(value)), nil
 }
 
+// //////////////////////////////////////////////////////////////////
+// Numbers
+// //////////////////////////////////////////////////////////////////
 func (s *Scanner) scanNumber() (Token, error) {
 	if s.match('#') {
 		return s.scanIntWithBase()
@@ -374,6 +386,36 @@ func (s *Scanner) scanDigits(base uint) {
 	}
 }
 
+func isHexDigit(c rune) bool {
+	return unicode.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+}
+
+func isBinaryDigit(c rune) bool {
+	return c == '0' || c == '1'
+}
+
+func isOctalDigit(c rune) bool {
+	return c >= '0' && c <= '7'
+}
+
+func isDigit(c rune, base uint) bool {
+	switch base {
+	case 2:
+		return isBinaryDigit(c)
+	case 8:
+		return isOctalDigit(c)
+	case 10:
+		return unicode.IsDigit(c)
+	case 16:
+		return isHexDigit(c)
+	default:
+		return false
+	}
+}
+
+// //////////////////////////////////////////////////////////////////
+// Identifiers
+// //////////////////////////////////////////////////////////////////
 var keywords = map[string]TokenType{
 	"fun":     TOKEN_FUN,
 	"proc":    TOKEN_PROC,
@@ -427,6 +469,9 @@ func (s *Scanner) scanIdentifier() (Token, error) {
 	return s.makeToken(TOKEN_IDENTIFIER), nil
 }
 
+// //////////////////////////////////////////////////////////////////
+// Helpers
+// //////////////////////////////////////////////////////////////////
 func (s *Scanner) isEof() bool {
 	return s.cursor >= uint64(len(*s.buffer))
 }
@@ -523,6 +568,10 @@ func (s *Scanner) unterminatedLiteralError() (Token, error) {
 
 func (s *Scanner) invalidCharacterLiteral() (Token, error) {
 	return Token{}, InvalidCharacterLiteralError{location: s.location()}
+}
+
+func (s *Scanner) invalidStringLiteral() (Token, error) {
+	return Token{}, InvalidStringLiteralError{location: s.location()}
 }
 
 func (s *Scanner) invalidNumberLiteral() (Token, error) {
