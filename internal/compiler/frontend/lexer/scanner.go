@@ -311,7 +311,7 @@ func (s *Scanner) scanNumber() (Token, error) {
 }
 
 func (s *Scanner) scanIntWithBase() (Token, error) {
-	base := uint(10)
+	var base uint8
 	baseSign := s.peek()
 
 	switch baseSign {
@@ -366,7 +366,7 @@ func (s *Scanner) scanFloatOrInt() (Token, error) {
 	}
 }
 
-func (s *Scanner) scanDigits(base uint) {
+func (s *Scanner) scanDigits(base uint8) {
 	for !s.isEof() && isDigit(s.peek(), base) {
 		s.advance()
 	}
@@ -384,7 +384,7 @@ func isOctalDigit(c rune) bool {
 	return c >= '0' && c <= '7'
 }
 
-func isDigit(c rune, base uint) bool {
+func isDigit(c rune, base uint8) bool {
 	switch base {
 	case 2:
 		return isBinaryDigit(c)
