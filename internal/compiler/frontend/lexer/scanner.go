@@ -239,7 +239,7 @@ func (s *Scanner) scanChar() (Token, error) {
 
 	for name, char := range namedChars {
 		if s.matchString(name) {
-			return s.makeTokenWithValue(TOKEN_CHARACTER, char), nil
+			return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{char}), nil
 		}
 	}
 
@@ -249,7 +249,7 @@ func (s *Scanner) scanChar() (Token, error) {
 	} else if next == 'x' && isHexDigit(s.peek()) {
 		return s.scanCharHexEscape()
 	} else if unicode.IsPrint(next) {
-		return s.makeTokenWithValue(TOKEN_CHARACTER, next), nil
+		return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{next}), nil
 	} else {
 		return s.invalidCharacterLiteral()
 	}
@@ -271,7 +271,7 @@ func (s *Scanner) scanCharUnicodeEscape() (Token, error) {
 	if err != nil {
 		return s.invalidCharacterLiteral()
 	}
-	return s.makeTokenWithValue(TOKEN_CHARACTER, rune(value)), nil
+	return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{rune(value)}), nil
 }
 
 func (s *Scanner) scanCharHexEscape() (Token, error) {
@@ -290,7 +290,7 @@ func (s *Scanner) scanCharHexEscape() (Token, error) {
 	if err != nil {
 		return s.invalidCharacterLiteral()
 	}
-	return s.makeTokenWithValue(TOKEN_CHARACTER, rune(value)), nil
+	return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{rune(value)}), nil
 }
 
 // //////////////////////////////////////////////////////////////////

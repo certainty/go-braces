@@ -6,6 +6,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
+	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
@@ -63,7 +64,7 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	return assemblyModule, nil
 }
 
-func (c Compiler) phaseParse(input *input.Input) (*parser.AST, error) {
+func (c Compiler) phaseParse(input *input.Input) (*ast.AST, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
 
@@ -71,23 +72,23 @@ func (c Compiler) phaseParse(input *input.Input) (*parser.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) phaseTypeCheck(ast *parser.AST) (*parser.AST, error) {
+func (c Compiler) phaseTypeCheck(theAST *ast.AST) (*ast.AST, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
 	typechecker := typechecker.NewTypeChecker(c.instrumentation)
-	if err := typechecker.Check(ast); err != nil {
+	if err := typechecker.Check(theAST); err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
-	return ast, nil
+	return theAST, nil
 }
 
-func (c Compiler) phaseLowerToIR(ast *parser.AST) (*ir.IR, error) {
+func (c Compiler) phaseLowerToIR(theAST *ast.AST) (*ir.IR, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(ast)
+	return ir.LowerToIR(theAST)
 }
 
 func (c Compiler) phaseOptimize(ir *ir.IR) (*ir.IR, error) {

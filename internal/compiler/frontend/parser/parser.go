@@ -156,6 +156,14 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
 	} else if p.match(lexer.TOKEN_FLOAT) {
 		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
+	} else if p.match(lexer.TOKEN_STRING) {
+		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
+	} else if p.match(lexer.TOKEN_TRUE) {
+		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
+	} else if p.match(lexer.TOKEN_FALSE) {
+		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
+	} else if p.match(lexer.TOKEN_CHARACTER) {
+		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
 	} else if p.match(lexer.TOKEN_EOF) {
 		p.errorAtCurrent(ParseErrorIdUnexpectedEOF, "unexpected end of input", nil)
 		return nil

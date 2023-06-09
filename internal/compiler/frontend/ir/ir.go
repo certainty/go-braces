@@ -4,25 +4,35 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
+	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
 type IRInstruction interface{}
 
 type IRConstant struct {
-	Value isa.Value
+	Value interface{}
 }
 
 func (c IRConstant) String() string {
 	return fmt.Sprintf("const %v", c.Value)
 }
 
-type IRLabel struct{}
+var _ IRInstruction = (*IRConstant)(nil)
+
+type IRLabel struct {
+	Name string
+}
+
 type IRGlobalRef struct{}
 type IRSet struct{}
 type IRClosure struct{}
-type IRCall struct{}
+
+type IRCall struct {
+	Operator IRLabel
+	Operands []IRInstruction
+}
+
 type IRTailCall struct{}
 type IRBranch struct{}
 type IRRet struct{}
@@ -64,16 +74,20 @@ func (ir *IR) AddBlock(name string) *IRBlock {
 	return block
 }
 
-func LowerToIR(ast *parser.AST) (*IR, error) {
+func LowerToIR(theAST *ast.AST) (*IR, error) {
 	var ir IR = NewIR()
 	var currentBlock *IRBlock = ir.AddBlock("entry")
 
-	log.Printf("lowering %v", ast)
+	log.Printf("lowering %v", theAST)
 
-	for _, expression := range ast.Nodes {
+	for _, expression := range theAST.Nodes {
 		switch exp := expression.(type) {
-		case parser.LiteralExpression:
+		case ast.LiteralExpression:
 			currentBlock.AddInstruction(NewConstant(exp.Value))
+		case ast.UnaryExpression:
+			// desugar to a call
+		case ast.BinaryExpression:
+			// desugar to a call
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", expression)
 		}

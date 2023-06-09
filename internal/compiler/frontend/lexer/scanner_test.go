@@ -187,38 +187,38 @@ func TestScanner(t *testing.T) {
 			input:         "#\\a",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\a",
-			expectedValue: 'a',
+			expectedValue: lexer.CodePoint{'a'},
 		},
 		{
 			input:         "#\\٭",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\٭",
-			expectedValue: '٭',
+			expectedValue: lexer.CodePoint{'٭'},
 		},
 		{
 			input:         "#\\u1324",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\u1324",
-			expectedValue: rune(1324),
+			expectedValue: lexer.CodePoint{rune(1324)},
 		},
 		{
 			input:         "#\\u0024",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\u0024",
-			expectedValue: rune(24),
+			expectedValue: lexer.CodePoint{rune(24)},
 		},
 		{
 			input:         "#\\x00002f",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\x00002f",
-			expectedValue: rune(0x2f),
+			expectedValue: lexer.CodePoint{rune(0x2f)},
 		},
 		{
 
 			input:         "#\\newline",
 			expectedType:  lexer.TOKEN_CHARACTER,
 			expectedText:  "#\\newline",
-			expectedValue: '\n',
+			expectedValue: lexer.CodePoint{'\n'},
 		},
 
 		// keywords

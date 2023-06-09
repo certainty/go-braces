@@ -17,38 +17,6 @@ type Node interface {
 type LValue interface{ Node }
 type RValue interface{ Node }
 
-type UnaryMinusExpression struct {
-	location location.Location
-	Operand  Expression
-}
-
-func NewUnaryMinusExpression(location location.Location, operand Expression) UnaryMinusExpression {
-	return UnaryMinusExpression{
-		location: location,
-		Operand:  operand,
-	}
-}
-
-func (u UnaryMinusExpression) Location() location.Location {
-	return u.location
-}
-
-type UnaryNotExpression struct {
-	location location.Location
-	Operand  Expression
-}
-
-func NewUnaryNotExpression(location location.Location, operand Expression) UnaryNotExpression {
-	return UnaryNotExpression{
-		location: location,
-		Operand:  operand,
-	}
-}
-
-func (n UnaryNotExpression) Location() location.Location {
-	return n.location
-}
-
 func New() *AST {
 	return &AST{
 		Nodes: []Node{},

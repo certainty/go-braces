@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
+	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -89,7 +90,11 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 	for _, instruction := range block.Instructions {
 		switch instruction.(type) {
 		case ir.IRConstant:
-			value := instruction.(ir.IRConstant).Value
+			value, err := c.convertValue(instruction.(ir.IRConstant).Value)
+			if err != nil {
+				return fmt.Errorf("emitBlock: %w", err)
+			}
+
 			switch value.(type) {
 			case isa.BoolValue:
 				if value == isa.BoolValue(true) {
@@ -99,25 +104,31 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 					log.Printf("emitBlock: false")
 					builder.AddInstruction(isa.InstFalse(c.registerAccu))
 				}
-			case isa.IntegerValue:
-				address := builder.AddConstant(&value)
-				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
-			case isa.StringValue:
-				// todo intern strings
-				address := builder.AddConstant(&value)
-				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
-			case isa.FloatValue:
-				address := builder.AddConstant(&value)
-				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
-			case isa.CharValue:
-				address := builder.AddConstant(&value)
-				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
 			default:
-				return fmt.Errorf("unknown constant type: %T", value)
+				address := builder.AddConstant(&value)
+				builder.AddInstruction(isa.InstConst(address, c.registerAccu))
 			}
 		default:
 			return fmt.Errorf("unknown instruction type: %T", instruction)
 		}
 	}
 	return nil
+}
+
+func (c *Codegenerator) convertValue(v interface{}) (isa.Value, error) {
+	switch v := v.(type) {
+	case bool:
+		return isa.BoolValue(v), nil
+	case lexer.CodePoint:
+		return isa.CharValue(v.Char), nil
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return isa.IntegerValue(v.(int64)), nil
+	case float32, float64:
+		return isa.FloatValue(v.(float64)), nil
+	case string:
+		return isa.StringValue(v), nil
+
+	default:
+		return nil, fmt.Errorf("unknown value type: %T", v)
+	}
 }

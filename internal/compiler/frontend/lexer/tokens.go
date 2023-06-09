@@ -7,11 +7,16 @@ import (
 )
 
 type TokenType uint8
+
 type Token struct {
 	Type     TokenType
 	Text     []rune
 	Value    interface{} // optionally we can also transport values back
 	Location location.Location
+}
+
+type CodePoint struct {
+	Char rune
 }
 
 const (
