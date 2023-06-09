@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
@@ -51,26 +52,14 @@ func (m InvalidNumberLiteralError) Error() string {
 }
 
 type Scanner struct {
-	origin location.Origin
-	buffer *[]rune
+	*input.Input
 	start  uint64
 	cursor uint64
 	line   uint64
 }
 
-func New(buffer *[]rune, origin location.Origin) *Scanner {
-	return &Scanner{
-		origin: origin,
-		buffer: buffer,
-		start:  0,
-		cursor: 0,
-		line:   1,
-	}
-}
-
-func NewFromString(input string, origin location.Origin) *Scanner {
-	runes := []rune(input)
-	return New(&runes, origin)
+func New(input *input.Input) *Scanner {
+	return &Scanner{Input: input, start: 0, cursor: 0, line: 1}
 }
 
 func (s *Scanner) NextToken() (Token, error) {
@@ -93,11 +82,6 @@ func (s *Scanner) NextToken() (Token, error) {
 
 	// different base numbers
 	if next == '#' && s.peekN(1) != '\\' {
-		return s.scanNumber()
-	}
-
-	// signed numbers
-	if (next == '-' && s.peekN(1) != '>') || next == '+' {
 		return s.scanNumber()
 	}
 
@@ -130,6 +114,10 @@ func (s *Scanner) NextToken() (Token, error) {
 		return s.makeToken(TOKEN_SLASH), nil
 	case '?':
 		return s.makeToken(TOKEN_QUESTION_MARK), nil
+	case '^':
+		return s.makeToken(TOKEN_CARET), nil
+	case '%':
+		return s.makeToken(TOKEN_MOD), nil
 	case '#':
 		if s.match('\\') {
 			return s.scanChar()
@@ -358,20 +346,18 @@ func (s *Scanner) scanFloatOrInt() (Token, error) {
 
 	s.scanDigits(10)
 
-	// dot followed by digit?
 	if s.peek() == '.' && unicode.IsDigit(s.peekN(1)) {
 		s.advance()
 		s.scanDigits(10)
-	}
 
-	text := string(s.tokenText())
-	if strings.Contains(text, ".") {
+		text := string(s.tokenText())
 		value, err := strconv.ParseFloat(text, 64)
 		if err != nil {
 			return s.invalidNumberLiteral()
 		}
 		return s.makeTokenWithValue(TOKEN_FLOAT, value), nil
 	} else {
+		text := string(s.tokenText())
 		value, err := strconv.ParseInt(text, 10, 64)
 		if err != nil {
 			return s.invalidNumberLiteral()
@@ -439,7 +425,6 @@ var keywords = map[string]TokenType{
 }
 
 func (s *Scanner) scanIdentifier() (Token, error) {
-	// identifiers
 	for {
 		if s.isEof() {
 			break
@@ -453,7 +438,6 @@ func (s *Scanner) scanIdentifier() (Token, error) {
 		}
 	}
 
-	// keywords
 	for kw, token := range keywords {
 		if string(s.tokenText()) == kw {
 			if token == TOKEN_TRUE {
@@ -473,12 +457,12 @@ func (s *Scanner) scanIdentifier() (Token, error) {
 // Helpers
 // //////////////////////////////////////////////////////////////////
 func (s *Scanner) isEof() bool {
-	return s.cursor >= uint64(len(*s.buffer))
+	return s.cursor >= uint64(len(*s.Buffer))
 }
 
 func (s *Scanner) advance() rune {
 	s.cursor++
-	return (*s.buffer)[s.cursor-1]
+	return (*s.Buffer)[s.cursor-1]
 }
 
 // one rune look ahead, returns the next character without advancing the cursor
@@ -486,7 +470,7 @@ func (s *Scanner) match(expected rune) bool {
 	if s.isEof() {
 		return false
 	}
-	if (*s.buffer)[s.cursor] != expected {
+	if (*s.Buffer)[s.cursor] != expected {
 		return false
 	}
 	s.cursor++
@@ -498,9 +482,9 @@ func (s *Scanner) matchString(expected string) bool {
 	end := start + uint64(len(expected))
 	if s.isEof() {
 		return false
-	} else if end > uint64(len(*s.buffer)) {
+	} else if end > uint64(len(*s.Buffer)) {
 		return false
-	} else if string((*s.buffer)[start:end]) != expected {
+	} else if string((*s.Buffer)[start:end]) != expected {
 		return false
 	}
 	s.cursor = end
@@ -536,14 +520,14 @@ func (s Scanner) peek() rune {
 func (s *Scanner) peekN(offset uint64) rune {
 	nextCursor := s.cursor + offset
 
-	if s.isEof() || nextCursor >= uint64(len(*s.buffer)) {
+	if s.isEof() || nextCursor >= uint64(len(*s.Buffer)) {
 		return 0
 	}
-	return (*s.buffer)[nextCursor]
+	return (*s.Buffer)[nextCursor]
 }
 
 func (s *Scanner) location() location.Location {
-	return location.Location{Origin: &s.origin, Line: s.line, StartOffset: s.start, EndOffset: s.cursor}
+	return location.Location{Origin: &s.Origin, Line: s.line, StartOffset: s.start, EndOffset: s.cursor}
 }
 
 func (s *Scanner) makeToken(tokenType TokenType) Token {
@@ -555,7 +539,7 @@ func (s *Scanner) makeTokenWithValue(tokenType TokenType, value interface{}) Tok
 }
 
 func (s *Scanner) tokenText() []rune {
-	return (*s.buffer)[s.start:s.cursor]
+	return (*s.Buffer)[s.start:s.cursor]
 }
 
 func (s *Scanner) unknownTokenError() (Token, error) {

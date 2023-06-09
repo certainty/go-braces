@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,6 +62,21 @@ func TestScanner(t *testing.T) {
 		},
 		{
 
+			input:         "^",
+			expectedType:  lexer.TOKEN_CARET,
+			expectedText:  "^",
+			expectedValue: nil,
+		},
+		{
+
+			input:         "%",
+			expectedType:  lexer.TOKEN_MOD,
+			expectedText:  "%",
+			expectedValue: nil,
+		},
+
+		{
+
 			input:         "::",
 			expectedType:  lexer.TOKEN_COLON_COLON,
 			expectedText:  "::",
@@ -112,20 +127,6 @@ func TestScanner(t *testing.T) {
 			expectedType:  lexer.TOKEN_FLOAT,
 			expectedText:  "35.34",
 			expectedValue: 35.34,
-		},
-		{
-
-			input:         "+35",
-			expectedType:  lexer.TOKEN_INTEGER,
-			expectedText:  "+35",
-			expectedValue: int64(35),
-		},
-		{
-
-			input:         "-35",
-			expectedType:  lexer.TOKEN_INTEGER,
-			expectedText:  "-35",
-			expectedValue: int64(-35),
 		},
 		{
 
@@ -352,7 +353,8 @@ func TestScanner(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
-			s := lexer.NewFromString(tc.input, location.NewStringOrigin("test"))
+			inp := input.NewStringInput("test", tc.input)
+			s := lexer.New(inp)
 			token, err := s.NextToken()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedType, token.Type)
@@ -360,4 +362,38 @@ func TestScanner(t *testing.T) {
 			assert.Equal(t, tc.expectedValue, token.Value)
 		})
 	}
+}
+
+func TestScannerMultipleTokens(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected []lexer.TokenType
+	}{
+		{
+			input:    "",
+			expected: []lexer.TokenType{lexer.TOKEN_EOF},
+		},
+		{
+			input:    "3 + 4",
+			expected: []lexer.TokenType{lexer.TOKEN_INTEGER, lexer.TOKEN_PLUS, lexer.TOKEN_INTEGER, lexer.TOKEN_EOF},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
+			inp := input.NewStringInput("test", tc.input)
+			s := lexer.New(inp)
+			tokens := []lexer.TokenType{}
+			for {
+				token, err := s.NextToken()
+				assert.NoError(t, err)
+				tokens = append(tokens, token.Type)
+				if token.Type == lexer.TOKEN_EOF {
+					break
+				}
+			}
+			assert.Equal(t, tc.expected, tokens)
+		})
+	}
+
 }
