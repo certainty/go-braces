@@ -30,6 +30,8 @@ func unaryOpToString(op UnaryOperator) string {
 		return "not"
 	case UnaryOpNeg:
 		return "-"
+	case UnaryOpPos:
+		return "+"
 	default:
 		return ""
 	}
