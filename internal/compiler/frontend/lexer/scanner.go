@@ -103,17 +103,8 @@ func (s *Scanner) NextToken() (Token, error) {
 		return s.makeToken(TOKEN_COMMA), nil
 	case '+':
 		return s.makeToken(TOKEN_PLUS), nil
-	case '-':
-		if s.match('>') {
-			return s.makeToken(TOKEN_ARROW), nil
-		}
-		return s.makeToken(TOKEN_MINUS), nil
-	case '*':
-		return s.makeToken(TOKEN_STAR), nil
 	case '/':
 		return s.makeToken(TOKEN_SLASH), nil
-	case '?':
-		return s.makeToken(TOKEN_QUESTION_MARK), nil
 	case '^':
 		return s.makeToken(TOKEN_CARET), nil
 	case '%':
@@ -142,6 +133,17 @@ func (s *Scanner) NextToken() (Token, error) {
 		} else {
 			return s.makeToken(TOKEN_BANG), nil
 		}
+	case '-':
+		if s.match('>') {
+			return s.makeToken(TOKEN_ARROW), nil
+		}
+		return s.makeToken(TOKEN_MINUS), nil
+	case '*':
+		if s.match('*') {
+			return s.makeToken(TOKEN_POWER), nil
+		}
+		return s.makeToken(TOKEN_STAR), nil
+
 	case '>':
 		if s.match('=') {
 			return s.makeToken(TOKEN_GT_EQUAL), nil
@@ -403,20 +405,21 @@ func isDigit(c rune, base uint8) bool {
 // Identifiers
 // //////////////////////////////////////////////////////////////////
 var keywords = map[string]TokenType{
-	"fun":     TOKEN_FUN,
-	"proc":    TOKEN_PROC,
 	"package": TOKEN_PACKAGE,
 	"import":  TOKEN_IMPORT,
-	"export":  TOKEN_EXPORT,
+	"api":     TOKEN_API,
 	"data":    TOKEN_DATA,
 	"alias":   TOKEN_ALIAS,
-	"var":     TOKEN_VAR,
+	"fun":     TOKEN_FUN,
+	"proc":    TOKEN_PROC,
 	"if":      TOKEN_IF,
 	"else":    TOKEN_ELSE,
 	"let":     TOKEN_LET,
 	"set":     TOKEN_SET,
 	"match":   TOKEN_MATCH,
 	"for":     TOKEN_FOR,
+	"from":    TOKEN_FROM,
+	"break":   TOKEN_BREAK,
 	"return":  TOKEN_RETURN,
 	"defer":   TOKEN_DEFER,
 	"...":     TOKEN_ELLIPSIS,

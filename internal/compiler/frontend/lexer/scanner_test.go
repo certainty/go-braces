@@ -35,11 +35,62 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
-			input:         "*",
-			expectedType:  lexer.TOKEN_STAR,
-			expectedText:  "*",
+			input:         "+",
+			expectedType:  lexer.TOKEN_PLUS,
+			expectedText:  "+",
 			expectedValue: nil,
 		},
+		{
+			input:         "-",
+			expectedType:  lexer.TOKEN_MINUS,
+			expectedText:  "-",
+			expectedValue: nil,
+		},
+		{
+			input:         "/",
+			expectedType:  lexer.TOKEN_SLASH,
+			expectedText:  "/",
+			expectedValue: nil,
+		},
+		{
+
+			input:         "%",
+			expectedType:  lexer.TOKEN_MOD,
+			expectedText:  "%",
+			expectedValue: nil,
+		},
+		{
+			input:         "<",
+			expectedType:  lexer.TOKEN_LT,
+			expectedText:  "<",
+			expectedValue: nil,
+		},
+		{
+			input:         ">",
+			expectedType:  lexer.TOKEN_GT,
+			expectedText:  ">",
+			expectedValue: nil,
+		},
+		{
+			input:         "&",
+			expectedType:  lexer.TOKEN_AMPERSAND,
+			expectedText:  "&",
+			expectedValue: nil,
+		},
+		{
+			input:         "|",
+			expectedType:  lexer.TOKEN_PIPE,
+			expectedText:  "|",
+			expectedValue: nil,
+		},
+
+		{
+			input:         ",",
+			expectedType:  lexer.TOKEN_COMMA,
+			expectedText:  ",",
+			expectedValue: nil,
+		},
+
 		{
 			input:         "{",
 			expectedType:  lexer.TOKEN_LBRACE,
@@ -68,13 +119,11 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
-
-			input:         "%",
-			expectedType:  lexer.TOKEN_MOD,
-			expectedText:  "%",
+			input:         "**",
+			expectedType:  lexer.TOKEN_POWER,
+			expectedText:  "**",
 			expectedValue: nil,
 		},
-
 		{
 
 			input:         "::",
@@ -94,6 +143,20 @@ func TestScanner(t *testing.T) {
 			input:         ">=",
 			expectedType:  lexer.TOKEN_GT_EQUAL,
 			expectedText:  ">=",
+			expectedValue: nil,
+		},
+		{
+
+			input:         "<=",
+			expectedType:  lexer.TOKEN_LT_EQUAL,
+			expectedText:  "<=",
+			expectedValue: nil,
+		},
+		{
+
+			input:         "||",
+			expectedType:  lexer.TOKEN_PIPE_PIPE,
+			expectedText:  "||",
 			expectedValue: nil,
 		},
 
@@ -247,6 +310,13 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
+
+			input:         "from",
+			expectedType:  lexer.TOKEN_FROM,
+			expectedText:  "from",
+			expectedValue: nil,
+		},
+		{
 			input:         "return",
 			expectedType:  lexer.TOKEN_RETURN,
 			expectedText:  "return",
@@ -271,9 +341,9 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
-			input:         "var",
-			expectedType:  lexer.TOKEN_VAR,
-			expectedText:  "var",
+			input:         "break",
+			expectedType:  lexer.TOKEN_BREAK,
+			expectedText:  "break",
 			expectedValue: nil,
 		},
 		{
@@ -289,9 +359,9 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
-			input:         "export",
-			expectedType:  lexer.TOKEN_EXPORT,
-			expectedText:  "export",
+			input:         "api",
+			expectedType:  lexer.TOKEN_API,
+			expectedText:  "api",
 			expectedValue: nil,
 		},
 		{
