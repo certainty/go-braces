@@ -30,7 +30,7 @@ func precedenceFor(tokenType lexer.TokenType) Precedence {
 	switch tokenType {
 	case lexer.TOKEN_STAR, lexer.TOKEN_SLASH, lexer.TOKEN_MOD:
 		return PREC_FACTOR
-	case lexer.TOKEN_CARET:
+	case lexer.TOKEN_POWER:
 		return PREC_EXPONENT
 	case lexer.TOKEN_PLUS, lexer.TOKEN_MINUS:
 		return PREC_TERM

@@ -38,8 +38,8 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name:     "exponentiation",
-			input:    "2 ^ 3",
-			expected: "(^ 2 3)",
+			input:    "2 ** 3",
+			expected: "(** 2 3)",
 		},
 		{
 			name:     "unary plus",
@@ -58,13 +58,13 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name:     "precedence",
-			input:    "1 + 2 * 3 ^ 4 ",
+			input:    "1 + 2 * 3 ** 4 ",
 			expected: "(+ 1 (* 2 (^ 3 4)))",
 		},
 		{
 			name:     "right associativity",
-			input:    "2 ^ 3 ^ 2",
-			expected: "(^ 2 (^ 3 2))",
+			input:    "2 ** 3 ** 2",
+			expected: "(** 2 (** 3 2))",
 		},
 		{
 			name:     "left associativity",

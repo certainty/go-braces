@@ -101,7 +101,7 @@ func TokenToBinaryOp(token lexer.Token) BinOperator {
 		return BinOpDiv
 	case lexer.TOKEN_MOD:
 		return BinOpMod
-	case lexer.TOKEN_CARET:
+	case lexer.TOKEN_POWER:
 		return BinOpPow
 	case lexer.TOKEN_AMPERSAND_AMPERSAND:
 		return BinOpAnd

@@ -46,13 +46,13 @@ func binOpToString(op BinOperator) string {
 	case BinOpDiv:
 		return "/"
 	case BinOpPow:
-		return "^"
+		return "**"
 	case BinOpMod:
 		return "%"
 	case BinOpAnd:
-		return "and"
+		return "&&"
 	case BinOpOr:
-		return "or"
+		return "||"
 	default:
 		return ""
 	}

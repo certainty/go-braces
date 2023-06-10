@@ -29,7 +29,7 @@ func TestASTWriter_Write(t *testing.T) {
 		},
 	}
 
-	expected := "((+ 2 3) (- 4) (and true (not false)))"
+	expected := "((+ 2 3) (- 4) (&& true (not false)))"
 	actual := writer.Write(ast)
 
 	if actual != expected {
