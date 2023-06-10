@@ -12,17 +12,17 @@ import (
 type Precedence uint8
 
 const (
-	PREC_NONE Precedence = iota
-	PREC_SET
-	PREC_OR
-	PREC_AND
-	PREC_EQUALITY   // == !=
-	PREC_COMPARISON // < > <= >=
-	PREC_TERM       // + -
-	PREC_FACTOR     // * / % /
-	PREC_EXPONENT   // ^
-	PREC_UNARY      // ! -
-	PREC_CALL       //  ()
+	PREC_NONE       Precedence = iota
+	PREC_SET                   // set x expr
+	PREC_OR                    // ||
+	PREC_AND                   // &&
+	PREC_EQUALITY              // == !=
+	PREC_COMPARISON            // < > <= >=
+	PREC_TERM                  // + -
+	PREC_FACTOR                // * / % /
+	PREC_EXPONENT              // **
+	PREC_UNARY                 // ! -
+	PREC_CALL                  //  ()
 	PREC_PRIMARY
 )
 
@@ -41,7 +41,7 @@ func precedenceFor(tokenType lexer.TokenType) Precedence {
 	case lexer.TOKEN_PIPE_PIPE:
 		return PREC_OR
 	case lexer.TOKEN_LPAREN:
-		return PREC_NONE // is this correct?
+		return PREC_NONE
 	default:
 		return PREC_NONE
 	}
@@ -152,17 +152,7 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 	} else if p.match(lexer.TOKEN_IDENTIFIER) {
 		fmt.Printf("Parsing identifier - not yes supported\n")
 		return nil
-	} else if p.match(lexer.TOKEN_INTEGER) {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_FLOAT) {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_STRING) {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_TRUE) {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_FALSE) {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_CHARACTER) {
+	} else if p.matchLiteral() {
 		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
 	} else if p.match(lexer.TOKEN_EOF) {
 		p.errorAtCurrent(ParseErrorIdUnexpectedEOF, "unexpected end of input", nil)
@@ -170,6 +160,24 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 	}
 	p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected unary expression", nil)
 	return nil
+}
+
+func (p *Parser) matchLiteral() bool {
+	literals := []lexer.TokenType{
+		lexer.TOKEN_INTEGER,
+		lexer.TOKEN_FLOAT,
+		lexer.TOKEN_STRING,
+		lexer.TOKEN_TRUE,
+		lexer.TOKEN_FALSE,
+		lexer.TOKEN_CHARACTER,
+	}
+
+	for _, literal := range literals {
+		if p.match(literal) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Parser) match(tokenTypes ...lexer.TokenType) bool {
