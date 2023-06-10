@@ -39,7 +39,7 @@ type Call struct {
 
 var _ CoreNode = (*Call)(nil)
 
-func NewCall(operator Callable, operands []CoreNode, location location.Location) Call {
+func NewCall(location location.Location, operator Callable, operands ...CoreNode) Call {
 	return Call{Operator: operator, Operands: operands, location: location}
 }
 
