@@ -39,22 +39,32 @@ func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule,
 func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
-	coreAst, err := c.phaseParse(input)
+	ast, err := c.phaseParse(input)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
-	coreAst, err = c.phaseTypeCheck(coreAst)
-	if err != nil {
-		return nil, fmt.Errorf("TypeError: %w", err)
-	}
-	ir, err := c.phaseLowerToIR(coreAst)
+
+	coreAST, err := c.phaseLowerToCore(ast)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
+
+	coreAST, err = c.phaseTypeCheck(coreAST)
+	if err != nil {
+		return nil, fmt.Errorf("TypeError: %w", err)
+	}
+
+	// linearize the IR
+	ir, err := c.lowerToIR(coreAST)
+	if err != nil {
+		return nil, fmt.Errorf("IRError: %w", err)
+	}
+
 	optimizedIr, err := c.phaseOptimize(ir)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
+
 	assemblyModule, err := c.phaseCodeGen(optimizedIr)
 	if err != nil {
 		return nil, fmt.Errorf("CodeGenError: %w", err)
@@ -72,7 +82,7 @@ func (c Compiler) phaseParse(input *input.Input) (*ast.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) phaseTypeCheck(theAST *ast.AST) (*ast.AST, error) {
+func (c Compiler) phaseTypeCheck(theAST *ir.CoreAST) (*ir.CoreAST, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
@@ -84,7 +94,14 @@ func (c Compiler) phaseTypeCheck(theAST *ast.AST) (*ast.AST, error) {
 	return theAST, nil
 }
 
-func (c Compiler) phaseLowerToIR(theAST *ast.AST) (*ir.IR, error) {
+func (c Compiler) phaseLowerToCore(theAST *ast.AST) (*ir.CoreAST, error) {
+	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToCore)
+	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToCore)
+
+	return ir.LowerToCore(theAST)
+}
+
+func (c Compiler) lowerToIR(theAST *ir.CoreAST) (*ir.IR, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 

@@ -13,12 +13,13 @@ type IntrospectionSubject interface{}
 type CompilationPhase string
 
 const (
-	CompilationPhaseRead      CompilationPhase = "read"
-	CompilationPhaseParse     CompilationPhase = "parse"
-	CompilationPhaseTypeCheck CompilationPhase = "typecheck"
-	CompilationPhaseLowerToIR CompilationPhase = "lowertoir"
-	CompilationPhaseOptimize  CompilationPhase = "optimize"
-	CompilationPhaseCodegen   CompilationPhase = "codegen"
+	CompilationPhaseRead        CompilationPhase = "read"
+	CompilationPhaseParse       CompilationPhase = "parse"
+	CompilationPhaseTypeCheck   CompilationPhase = "typecheck"
+	CompilationPhaseLowerToCore CompilationPhase = "lowertocore"
+	CompilationPhaseLowerToIR   CompilationPhase = "lowertoir"
+	CompilationPhaseOptimize    CompilationPhase = "optimize"
+	CompilationPhaseCodegen     CompilationPhase = "codegen"
 )
 
 type BreakpointID string

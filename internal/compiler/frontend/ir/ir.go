@@ -2,46 +2,30 @@ package ir
 
 import (
 	"fmt"
-	"log"
-
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/isa"
+	"log"
 )
+
+// linearized intermediate representation
 
 type IRInstruction interface{}
 
 type IRConstant struct {
-	Value interface{}
+	Value isa.Value
 }
 
 func (c IRConstant) String() string {
 	return fmt.Sprintf("const %v", c.Value)
 }
 
-var _ IRInstruction = (*IRConstant)(nil)
-
-type IRLabel struct {
-	Name string
-}
-
-type IRGlobalRef struct{}
-type IRSet struct{}
-type IRClosure struct{}
-
-type IRCall struct {
-	Operator IRLabel
-	Operands []IRInstruction
-}
-
-type IRTailCall struct{}
-type IRBranch struct{}
+type IRLabel struct{}
 type IRRet struct{}
 type IRBlock struct {
 	Label        string
 	Instructions []IRInstruction
 }
 
-func NewConstant(value isa.Value) IRConstant {
+func NewIRConstant(value interface{}) IRConstant {
 	return IRConstant{Value: value}
 }
 
@@ -74,26 +58,19 @@ func (ir *IR) AddBlock(name string) *IRBlock {
 	return block
 }
 
-func LowerToIR(theAST *ast.AST) (*IR, error) {
+func LowerToIR(coreAst *CoreAST) (*IR, error) {
 	var ir IR = NewIR()
 	var currentBlock *IRBlock = ir.AddBlock("entry")
 
-	log.Printf("lowering %v", theAST)
-
-	for _, expression := range theAST.Nodes {
-		switch exp := expression.(type) {
-		case ast.LiteralExpression:
-			currentBlock.AddInstruction(NewConstant(exp.Value))
-		case ast.UnaryExpression:
-			// desugar to a call
-		case ast.BinaryExpression:
-			// desugar to a call
+	for _, node := range coreAst.Nodes {
+		switch node := node.(type) {
+		case CoreConstant:
+			currentBlock.AddInstruction(NewIRConstant(node.Value))
 		default:
-			return nil, fmt.Errorf("unhandled expression type %T", expression)
+			return nil, fmt.Errorf("unhandled expression type %T", node)
 		}
 	}
 
 	log.Printf("lowered %v", ir)
-
 	return &ir, nil
 }
