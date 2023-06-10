@@ -7,7 +7,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
-type Expression interface{ LValue }
+type Expression interface{ RValue }
 
 type UnaryOperator uint8
 

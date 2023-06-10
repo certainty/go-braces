@@ -10,6 +10,7 @@ import (
 )
 
 type Precedence uint8
+type Associativity uint8
 
 const (
 	PREC_NONE       Precedence = iota
@@ -26,24 +27,30 @@ const (
 	PREC_PRIMARY
 )
 
-func precedenceFor(tokenType lexer.TokenType) Precedence {
+const (
+	ASSOC_NONE Associativity = iota
+	ASSOC_LEFT
+	ASSOC_RIGHT
+)
+
+func precedenceFor(tokenType lexer.TokenType) (Precedence, Associativity) {
 	switch tokenType {
 	case lexer.TOKEN_STAR, lexer.TOKEN_SLASH, lexer.TOKEN_MOD:
-		return PREC_FACTOR
+		return PREC_FACTOR, ASSOC_LEFT
 	case lexer.TOKEN_POWER:
-		return PREC_EXPONENT
+		return PREC_EXPONENT, ASSOC_RIGHT
 	case lexer.TOKEN_PLUS, lexer.TOKEN_MINUS:
-		return PREC_TERM
+		return PREC_TERM, ASSOC_LEFT
 	case lexer.TOKEN_EQUAL_EQUAL, lexer.TOKEN_BANG_EQUAL, lexer.TOKEN_LT, lexer.TOKEN_LT_EQUAL, lexer.TOKEN_GT, lexer.TOKEN_GT_EQUAL:
-		return PREC_COMPARISON
+		return PREC_COMPARISON, ASSOC_LEFT
 	case lexer.TOKEN_AMPERSAND_AMPERSAND:
-		return PREC_AND
+		return PREC_AND, ASSOC_LEFT
 	case lexer.TOKEN_PIPE_PIPE:
-		return PREC_OR
+		return PREC_OR, ASSOC_LEFT
 	case lexer.TOKEN_LPAREN:
-		return PREC_NONE
+		return PREC_NONE, ASSOC_LEFT
 	default:
-		return PREC_NONE
+		return PREC_NONE, ASSOC_NONE
 	}
 }
 
@@ -126,22 +133,29 @@ func (p *Parser) parseExpression() ast.Expression {
 // precedence climbing algorithm to make sure we treat precedence and associativity correctly
 func (p *Parser) parseBinaryExpressions(minPrecedence Precedence) ast.Expression {
 	left := p.parseUnaryExpression()
+	var right ast.Expression
 	for {
-		precedence := precedenceFor(p.currentToken.Type)
+		precedence, assoc := precedenceFor(p.currentToken.Type)
 		if precedence < minPrecedence {
 			break
 		}
 		tok := p.currentToken
 		p.advance()
+
 		// now we climb the precedence ladder
-		right := p.parseBinaryExpressions(precedence + 1)
+		if assoc == ASSOC_LEFT {
+			right = p.parseBinaryExpressions(precedence + 1)
+		} else {
+			right = p.parseBinaryExpressions(precedence)
+		}
+
 		left = ast.BinOp(tok.Location, ast.TokenToBinaryOp(*tok), left, right)
 	}
 	return left
 }
 
 func (p *Parser) parseUnaryExpression() ast.Expression {
-	if p.match(lexer.TOKEN_BANG, lexer.TOKEN_MINUS, lexer.TOKEN_PLUS) {
+	if p.match(lexer.TOKEN_BANG) || p.match(lexer.TOKEN_MINUS) || p.match(lexer.TOKEN_PLUS) {
 		tok := p.previousToken
 		right := p.parseUnaryExpression()
 		return ast.UnaryOp(tok.Location, ast.TokenToUnaryOp(*tok), right)

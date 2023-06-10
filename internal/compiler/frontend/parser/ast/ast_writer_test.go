@@ -9,21 +9,21 @@ func TestASTWriter_Write(t *testing.T) {
 
 	ast := &AST{
 		Nodes: []Node{
-			&BinaryExpression{
-				Left:     &LiteralExpression{Value: 2},
+			BinaryExpression{
+				Left:     LiteralExpression{Value: 2},
 				Operator: BinOpAdd,
-				Right:    &LiteralExpression{Value: 3},
+				Right:    LiteralExpression{Value: 3},
 			},
-			&UnaryExpression{
+			UnaryExpression{
 				Operator: UnaryOpNeg,
-				Operand:  &LiteralExpression{Value: 4},
+				Operand:  LiteralExpression{Value: 4},
 			},
-			&BinaryExpression{
-				Left:     &LiteralExpression{Value: true},
+			BinaryExpression{
+				Left:     LiteralExpression{Value: true},
 				Operator: BinOpAnd,
-				Right: &UnaryExpression{
+				Right: UnaryExpression{
 					Operator: UnaryOpNot,
-					Operand:  &LiteralExpression{Value: false},
+					Operand:  LiteralExpression{Value: false},
 				},
 			},
 		},

@@ -13,11 +13,11 @@ func NewASTWriter() *ASTWriter {
 
 func (w *ASTWriter) WriteNode(node Node) string {
 	switch n := node.(type) {
-	case *UnaryExpression:
+	case UnaryExpression:
 		return fmt.Sprintf("(%s %s)", unaryOpToString(n.Operator), w.WriteNode(n.Operand))
-	case *BinaryExpression:
+	case BinaryExpression:
 		return fmt.Sprintf("(%s %s %s)", binOpToString(n.Operator), w.WriteNode(n.Left), w.WriteNode(n.Right))
-	case *LiteralExpression:
+	case LiteralExpression:
 		return fmt.Sprintf("%v", n.Value)
 	default:
 		return ""

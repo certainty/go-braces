@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
@@ -59,13 +60,29 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name:     "precedence",
 			input:    "1 + 2 * 3 ** 4 ",
-			expected: "(+ 1 (* 2 (^ 3 4)))",
+			expected: "(+ 1 (* 2 (** 3 4)))",
+		},
+		{
+			name:     "more precedence",
+			input:    "3 ** 4 * 3 + 4",
+			expected: "(+ (* (** 3 4) 3) 4)",
+		},
+		{
+			name:     "even more precedence",
+			input:    "3 ** 4 * 3 - 4",
+			expected: "(- (* (** 3 4) 3) 4)",
 		},
 		{
 			name:     "right associativity",
-			input:    "2 ** 3 ** 2",
-			expected: "(** 2 (** 3 2))",
+			input:    "1 ** 4 ** 2",
+			expected: "(** 1 (** 4 2))",
 		},
+		{
+			name:     "grouping",
+			input:    "(2 ** 3) ** 2",
+			expected: "(** (** 2 3) 2)",
+		},
+
 		{
 			name:     "left associativity",
 			input:    "2 + 3 + 2",
@@ -82,7 +99,8 @@ func TestParser_Parse(t *testing.T) {
 			ast, err := parser.Parse(input)
 			assert.NoError(t, err)
 			assert.Equal(t, 1, len(ast.Nodes)) // single expression
-			if err != nil {
+			if err == nil {
+				fmt.Printf("%v\n", ast.Nodes[0])
 				result := astWriter.WriteNode(ast.Nodes[0])
 				assert.Equal(t, test.expected, result)
 			}
