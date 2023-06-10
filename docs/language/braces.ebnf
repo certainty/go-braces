@@ -1,0 +1,108 @@
+(* repl programs allow anything at the toplevel  *) EBNF for the language
+repl_program { repl_top_level_statement } ;
+
+repl_top_level_statement = top_level_statement | expression ; 
+
+program = { top_level_statement } ;
+
+top_level_statement = package_decl | api_decl | import_decl | let_statement | type_alias | data_decl | function_def | proc_def ;
+
+package_decl = "package", identifier ;
+
+api_decl = "api", "[", {api_identifier, ","}, "]" ;
+
+api_identifier = identifier ;
+
+import_decl = "import", ["("] {identifier, ","} [")"];
+
+type_hint = "::", type ;
+
+type = base_type | "^", base_type;
+
+base_type = type_identifier | "(", type, ")" | tuple_type | set_type | array_type | map_type;
+
+tuple_type = '(', type, {',', type}, ')';
+
+set_type = '{', {type, ','}, '}';
+
+array_type = '[', {type, ','}, ']';
+
+map_type = '{', {type, '->', type, ','},  '}';
+
+type_alias = "alias", type, identifier ;
+
+(* data *)
+data_decl = record_decl | enum_decl ;
+
+record_decl = "data", identifier, "{", {field_decl, ","}, "}" ;
+
+enum_decl = "data", identifier, "[", {identifier, ","}, "]" ;
+
+field_decl = identifier, type ;
+
+(* functions and procedures *)
+function_def = "fun", identifier, "(", [parameter_list], ")", [type], block ;
+
+proc_def = "proc", identifier, "(", [parameter_list], ")", [type], block ;
+
+parameter_list = parameter, {",", parameter} ;
+
+parameter = identifier, type ;
+
+block = "{", {block_statement}, "}" ;
+
+block_statement = let_statement | set_statement | return_statement | for_statement | if_statement | expression ;
+
+return_statement = "return", [expression] ;
+
+let_statement = "let", identifier, expression, [type_hint];
+
+set_statement = "set", lvalue, "=", expression ;
+
+lvalue = qualified_identifier |  call_expression ;
+
+(* for loops *)
+for_statement = "for", {identifier, "from", expression}, block ;
+
+(* if statements *)
+
+if_statement = "if", expression, block, { "else if", expression, block }, [ "else", block ] ;
+
+qualified_identifier = identifier, { ".", identifier } ;
+
+(* expressions *)
+
+(* TOOD:  check that this is correct *)
+
+expression =  call_expression | match_expression | pipe_expression | literal | qualified_identifier | "(", expression , ")" | expression, binop, expression | unop expression;
+
+call_expression = identifier, "(", [expression, {",", expression}], ")" ;
+
+(* pattern matching *)
+match_expression = "match", expression, "{", match_cases, "}" ;
+
+match_cases = { match_case } ;
+
+match_case = match_pattern, ":", block | expression ;
+
+match_pattern = literal | identifier | type | "(" , {match_pattern , ","}, ")" ;
+
+pipe_expression = expression, {"|>", call_expression} ;
+
+binop = "+" | "-" | "*" | "/" | "**" | "||" | "&&";
+
+unop = "-" | "!" | "+";
+
+literal = boolean | number | string_literal | multiline_string | char | tuple_literal | set_literal | array_literal | map_literal;
+
+multiline_string = '"""', ANY_SEQUENCE_OF_CHARACTERS, '"""';
+
+char = '#\', SINGLE_CHARACTER; (* as defined in Scheme *)
+
+tuple_literal = '(', expression, {',', expression}, ')';
+
+set_literal = '{', expression, {',', expression}, '}';
+
+array_literal = '[', expression, {',', expression}, ']';
+
+map_literal = '{', expression, '->', expression, {',', expression, '->', expression}, '}';
