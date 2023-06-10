@@ -86,8 +86,10 @@ func NewCoreAST() CoreAST {
 	return CoreAST{Nodes: make([]CoreNode, 0)}
 }
 
+// desugar the AST into a core AST
 func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 	coreAST := NewCoreAST()
+
 	for _, expression := range theAST.Nodes {
 		coreNode, err := lowerNode(expression)
 		if err != nil {
@@ -96,7 +98,7 @@ func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 		coreAST.Nodes = append(coreAST.Nodes, coreNode)
 	}
 
-	log.Printf("lowered %v", coreAST) // TODO: build a writer
+	log.Printf("core %v", coreAST) // TODO: build a writer for the coreAST
 	return &coreAST, nil
 }
 
@@ -105,8 +107,10 @@ func lowerNode(node ast.Node) (CoreNode, error) {
 	case ast.LiteralExpression:
 		return NewConstant(node.Value, node.Location()), nil
 	case ast.UnaryExpression:
+		// convert to call
 		return nil, fmt.Errorf("unhandled expression type %T", node)
 	case ast.BinaryExpression:
+		// convert to call
 		return nil, fmt.Errorf("unhandled expression type %T", node)
 	default:
 		return nil, fmt.Errorf("unhandled expression type %T", node)
