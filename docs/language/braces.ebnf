@@ -51,7 +51,7 @@ parameter = identifier, type ;
 
 block = "{", {block_statement}, "}" ;
 
-block_statement = let_statement | set_statement | return_statement | for_statement | if_statement | expression ;
+block_statement = let_statement | set_statement | return_statement | for_statement | expression ;
 
 return_statement = "return", [expression] ;
 
@@ -66,7 +66,7 @@ for_statement = "for", {identifier, "from", expression}, block ;
 
 (* if statements *)
 
-if_statement = "if", expression, block, { "else if", expression, block }, [ "else", block ] ;
+if_expression = "if", expression, block, { "else if", expression, block }, [ "else", block ] ;
 
 qualified_identifier = identifier, { ".", identifier } ;
 

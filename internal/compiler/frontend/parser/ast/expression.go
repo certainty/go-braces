@@ -17,10 +17,10 @@ const (
 	UnaryOpPos
 )
 
-type BinOperator uint8
+type BinaryOperator uint8
 
 const (
-	BinOpAdd BinOperator = iota
+	BinOpAdd BinaryOperator = iota
 	BinOpSub
 	BinOpMul
 	BinOpDiv
@@ -70,14 +70,14 @@ type BinaryExpression struct {
 	location location.Location
 	Left     Expression
 	Right    Expression
-	Operator BinOperator
+	Operator BinaryOperator
 }
 
 var _ Expression = (*BinaryExpression)(nil)
 var _ RValue = (*BinaryExpression)(nil)
 var _ Node = (*BinaryExpression)(nil)
 
-func BinOp(location location.Location, operator BinOperator, left Expression, right Expression) BinaryExpression {
+func BinOp(location location.Location, operator BinaryOperator, left Expression, right Expression) BinaryExpression {
 	return BinaryExpression{
 		location: location,
 		Left:     left,
@@ -90,7 +90,7 @@ func (b BinaryExpression) Location() location.Location {
 	return b.location
 }
 
-func TokenToBinaryOp(token lexer.Token) BinOperator {
+func TokenToBinaryOp(token lexer.Token) BinaryOperator {
 	switch token.Type {
 	case lexer.TOKEN_PLUS:
 		return BinOpAdd

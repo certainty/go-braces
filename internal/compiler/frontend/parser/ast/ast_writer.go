@@ -37,7 +37,7 @@ func unaryOpToString(op UnaryOperator) string {
 	}
 }
 
-func binOpToString(op BinOperator) string {
+func binOpToString(op BinaryOperator) string {
 	switch op {
 	case BinOpAdd:
 		return "+"

@@ -82,6 +82,28 @@ func (p Primitive) Location() location.Location {
 	return p.location
 }
 
+type JunctionOp uint8
+
+const (
+	JunctionOpAnd JunctionOp = iota
+	JunctionOpOr
+)
+
+type Junction struct {
+	location location.Location
+	Junctor  JunctionOp
+	Left     CoreNode
+	Right    CoreNode
+}
+
+func NewJunction(junctor JunctionOp, left CoreNode, right CoreNode, location location.Location) Junction {
+	return Junction{Junctor: junctor, Left: left, Right: right, location: location}
+}
+
+func (j Junction) Location() location.Location {
+	return j.location
+}
+
 func NewCoreAST() CoreAST {
 	return CoreAST{Nodes: make([]CoreNode, 0)}
 }
@@ -89,6 +111,7 @@ func NewCoreAST() CoreAST {
 // desugar the AST into a core AST
 func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 	coreAST := NewCoreAST()
+	coreASTWriter := NewCoreASTWriter()
 
 	for _, expression := range theAST.Nodes {
 		coreNode, err := lowerNode(expression)
@@ -98,7 +121,7 @@ func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 		coreAST.Nodes = append(coreAST.Nodes, coreNode)
 	}
 
-	log.Printf("core %v", coreAST) // TODO: build a writer for the coreAST
+	log.Printf("CORE: %s", coreASTWriter.Write(coreAST)) // TODO: build a writer for the coreAST
 	return &coreAST, nil
 }
 
@@ -107,12 +130,49 @@ func lowerNode(node ast.Node) (CoreNode, error) {
 	case ast.LiteralExpression:
 		return NewConstant(node.Value, node.Location()), nil
 	case ast.UnaryExpression:
-		// convert to call
 		return nil, fmt.Errorf("unhandled expression type %T", node)
 	case ast.BinaryExpression:
-		// convert to call
-		return nil, fmt.Errorf("unhandled expression type %T", node)
+		left, err := lowerNode(node.Left)
+		if err != nil {
+			return nil, err
+		}
+		right, err := lowerNode(node.Right)
+		if err != nil {
+			return nil, err
+		}
+		// TODO: distinguish between booleans and other binary expression in source AST
+		switch node.Operator {
+		case ast.BinOpAnd:
+			return NewJunction(JunctionOpAnd, left, right, node.Location()), nil
+		case ast.BinOpOr:
+			return NewJunction(JunctionOpOr, left, right, node.Location()), nil
+		default:
+			return NewCall(node.Location(), NewPrimitive(callableFromOperator(node.Operator), node.Location()), left, right), nil
+		}
 	default:
 		return nil, fmt.Errorf("unhandled expression type %T", node)
+	}
+}
+
+func callableFromOperator(operator ast.BinaryOperator) PrimitiveOp {
+	switch operator {
+	case ast.BinOpAdd:
+		return PrimitiveOpAdd
+	case ast.BinOpSub:
+		return PrimitiveOpSub
+	case ast.BinOpMul:
+		return PrimitiveOpMul
+	case ast.BinOpDiv:
+		return PrimitiveOpDiv
+	case ast.BinOpPow:
+		return PrimitiveOpPow
+	case ast.BinOpMod:
+		return PrimitiveOpMod
+	case ast.BinOpAnd:
+		return PrimitiveOpAnd
+	case ast.BinOpOr:
+		return PrimitiveOpOr
+	default:
+		panic(fmt.Sprintf("unhandled operator %v", operator))
 	}
 }
