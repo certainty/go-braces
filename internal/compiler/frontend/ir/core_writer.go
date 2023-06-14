@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"strings"
 )
 
@@ -15,16 +16,16 @@ func (w *CoreASTWriter) WriteNode(node CoreNode) string {
 	switch n := node.(type) {
 	case CoreConstant:
 		return fmt.Sprintf("%v", n.Value)
-	case Call:
+	case Apply:
 		operands := make([]string, len(n.Operands))
 		for i, operand := range n.Operands {
 			operands[i] = w.WriteNode(operand)
 		}
-		return fmt.Sprintf("(call %s %s)", w.WriteNode(n.Operator), strings.Join(operands, " "))
-	case Junction:
+		return fmt.Sprintf("(apply %s %s)", w.WriteNode(n.Operator), strings.Join(operands, " "))
+	case LogicalConnective:
 		left := w.WriteNode(n.Left)
 		right := w.WriteNode(n.Right)
-		return fmt.Sprintf("(junct %s %s %s)", w.writeJunctor(n.Junctor), left, right)
+		return fmt.Sprintf("(logic-apply %s %s %s)", w.writeConnective(n.Operator), left, right)
 	case Primitive:
 		return w.writePrimitiveOp(n.Op)
 	default:
@@ -48,32 +49,32 @@ func (w *CoreASTWriter) Write(ast CoreAST) string {
 
 func (w *CoreASTWriter) writePrimitiveOp(op PrimitiveOp) string {
 	switch op {
-	case PrimitiveOpAdd:
+	case PrimitiveOp(ast.BinOpAdd):
 		return "prim#plus"
-	case PrimitiveOpSub:
+	case PrimitiveOp(ast.BinOpSub):
 		return "prim#minus"
-	case PrimitiveOpMul:
+	case PrimitiveOp(ast.BinOpMul):
 		return "prim#mul"
-	case PrimitiveOpDiv:
+	case PrimitiveOp(ast.BinOpDiv):
 		return "prim#div"
-	case PrimitiveOpPow:
+	case PrimitiveOp(ast.BinOpPow):
 		return "prim#pow"
-	case PrimitiveOpMod:
+	case PrimitiveOp(ast.BinOpMod):
 		return "prim#mod"
-	case PrimitiveOpAnd:
+	case PrimitiveOp(ast.BinOpAnd):
 		return "prim#and"
-	case PrimitiveOpOr:
+	case PrimitiveOp(ast.BinOpOr):
 		return "prim#or"
 	default:
 		return ""
 	}
 }
 
-func (w *CoreASTWriter) writeJunctor(j JunctionOp) string {
-	switch j {
-	case JunctionOpAnd:
+func (w *CoreASTWriter) writeConnective(op LogicalOperator) string {
+	switch op {
+	case LogicalOperator(ast.BinOpAnd):
 		return "prim#and"
-	case JunctionOpOr:
+	case LogicalOperator(ast.BinOpOr):
 		return "prim#or"
 	default:
 		return ""
