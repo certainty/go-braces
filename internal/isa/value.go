@@ -1,9 +1,5 @@
 package isa
 
-import (
-	"fmt"
-)
-
 // Values are not actullay part of the ISA normally
 // and this file will go away eventually, but in the
 // beginning it's very helpful to take some shortcuts
@@ -11,20 +7,36 @@ import (
 // much about layout and encoding of the values in the constant pool
 // for example.
 
-type Value interface {
-	Inspect() string
-}
+type Value interface{}
 
 type BoolValue bool
 
-func (b BoolValue) Inspect() string {
+func (b BoolValue) String() string {
 	return "BoolValue"
 }
 
 type CharValue rune
 
-func (v CharValue) Inspect() string {
+func (v CharValue) String() string {
 	return "CharValue"
+}
+
+type StringValue string
+
+func (v StringValue) String() string {
+	return "StringValue"
+}
+
+type IntegerValue int64
+
+func (v IntegerValue) String() string {
+	return "IntegerValue"
+}
+
+type FloatValue float64
+
+func (v FloatValue) String() string {
+	return "FloatValue"
 }
 
 type ProcedureValue struct {
@@ -32,7 +44,7 @@ type ProcedureValue struct {
 	// more to come later: like arity
 }
 
-func (p *ProcedureValue) Inspect() string {
+func (p *ProcedureValue) String() string {
 	return "ProcedureValue"
 }
 
@@ -41,18 +53,6 @@ type ClosureValue struct {
 	UpValues  []*Value
 }
 
-func (c *ClosureValue) Inspect() string {
+func (c *ClosureValue) String() string {
 	return "ClosureValue"
-}
-
-func ValueFromDatum(datum Datum) (Value, error) {
-	// at this point location information is stripped
-	switch datum := datum.(type) {
-	case DatumBool:
-		return BoolValue(datum.Value), nil
-	case DatumChar:
-		return CharValue(datum.Value), nil
-	default:
-		return nil, fmt.Errorf("Can't convert datum to value")
-	}
 }

@@ -1,9 +1,10 @@
 package vm
 
 import (
+	"log"
+
 	"github.com/certainty/go-braces/internal/introspection/vm_introspection"
 	"github.com/certainty/go-braces/internal/isa"
-	"log"
 )
 
 type VmOptions struct {

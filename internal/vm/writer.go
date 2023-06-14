@@ -20,12 +20,18 @@ func (w *Writer) Write(v isa.Value) string {
 	switch value := v.(type) {
 	case isa.BoolValue:
 		if value {
-			return "#t"
+			return "true"
 		} else {
-			return "#f"
+			return "false"
 		}
 	case isa.CharValue:
 		return w.writeChar(value)
+	case isa.IntegerValue:
+		return fmt.Sprintf("%d", value)
+	case isa.FloatValue:
+		return fmt.Sprintf("%f", value)
+	case isa.StringValue:
+		return fmt.Sprintf("%q", string(value))
 	default:
 		panic("CompilerBug: unknown value")
 	}

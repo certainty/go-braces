@@ -4,7 +4,6 @@
 A comprehensive compiler and VM implementation for programming language enthusiasts.
 
 ## Project state
-
 While I'm making good progress most of this is in very very early development and many of the features only exist in my head.
 I totally expect this to take maybe a year till this is somewhere in a state I can show it, at the current rate of development.
 Well I guess that's just it. If you still feel interested or even want to contribute, please get in contact. I'm happy to
@@ -12,7 +11,7 @@ nerd out about this :)
 
 ## Overview
 
-Go-Braces is a dialect of the Scheme programming language, offering a compiler and virtual machine (VM) designed as a learning platform for individuals interested in building programming languages and compilers.
+Go-Braces is a self-designed programming language, offering a compiler and virtual machine (VM) designed as a learning platform for individuals interested in building programming languages and compilers.
 
 The primary objectives of the tools provided here are:
 
@@ -23,25 +22,17 @@ The primary objectives of the tools provided here are:
 
 * Develop a VM that is reasonably performant and provides runtime introspection for a clear view of program execution.
   * Implement through a Text-based User Interface (TUI) for access to VM internals and interactive runtime system engagement.
-* Create a modular compiler that:
+* Create a compiler that:
   * Features a modular design and supports language extensions.
-  * Allows for an optional type system.
+  * Features a static type system with local inference and support for generics 
   * Supports both ahead-of-time and just-in-time compilation.
   * Incorporates introspection capabilities to examine every phase of the compilation process in detail.
-  * Supports macros with an explicit renaming macro expander.
-* Offer a gradual type system that can be enabled/disabled via a compiler flag (possibly on a per-module basis).
 
 ## Non-Objectives
 
-* Develop a fully compliant r7rs Scheme - Although it will be used as a foundation.
+* Develop a language that is intended to be used outside of this learning context
 * Create the most efficient/fast/resource-optimized VM or compiler.
   * Strive for a balance between comprehensibility and performance.
-
-
-## Language deviations
-
-* No first class continuations 
-* Gradual type system
 
 ## Getting Started
 
@@ -98,3 +89,6 @@ and allow you to interact with it and see its state.
 ## References
 
 This implementation is heavily based on an earlier version written in rust, which can be found here: https://github.com/certainty/braces
+This project focused on implementing a scheme dialect. Go-Braces started out with the same idea,
+but eventually I realised that scheme isn't the most suitable choice as it doesn't feature some of the modern
+aspects of programming languages.
