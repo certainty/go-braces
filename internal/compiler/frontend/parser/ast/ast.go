@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"fmt"
-
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
@@ -23,8 +21,8 @@ func New() *AST {
 	}
 }
 
-func (ast *AST) String() string {
-	return fmt.Sprintf("AST %v ", ast.Nodes)
+func (ast *AST) ASTring() string {
+	return NewASTWriter().Write(ast)
 }
 
 func (ast *AST) AddExpression(expression Expression) {

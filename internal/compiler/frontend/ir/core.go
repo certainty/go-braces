@@ -12,6 +12,10 @@ type CoreAST struct {
 	Nodes []CoreNode
 }
 
+func (c CoreAST) ASTring() string {
+	return NewCoreASTWriter().Write(c)
+}
+
 type CoreNode interface {
 	Location() location.Location
 }
@@ -33,13 +37,13 @@ func (c CoreConstant) Location() location.Location {
 
 type Apply struct {
 	location location.Location
-	Operator Appicable
+	Operator Applicable
 	Operands []CoreNode
 }
 
 var _ CoreNode = (*Apply)(nil)
 
-func NewApply(location location.Location, operator Appicable, operands ...CoreNode) Apply {
+func NewApply(location location.Location, operator Applicable, operands ...CoreNode) Apply {
 	return Apply{Operator: operator, Operands: operands, location: location}
 }
 
@@ -47,7 +51,7 @@ func (c Apply) Location() location.Location {
 	return c.location
 }
 
-type Appicable interface {
+type Applicable interface {
 	CoreNode
 }
 
@@ -58,7 +62,7 @@ type Primitive struct {
 	Op       PrimitiveOp
 }
 
-var _ Appicable = (*Primitive)(nil)
+var _ Applicable = (*Primitive)(nil)
 var _ CoreNode = (*Primitive)(nil)
 
 func NewPrimitive(op PrimitiveOp, location location.Location) Primitive {
@@ -93,7 +97,6 @@ func NewCoreAST() CoreAST {
 // desugar the AST into a core AST
 func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 	coreAST := NewCoreAST()
-	coreASTWriter := NewCoreASTWriter()
 
 	for _, expression := range theAST.Nodes {
 		coreNode, err := lowerNode(expression)
@@ -103,7 +106,8 @@ func LowerToCore(theAST *ast.AST) (*CoreAST, error) {
 		coreAST.Nodes = append(coreAST.Nodes, coreNode)
 	}
 
-	log.Printf("CORE: %s", coreASTWriter.Write(coreAST)) // TODO: build a writer for the coreAST
+	log.Printf("%v", coreAST)
+
 	return &coreAST, nil
 }
 
@@ -122,7 +126,7 @@ func lowerNode(node ast.Node) (CoreNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		// TODO: distinguish between booleans and other binary expression in source AST
+
 		switch node.Operator {
 		case ast.BinOpAnd:
 			return NewLogicalConnective(LogicalOperator(ast.BinOpAdd), left, right, node.Location()), nil

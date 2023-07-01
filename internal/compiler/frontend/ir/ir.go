@@ -3,7 +3,6 @@ package ir
 import (
 	"fmt"
 	"github.com/certainty/go-braces/internal/isa"
-	"log"
 )
 
 // linearized intermediate representation
@@ -66,11 +65,12 @@ func LowerToIR(coreAst *CoreAST) (*IR, error) {
 		switch node := node.(type) {
 		case CoreConstant:
 			currentBlock.AddInstruction(NewIRConstant(node.Value))
+		case LogicalConnective:
+		case Apply:
 		default:
 			return nil, fmt.Errorf("unhandled expression type %T", node)
 		}
 	}
 
-	log.Printf("lowered %v", ir)
 	return &ir, nil
 }

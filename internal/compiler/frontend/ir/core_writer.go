@@ -21,11 +21,11 @@ func (w *CoreASTWriter) WriteNode(node CoreNode) string {
 		for i, operand := range n.Operands {
 			operands[i] = w.WriteNode(operand)
 		}
-		return fmt.Sprintf("(apply %s %s)", w.WriteNode(n.Operator), strings.Join(operands, " "))
+		return fmt.Sprintf("(call %s %s)", w.WriteNode(n.Operator), strings.Join(operands, " "))
 	case LogicalConnective:
 		left := w.WriteNode(n.Left)
 		right := w.WriteNode(n.Right)
-		return fmt.Sprintf("(logic-apply %s %s %s)", w.writeConnective(n.Operator), left, right)
+		return fmt.Sprintf("(%s %s %s)", w.writeConnective(n.Operator), left, right)
 	case Primitive:
 		return w.writePrimitiveOp(n.Op)
 	default:
@@ -61,10 +61,6 @@ func (w *CoreASTWriter) writePrimitiveOp(op PrimitiveOp) string {
 		return "prim#pow"
 	case PrimitiveOp(ast.BinOpMod):
 		return "prim#mod"
-	case PrimitiveOp(ast.BinOpAnd):
-		return "prim#and"
-	case PrimitiveOp(ast.BinOpOr):
-		return "prim#or"
 	default:
 		return ""
 	}
@@ -77,6 +73,6 @@ func (w *CoreASTWriter) writeConnective(op LogicalOperator) string {
 	case LogicalOperator(ast.BinOpOr):
 		return "prim#or"
 	default:
-		return ""
+		return fmt.Sprintf("%v", op)
 	}
 }

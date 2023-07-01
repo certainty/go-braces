@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
@@ -37,11 +38,13 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
+	log.Printf("AST: %s", ast.ASTring())
 
 	coreAST, err := c.lowerToCore(ast)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
+	log.Printf("Core AST: %s", coreAST.ASTring())
 
 	coreAST, err = c.typeCheck(coreAST)
 	if err != nil {
@@ -53,17 +56,20 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
+	log.Printf("IR %v", ir)
 
 	optimizedIr, err := c.optimize(ir)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
+	log.Printf("Optimized IR %v", optimizedIr)
 
 	// backend
 	assemblyModule, err := c.generateCode(optimizedIr)
 	if err != nil {
 		return nil, fmt.Errorf("CodeGenError: %w", err)
 	}
+	log.Printf("AssemblyModule %v", assemblyModule)
 
 	c.instrumentation.LeaveCompilerModule(*assemblyModule)
 	return assemblyModule, nil

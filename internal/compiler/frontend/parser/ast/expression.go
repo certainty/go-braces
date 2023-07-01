@@ -28,7 +28,6 @@ const (
 	BinOpMod
 	BinOpAnd
 	BinOpOr
-	BinOpNot
 )
 
 type UnaryExpression struct {

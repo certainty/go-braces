@@ -1,8 +1,6 @@
 package optimization
 
 import (
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 )
@@ -20,7 +18,5 @@ func NewOptimizer(instrumentation compiler_introspection.Instrumentation) *Optim
 func (o *Optimizer) Optimize(intermediate *ir.IR) (*ir.IR, error) {
 	o.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer o.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
-
-	log.Printf("opitmizing %v", intermediate)
 	return intermediate, nil
 }
