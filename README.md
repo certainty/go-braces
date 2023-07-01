@@ -82,9 +82,6 @@ will observe is that the introspector picks up the compilation events and gives 
 By default the compiler is in single-stepping mode, meaning that it will stop at strategic points during compilation
 and allow you to interact with it and see its state.
 
-## Todo
-
-- [ ] Snapshot tests for the TUI elements
 
 ## References
 
