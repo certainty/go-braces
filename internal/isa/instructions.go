@@ -18,6 +18,8 @@ type Register uint32
 
 type ConstantAddress uint64
 
+type InstructionAddress uint64
+
 type Instruction struct {
 	Opcode   OpCode
 	Operands []Operand

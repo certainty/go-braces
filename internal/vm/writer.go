@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -33,7 +34,8 @@ func (w *Writer) Write(v isa.Value) string {
 	case isa.StringValue:
 		return fmt.Sprintf("%q", string(value))
 	default:
-		panic("CompilerBug: unknown value")
+		log.Panicf("unhandled value type: %T", value)
+		return ""
 	}
 }
 

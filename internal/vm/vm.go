@@ -1,8 +1,10 @@
 package vm
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/certainty/go-braces/internal/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/internal/introspection/vm_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -55,6 +57,8 @@ func (vm *VM) LoadModule(module *isa.AssemblyModule) {
 
 func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 	vm.LoadModule(module)
+
+	fmt.Print(disassembler.DisassModule(module))
 
 	for vm.pc < len((*vm.code).Instructions) {
 		instr := (*vm.code).Instructions[vm.pc]
