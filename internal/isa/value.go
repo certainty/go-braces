@@ -9,12 +9,6 @@ package isa
 
 type Value interface{}
 
-type BoolValue bool
-
-func (b BoolValue) String() string {
-	return "BoolValue"
-}
-
 type CharValue rune
 
 func (v CharValue) String() string {
@@ -27,11 +21,21 @@ func (v StringValue) String() string {
 	return "StringValue"
 }
 
+type Int8Value int8
+type Int16Value int16
+type Int32Value int32
+type Int64Value int64
+
 type IntegerValue int64
 
 func (v IntegerValue) String() string {
 	return "IntegerValue"
 }
+
+type Uint8Value uint8
+type Uint16Value uint16
+type Uint32Value uint32
+type Uint64Value uint64
 
 type FloatValue float64
 

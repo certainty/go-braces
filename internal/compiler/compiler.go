@@ -39,19 +39,13 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	}
 	log.Printf("AST: %s", ast.ASTring())
 
-	coreAST, err := c.lowerToCore(ast)
-	if err != nil {
-		return nil, fmt.Errorf("IRError: %w", err)
-	}
-	log.Printf("Core AST: %s", coreAST.ASTring())
-
-	coreAST, err = c.typeCheck(coreAST)
+	err = c.typeCheck(ast)
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(coreAST)
+	ir, err := c.lowerToIR(ast)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
@@ -82,26 +76,19 @@ func (c Compiler) parse(input *input.Input) (*ast.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) typeCheck(theAST *ir.CoreAST) (*ir.CoreAST, error) {
+func (c Compiler) typeCheck(theAST *ast.AST) error {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
 	typechecker := typechecker.NewTypeChecker(c.instrumentation)
 	if err := typechecker.Check(theAST); err != nil {
-		return nil, fmt.Errorf("TypeError: %w", err)
+		return fmt.Errorf("TypeError: %w", err)
 	}
 
-	return theAST, nil
+	return nil
 }
 
-func (c Compiler) lowerToCore(theAST *ast.AST) (*ir.CoreAST, error) {
-	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToCore)
-	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToCore)
-
-	return ir.LowerToCore(theAST)
-}
-
-func (c Compiler) lowerToIR(theAST *ir.CoreAST) (*ir.IR, error) {
+func (c Compiler) lowerToIR(theAST *ast.AST) (*ir.IR, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 

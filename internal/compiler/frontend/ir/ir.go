@@ -2,75 +2,72 @@ package ir
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/isa"
+	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
+	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
-// linearized intermediate representation
+type Label string
+type Register string
 
-type IRInstruction interface{}
-
-type IRConstant struct {
-	Value isa.Value
+type Module struct {
+	Name      Label
+	Source    location.Origin
+	Functions []*Function
 }
 
-func (c IRConstant) String() string {
-	return fmt.Sprintf("const %v", c.Value)
+type Function struct {
+	tpe    Type
+	Name   Label
+	Blocks []*BasicBlock
 }
 
-type IRLabel struct{}
-type IRRet struct{}
-type IRBlock struct {
-	Label        string
-	Instructions []IRInstruction
+type BasicBlock struct {
+	Label        Label
+	Instructions []Instruction
 }
 
-func NewIRConstant(value interface{}) IRConstant {
-	return IRConstant{Value: value}
+type Instruction interface{}
+
+// %register = op tpe operand1, operand2, ...
+type SimpleInstruction struct {
+	tpe       Type
+	Register  Register
+	Operation Operation
+	Operand   Operand
 }
 
-func NewBlock(label string) *IRBlock {
-	return &IRBlock{
-		Label:        label,
-		Instructions: make([]IRInstruction, 0),
-	}
+type ReturnInstruction struct {
+	tpe      Type
+	Register Register
 }
 
-func (b *IRBlock) String() string {
-	return fmt.Sprintf("block %s %v", b.Label, b.Instructions)
-}
+type Operation uint8
+type Operand interface{}
+type Constant interface{}
 
-func (b *IRBlock) AddInstruction(instruction IRInstruction) {
-	b.Instructions = append(b.Instructions, instruction)
-}
+var _ Operand = Constant(nil)
+var _ Operand = Label("")
+var _ Operand = Register("")
 
-type IR struct {
-	Blocks []*IRBlock
-}
+const (
+	Ret Operation = iota
+	Add
+	Sub
+	Mul
+	Div
+	Or
+	And
+	Xor
+	Neg
+)
 
-func NewIR() IR {
-	return IR{Blocks: make([]*IRBlock, 0)}
-}
+func LowerToIR(origin location.Origin, ast *ast.AST, moduleName Label) (*Module, error) {
+	mod := CreateModule(moduleName, origin)
+	for _, node := range ast.Nodes {
+		switch node.(type) {
 
-func (ir *IR) AddBlock(name string) *IRBlock {
-	block := NewBlock(name)
-	ir.Blocks = append(ir.Blocks, block)
-	return block
-}
-
-func LowerToIR(coreAst *CoreAST) (*IR, error) {
-	var ir IR = NewIR()
-	var currentBlock *IRBlock = ir.AddBlock("entry")
-
-	for _, node := range coreAst.Nodes {
-		switch node := node.(type) {
-		case CoreConstant:
-			currentBlock.AddInstruction(NewIRConstant(node.Value))
-		case LogicalConnective:
-		case Apply:
-		default:
-			return nil, fmt.Errorf("unhandled expression type %T", node)
 		}
 	}
 
-	return &ir, nil
+	return nil, nil
 }

@@ -15,6 +15,20 @@ type Node interface {
 type LValue interface{ Node }
 type RValue interface{ Node }
 
+type Type string
+type Identifier string
+
+type ArgumentDef struct {
+	Name Identifier
+	Type Type
+}
+
+type FunctionDef struct {
+	Name      Identifier
+	Arguments []ArgumentDef
+	Body      []Node
+}
+
 func New() *AST {
 	return &AST{
 		Nodes: []Node{},
