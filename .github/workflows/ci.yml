@@ -26,26 +26,12 @@ jobs:
       - name: Cache Go modules
         uses: actions/cache@v2
         with:
-          path: ~/go/pkg/mod
+          path: |
+            ~/go/pkg/mod
+            ~/go/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Cache golangci-lint
-        uses: actions/cache@v2
-        with:
-          path: ~/go/bin/golangci-lint
-          key: ${{ runner.os }}-golangci-lint-${{ env.GOLANGCI_LINT_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-golangci-lint-
-
-      - name: Cache gogetsum
-        uses: actions/cache@v2
-        with:
-          path: ~/go/bin/gogetsum
-          key: ${{ runner.os }}-gogetsum
-          restore-keys: |
-            ${{ runner.os }}-gogetsum-
 
       - name: Install tools 
         run: make install-tools

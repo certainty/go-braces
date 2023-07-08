@@ -6,7 +6,7 @@ GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
 IN_CI ?= false
 
-.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto build-introspect
+.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools repl build-introspect
 
 build: tidy build-compile build-vm build-introspect 
 
@@ -34,6 +34,10 @@ lint:
 	@echo "Running linters..."
 	@golangci-lint run --tests=false --timeout=5m
 
+staticcheck:
+	@echo "Running staticcheck..."
+	@staticcheck ./...
+
 format:
 	@echo "Formatting code..."
 	@gofmt -w $(GOFMT_FILES)
@@ -54,21 +58,26 @@ tidy:
 	@echo "Tidying up..."
 	@go mod tidy
 
-install-tools: install-linter install-gotestsum
+install-tools: install-linter install-gotestsum  install-staticcheck
 
 install-linter:
 	@if ! command -v golangci-lint &> /dev/null; then \
 	  echo "Installing linter..."; \
-	  go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
+	  go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi 
 
 install-gotestsum:
 	@if [ $(IN_CI) = false ]; then \
     if ! command -v gotestsum &> /dev/null; then \
 		  echo "Installing gotestsum..."; \
-		  go get gotest.tools/gotestsum; \
 		  go install gotest.tools/gotestsum; \
 		fi \
+	fi
+
+install-staticcheck:
+	@if ! command -v staticcheck &> /dev/null; then \
+		echo "Installing staticcheck..."; \
+		go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
 
 repl: build

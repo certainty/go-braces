@@ -1,0 +1,33 @@
+run:
+  # indicates the timeout for analysis. Default is 1m
+  deadline: 5m
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  gocyclo:
+    min-complexity: 10
+  goimports:
+    local-prefixes: github.com/certainty/go-braces
+  misspell:
+    locale: US
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+      # - gocyclo
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unused
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters: [golint]
+      text: ".*_test.go:.*: don't use underscores.*"
+
+

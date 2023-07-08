@@ -33,7 +33,6 @@ func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule,
 func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
-	// frontend
 	ast, err := c.parse(input)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
