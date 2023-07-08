@@ -208,17 +208,13 @@ func (p *Parser) check(tokenType lexer.TokenType) bool {
 	return p.currentToken.Type == tokenType
 }
 
-func (p *Parser) compilerBug(message string) {
-	panic(fmt.Sprintf("compiler bug: %s", message))
-}
-
 func (p *Parser) errorAtCurrent(id ParseErrorId, message string, cause error) {
 	p.errorAt(*p.currentToken, id, message, cause)
 }
 
-func (p *Parser) errorAtPrevious(id ParseErrorId, message string, cause error) {
-	p.errorAt(*p.previousToken, id, message, cause)
-}
+// func (p *Parser) errorAtPrevious(id ParseErrorId, message string, cause error) {
+// 	p.errorAt(*p.previousToken, id, message, cause)
+// }
 
 func (p *Parser) errorAt(token lexer.Token, id ParseErrorId, message string, cause error) {
 	if p.panicMode {

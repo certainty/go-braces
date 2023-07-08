@@ -35,11 +35,11 @@ jobs:
 
       - name: Install tools 
         run: make install-tools
+      - name: Check formatting
+        run: make check-format
+      - name: Lint
+        run: make lint 
       - name: Build
         run: make build 
       - name: Test
         run: make test 
-      # - name: Lint
-      # run: make lint 
-      - name: Check formatting
-        run: make check-format

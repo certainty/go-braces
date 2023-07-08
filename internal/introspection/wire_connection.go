@@ -139,6 +139,7 @@ func (w *WireControlConnection) processIncomingControlMessages() {
 func (w *WireControlConnection) processOutgoingControlMessages() {
 	defer w.wg.Done()
 	encoder := gob.NewEncoder(w.socket)
+	var err error
 
 	for {
 		select {
@@ -146,10 +147,10 @@ func (w *WireControlConnection) processOutgoingControlMessages() {
 			return
 		case payload := <-w.Out:
 			wireMessage := WireMessage{MessageTypeControl, payload}
-			if err := encoder.Encode(wireMessage); err != nil {
+			if err = encoder.Encode(wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
 					log.Printf("Control connection closed. Leaving outgoing control message processing loop.")
-					if err := w.closeSocket(); err != nil {
+					if err = w.closeSocket(); err != nil {
 						log.Printf("Failed to close socket. Ignoring...")
 					}
 					return
@@ -192,6 +193,7 @@ func (w *WireEventConnection) processIncomingEvents() {
 
 func (w *WireEventConnection) processOutgoingEvents() {
 	encoder := gob.NewEncoder(w.socket)
+	var err error
 
 	for {
 		select {
@@ -199,10 +201,10 @@ func (w *WireEventConnection) processOutgoingEvents() {
 			return
 		case event := <-w.Channel:
 			wireMessage := WireMessage{MessageTypeEvent, event}
-			if err := encoder.Encode(wireMessage); err != nil {
+			if err = encoder.Encode(wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
 					log.Printf("Event connection closed. Leaving event message processing loop.")
-					if err := w.closeSocket(); err != nil {
+					if err = w.closeSocket(); err != nil {
 						log.Printf("Failed to close socket. Ignoring...")
 					}
 					return

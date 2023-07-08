@@ -57,22 +57,22 @@ func (m *Model) propagateResize() {
 	m.updatedPhasePane(m.activePhasePane, common.NewMsgResize(m.containerWidth, m.containerHeight-4))
 }
 
-func (m *Model) propagateUpdate(msg tea.Msg) tea.Cmd {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
+// func (m *Model) propagateUpdate(msg tea.Msg) tea.Cmd {
+// 	var (
+// 		cmd  tea.Cmd
+// 		cmds []tea.Cmd
+// 	)
 
-	for idx := range m.sections {
-		cmd = m.updateSection(section(idx), msg)
-		cmds = append(cmds, cmd)
-	}
+// 	for idx := range m.sections {
+// 		cmd = m.updateSection(section(idx), msg)
+// 		cmds = append(cmds, cmd)
+// 	}
 
-	cmd = m.updatedPhasePane(m.activePhasePane, msg)
-	cmds = append(cmds, cmd)
+// 	cmd = m.updatedPhasePane(m.activePhasePane, msg)
+// 	cmds = append(cmds, cmd)
 
-	return tea.Batch(cmds...)
-}
+// 	return tea.Batch(cmds...)
+// }
 
 func (m *Model) updateSection(sect section, msg tea.Msg) tea.Cmd {
 	updatedSection, cmd := m.sections[sect].Update(msg)
