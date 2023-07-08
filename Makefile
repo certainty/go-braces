@@ -10,7 +10,7 @@ IN_CI ?= false
 
 build: tidy build-compile build-vm build-introspect 
 
-build-compile: build-proto
+build-compile:
 	@echo "Building $(BINARY_COMPILE)..."
 	@go build -o target/$(BINARY_COMPILE) ./cmd/$(BINARY_COMPILE)
 
