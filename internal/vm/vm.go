@@ -50,13 +50,21 @@ func (vm *VM) WriteValue(value isa.Value) string {
 	return vm.writer.Write(value)
 }
 
-func (vm *VM) LoadModule(module *isa.AssemblyModule) {
-	vm.code = module.Code
+func (vm *VM) LoadModule(module *isa.AssemblyModule) error {
+	if module.EntryPoint < 0 {
+		return fmt.Errorf("invalid entry point")
+	}
+
+	vm.code = &module.Functions[module.EntryPoint].Code
 	vm.pc = 0
+
+	return nil
 }
 
 func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
-	vm.LoadModule(module)
+	if err := vm.LoadModule(module); err != nil {
+		return nil, err
+	}
 
 	fmt.Print(disassembler.DisassModule(module))
 
@@ -68,10 +76,10 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		switch instr.Opcode {
 		case isa.OP_TRUE:
 			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.BoolValue(true)
+			vm.registers[register] = isa.UInt8(1)
 		case isa.OP_FALSE:
 			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.BoolValue(false)
+			vm.registers[register] = isa.UInt8(0)
 		case isa.OP_CONST:
 			address := instr.Operands[0].(isa.ConstantAddress)
 			register := instr.Operands[1].(isa.Register)

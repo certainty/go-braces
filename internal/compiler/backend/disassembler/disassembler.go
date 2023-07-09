@@ -2,18 +2,22 @@ package disassembler
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/isa"
 	"io"
+	"log"
 	"strings"
+
+	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Disassembler struct {
 	writer io.StringWriter
+	indent string
 }
 
 func NewDisassembler(writer io.StringWriter) *Disassembler {
 	return &Disassembler{
 		writer: writer,
+		indent: "",
 	}
 }
 
@@ -28,19 +32,12 @@ func DisassModule(assemblyModule *isa.AssemblyModule) (string, error) {
 
 func (disass *Disassembler) Disassemble(assemblyModule *isa.AssemblyModule) error {
 	disass.disassModuleMeta(assemblyModule.Meta)
-	var address isa.InstructionAddress = 0
-	var err error
-
-	for {
-		if int(address) >= len(assemblyModule.Code.Instructions) {
-			break
-		}
-		address, err = disass.DisassInstruction(assemblyModule.Code, address)
-		if err != nil {
-			return err
-		}
+	for _, function := range assemblyModule.Functions {
+		disass.dissassFunction(&function)
 	}
-
+	for _, closure := range assemblyModule.Closures {
+		disass.disassClosure(&closure)
+	}
 	disass.writer.WriteString("\n")
 	return nil
 }
@@ -53,8 +50,35 @@ func (disass *Disassembler) disassModuleMeta(meta isa.AssemblyMeta) {
 	disass.writer.WriteString(fmt.Sprintf("\nMOD(%s) Name: '%s' APIVersion: %x\n\n", moduleType, meta.Name, meta.ABIVersion))
 }
 
+func (disass *Disassembler) dissassFunction(function *isa.Function) {
+	disass.writer.WriteString(fmt.Sprintf("@%s:\n", function.Label))
+	disass.indent = "  "
+	disass.disassCodeUnit(&function.Code)
+	disass.indent = ""
+	disass.writer.WriteString("\n")
+}
+
+func (disass *Disassembler) disassClosure(closure *isa.Closure) {
+	disass.writer.WriteString(fmt.Sprintf("@%s:\n", closure.Function.Label))
+	disass.indent = "  "
+	disass.disassCodeUnit(&closure.Function.Code)
+	disass.indent = ""
+	disass.writer.WriteString("\n")
+}
+
+func (disass *Disassembler) disassCodeUnit(code *isa.CodeUnit) {
+	var err error
+	instructionCount := len(code.Instructions)
+	for addr := isa.InstructionAddress(0); int(addr) < instructionCount; {
+		addr, err = disass.DisassInstruction(code, addr)
+		if err != nil {
+			log.Fatalf("disassembler: %v", err)
+		}
+	}
+}
+
 func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.InstructionAddress) (isa.InstructionAddress, error) {
-	disass.writer.WriteString(fmt.Sprintf("0x%08x ", addr))
+	disass.writer.WriteString(fmt.Sprintf("%s0x%08x ", disass.indent, addr))
 	instr := code.Instructions[addr]
 
 	switch instr.Opcode {
@@ -68,7 +92,7 @@ func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.Instr
 }
 
 func (disass *Disassembler) disassSimpleInstruction(instr isa.Instruction, addr isa.InstructionAddress) isa.InstructionAddress {
-	disass.writer.WriteString(fmt.Sprintf("%-8s %s\n", disassOpCode(instr.Opcode), disassOperands(instr.Operands)))
+	disass.writer.WriteString(fmt.Sprintf("%s%-8s %s\n", disass.indent, disassOpCode(instr.Opcode), disassOperands(instr.Operands)))
 	return addr + 1
 }
 

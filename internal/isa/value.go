@@ -1,62 +1,60 @@
 package isa
 
-// Values are not actullay part of the ISA normally
-// and this file will go away eventually, but in the
-// beginning it's very helpful to take some shortcuts
-// during development. The compiler doesn't need to care too
-// much about layout and encoding of the values in the constant pool
-// for example.
-
 type Value interface{}
 
-type CharValue rune
+type Char rune
 
-func (v CharValue) String() string {
+func (v Char) String() string {
 	return "CharValue"
 }
 
-type StringValue string
+type String string
 
-func (v StringValue) String() string {
+func (v String) String() string {
 	return "StringValue"
 }
 
-type Int8Value int8
-type Int16Value int16
-type Int32Value int32
-type Int64Value int64
+type Bool bool
+type Int8 int8
+type Int16 int16
+type Int32 int32
+type Int64 int64
+type UInt8 uint8
+type UInt16 uint16
+type UInt32 uint32
+type UInt64 uint64
+type UInt uint
+type Int int
 
-type IntegerValue int64
-
-func (v IntegerValue) String() string {
+func (Int) String() string {
 	return "IntegerValue"
 }
 
-type Uint8Value uint8
-type Uint16Value uint16
-type Uint32Value uint32
-type Uint64Value uint64
+type Float float64
 
-type FloatValue float64
-
-func (v FloatValue) String() string {
+func (v Float) String() string {
 	return "FloatValue"
 }
 
-type ProcedureValue struct {
-	Code CodeUnit
-	// more to come later: like arity
+type Arity interface{}
+type AtLeast uint
+type Exactly uint
+
+type Function struct {
+	Label string
+	Code  CodeUnit
+	Arity Arity
 }
 
-func (p *ProcedureValue) String() string {
+func (p *Function) String() string {
 	return "ProcedureValue"
 }
 
-type ClosureValue struct {
-	Procedure ProcedureValue
-	UpValues  []*Value
+type Closure struct {
+	Function Function
+	UpValues []*Value
 }
 
-func (c *ClosureValue) String() string {
+func (c *Closure) String() string {
 	return "ClosureValue"
 }

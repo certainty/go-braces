@@ -10,6 +10,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
 	"github.com/certainty/go-braces/internal/compiler/input"
+	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
@@ -45,7 +46,7 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(ast)
+	ir, err := c.lowerToIR(ast, input.Origin)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
@@ -88,14 +89,14 @@ func (c Compiler) typeCheck(theAST *ast.AST) error {
 	return nil
 }
 
-func (c Compiler) lowerToIR(theAST *ast.AST) (*ir.IR, error) {
+func (c Compiler) lowerToIR(theAST *ast.AST, origin location.Origin) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(theAST)
+	return ir.LowerToIR(origin, theAST, "FIXME")
 }
 
-func (c Compiler) optimize(ir *ir.IR) (*ir.IR, error) {
+func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
 
@@ -107,7 +108,7 @@ func (c Compiler) optimize(ir *ir.IR) (*ir.IR, error) {
 	return optimized, nil
 }
 
-func (c Compiler) generateCode(ir *ir.IR) (*isa.AssemblyModule, error) {
+func (c Compiler) generateCode(ir *ir.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 

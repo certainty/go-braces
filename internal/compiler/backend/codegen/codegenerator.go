@@ -62,23 +62,20 @@ func (c *Codegenerator) NextRegister() isa.Register {
 	return isa.Register(c.currentGeneralPurposeRegister)
 }
 
-func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule, error) {
+func (c *Codegenerator) GenerateModule(irModule *ir.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
-	codeBuilder := newCodeUnitBuilder(c.instrumentation)
-
-	for _, block := range intermediate.Blocks {
-		if err := c.emitBlock(block, codeBuilder); err != nil {
+	for _, fun := range irModule.Functions {
+		if err := c.emitFunction(fun); err != nil {
 			return nil, err
 		}
 	}
-	codeBuilder.AddInstruction(isa.InstHalt(c.registerAccu))
 
 	module := isa.NewAssemblyModule(
 		isa.NewAssemblyMeta("", isa.AssemblyTypeExecutable),
-		codeBuilder.BuildCodeUnit(),
-		[]isa.ClosureValue{},
+		[]isa.Closure{},
+		[]isa.Function{},
 		nil,
 		nil,
 	)
@@ -86,18 +83,30 @@ func (c *Codegenerator) GenerateModule(intermediate *ir.IR) (*isa.AssemblyModule
 	return module, nil
 }
 
-func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) error {
+// we should return the function address to fill the jump table
+func (c *Codegenerator) emitFunction(fun *ir.Function) error {
+	codeBuilder := newCodeUnitBuilder(c.instrumentation)
+
+	for _, block := range fun.Blocks {
+		if err := c.emitBlock(block, codeBuilder); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder) error {
 	for _, instruction := range block.Instructions {
 		switch instruction.(type) {
-		case ir.IRConstant:
-			value, err := c.convertValue(instruction.(ir.IRConstant).Value)
+		case ir.Constant:
+			value, err := c.convertValue(instruction.(ir.Constant))
 			if err != nil {
 				return fmt.Errorf("emitBlock: %w", err)
 			}
 
 			switch value.(type) {
-			case isa.BoolValue:
-				if value == isa.BoolValue(true) {
+			case isa.Bool:
+				if value == isa.Bool(true) {
 					log.Printf("emitBlock: true")
 					builder.AddInstruction(isa.InstTrue(c.registerAccu))
 				} else {
@@ -118,15 +127,32 @@ func (c *Codegenerator) emitBlock(block *ir.IRBlock, builder *CodeUnitBuilder) e
 func (c *Codegenerator) convertValue(v interface{}) (isa.Value, error) {
 	switch v := v.(type) {
 	case bool:
-		return isa.BoolValue(v), nil
+		return isa.Bool(v), nil
 	case lexer.CodePoint:
-		return isa.CharValue(v.Char), nil
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		return isa.IntegerValue(v.(int64)), nil
+		return isa.Char(v.Char), nil
+	case int:
+		return isa.Int(v), nil
+	case int8:
+		return isa.Int8(v), nil
+	case int16:
+		return isa.Int16(v), nil
+	case int32:
+		return isa.Int32(v), nil
+	case int64:
+		return isa.Int64(v), nil
+	case uint8:
+		return isa.UInt8(v), nil
+	case uint16:
+		return isa.UInt16(v), nil
+	case uint32:
+		return isa.UInt32(v), nil
+	case uint64:
+		return isa.UInt64(v), nil
+
 	case float32, float64:
-		return isa.FloatValue(v.(float64)), nil
+		return isa.Float(v.(float64)), nil
 	case string:
-		return isa.StringValue(v), nil
+		return isa.String(v), nil
 
 	default:
 		return nil, fmt.Errorf("unknown value type: %T", v)

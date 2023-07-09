@@ -15,7 +15,7 @@ func NewOptimizer(instrumentation compiler_introspection.Instrumentation) *Optim
 	}
 }
 
-func (o *Optimizer) Optimize(intermediate *ir.IR) (*ir.IR, error) {
+func (o *Optimizer) Optimize(intermediate *ir.Module) (*ir.Module, error) {
 	o.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer o.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
 	return intermediate, nil
