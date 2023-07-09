@@ -61,6 +61,6 @@ func assertRuntimeError(t *testing.T, sourceCode string) {
 }
 
 func TestJitCanCompileAndExecuteSimpleProgram(t *testing.T) {
-	assertCompilesAndRuns(t, "true", isa.BoolValue(true))
-	assertCompilesAndRuns(t, "false", isa.BoolValue(false))
+	assertCompilesAndRuns(t, "true", isa.Bool(true))
+	assertCompilesAndRuns(t, "false", isa.Bool(false))
 }

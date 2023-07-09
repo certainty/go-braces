@@ -2,12 +2,34 @@ package isa
 
 import "fmt"
 
+// load store architecture
+
 type OpCode uint8
 
 const (
 	OP_TRUE OpCode = iota
 	OP_FALSE
 	OP_CONST
+	OP_ADD
+	OP_SUB
+	OP_MUL
+	OP_DIV
+	OP_NEG
+	OP_MOD
+	OP_REM
+	OP_AND
+	OP_OR
+	OP_XOR
+	OP_NOT
+	OP_MOV
+	OP_SHL
+	OP_SHR
+	OP_BEQ
+	OP_BNE
+	OP_PRNT
+	OP_NEW_TABLE
+	OP_GET
+	OP_SET
 	OP_HALT
 	OP_RET
 )

@@ -16,17 +16,17 @@ func TestWrite(t *testing.T) {
 	}{
 		{
 			name:     "Write true BoolValue",
-			input:    isa.BoolValue(true),
+			input:    isa.Bool(true),
 			expected: "true",
 		},
 		{
 			name:     "Write false BoolValue",
-			input:    isa.BoolValue(false),
+			input:    isa.Bool(false),
 			expected: "false",
 		},
 		{
 			name:     "Write #\\c CharValue",
-			input:    isa.CharValue('c'),
+			input:    isa.Char('c'),
 			expected: "#\\c",
 		},
 	}
