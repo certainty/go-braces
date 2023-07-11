@@ -74,13 +74,15 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 
 		log.Printf("Executing instruction %s", instr)
 		switch instr.Opcode {
-		case isa.OP_TRUE:
+		case isa.OP_RET:
 			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.UInt8(1)
-		case isa.OP_FALSE:
-			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.UInt8(0)
-		case isa.OP_CONST:
+			return vm.registers[register], nil
+		case isa.OP_ADD:
+			target := instr.Operands[0].(isa.Register)
+			left := instr.Operands[1].(isa.Register)
+			right := instr.Operands[2].(isa.Register)
+			vm.registers[target] = vm.registers[left].(isa.Int) + vm.registers[right].(isa.Int)
+		case isa.OP_LOAD:
 			address := instr.Operands[0].(isa.ConstantAddress)
 			register := instr.Operands[1].(isa.Register)
 			value, err := vm.code.ReadConstant(address)

@@ -1,58 +1,75 @@
 package isa
 
+import "github.com/certainty/go-braces/internal/isa/arity"
+
 type Value interface{}
 
+type Bool bool
+type Byte byte
+type Int int64
+type UInt uint64
+type Float float64
 type Char rune
+type String string
+type Vector []Value
+type Map map[Value]Value
+type Closure struct {
+	Function Function
+	UpValues []*Value
+}
+
+type Function struct {
+	Label Label
+	Arity arity.Arity
+	Code  CodeUnit
+}
+
+var _ Value = Bool(false)
+var _ Value = Byte(0)
+var _ Value = Int(0)
+var _ Value = UInt(0)
+var _ Value = Float(0.0)
+var _ Value = Char(0)
+var _ Value = String("")
+var _ Value = (*Closure)(nil)
+var _ Value = (*Function)(nil)
+var _ Value = Vector{}
+var _ Value = Map{}
 
 func (v Char) String() string {
 	return "CharValue"
 }
 
-type String string
-
 func (v String) String() string {
 	return "StringValue"
 }
 
-type Bool bool
-type Int8 int8
-type Int16 int16
-type Int32 int32
-type Int64 int64
-type UInt8 uint8
-type UInt16 uint16
-type UInt32 uint32
-type UInt64 uint64
-type UInt uint
-type Int int
+func (v Byte) String() string {
+	return "ByteValue"
+}
+
+func (v Bool) String() string {
+	return "BoolValue"
+}
 
 func (Int) String() string {
 	return "IntegerValue"
 }
 
-type Float float64
-
 func (v Float) String() string {
 	return "FloatValue"
 }
 
-type Arity interface{}
-type AtLeast uint
-type Exactly uint
+func (v Vector) String() string {
+	return "VectorValue"
+}
 
-type Function struct {
-	Label string
-	Code  CodeUnit
-	Arity Arity
+func (v Map) String() string {
+	return "MapValue"
 }
 
 func (p *Function) String() string {
 	return "ProcedureValue"
-}
-
-type Closure struct {
-	Function Function
-	UpValues []*Value
 }
 
 func (c *Closure) String() string {

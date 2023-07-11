@@ -10,23 +10,33 @@ type Type interface {
 }
 
 type Bool struct{}
-type Int8 struct{}
-type Int16 struct{}
-type Int32 struct{}
-type Int64 struct{}
-type UInt8 struct{}
-type UInt16 struct{}
-type UInt32 struct{}
-type UInt64 struct{}
-type Float32 struct{}
+type Byte struct{}
+type Int struct{}
+type UInt struct{}
+type Float struct{}
+type Rational struct{}
+type Complex struct{}
 type String struct{}
 type Char struct{}
-type Table struct {
-	KeyType, ValueType Type
+
+type Vector struct {
+	elementType Type
 }
-type Ptr struct {
+
+type ByteVector struct{}
+
+type Tuple struct {
+	elementTypes []Type
+}
+
+type Place struct {
 	BaseType Type
 }
+
+type SetablePlace struct {
+	BaseType Type
+}
+
 type Chan struct {
 	ElementType Type
 }
@@ -37,38 +47,30 @@ type Func struct {
 }
 
 var (
-	BoolType    = Bool{}
-	Int8Type    = Int8{}
-	Int16Type   = Int16{}
-	Int32Type   = Int32{}
-	Int64Type   = Int64{}
-	UInt8Type   = UInt8{}
-	UInt16Type  = UInt16{}
-	UInt32Type  = UInt32{}
-	UInt64Type  = UInt64{}
-	Float32Type = Float32{}
-	CharType    = Char{}
-	StringType  = String{}
+	BoolType   = Bool{}
+	ByteType   = Byte{}
+	IntType    = Int{}
+	FloatType  = Float{}
+	CharType   = Char{}
+	StringType = String{}
 )
 
-func (Int8) Name() string    { return "int8" }
-func (Int16) Name() string   { return "int16" }
-func (Int32) Name() string   { return "int32" }
-func (Int64) Name() string   { return "int64" }
-func (UInt8) Name() string   { return "uint8" }
-func (UInt16) Name() string  { return "uint16" }
-func (UInt32) Name() string  { return "uint32" }
-func (UInt64) Name() string  { return "uint64" }
-func (Float32) Name() string { return "float32" }
-func (Char) Name() string    { return "char" }
-func (String) Name() string  { return "string" }
+func (Int) Name() string      { return "int" }
+func (UInt) Name() string     { return "uint" }
+func (Float) Name() string    { return "float" }
+func (Rational) Name() string { return "rational" }
+func (Complex) Name() string  { return "complex" }
+func (Bool) Name() string     { return "bool" }
+func (Char) Name() string     { return "char" }
+func (String) Name() string   { return "string" }
+func (Byte) Name() string     { return "byte" }
 
-func (t Table) Name() string {
-	return fmt.Sprintf("table[%s]%s", t.KeyType.Name(), t.ValueType.Name())
+func (p Place) Name() string {
+	return fmt.Sprintf("*%s", p.BaseType.Name())
 }
 
-func (p Ptr) Name() string {
-	return fmt.Sprintf("*%s", p.BaseType.Name())
+func (p SetablePlace) Name() string {
+	return fmt.Sprintf("mut *%s", p.BaseType.Name())
 }
 
 func (c Chan) Name() string {
@@ -85,4 +87,16 @@ func (f Func) Name() string {
 		results = append(results, r.Name())
 	}
 	return fmt.Sprintf("func(%s) -> (%s)", strings.Join(params, ", "), strings.Join(results, ", "))
+}
+
+func (v Vector) Name() string {
+	return fmt.Sprintf("vector[%s]", v.elementType.Name())
+}
+
+func (t Tuple) Name() string {
+	elements := make([]string, len(t.elementTypes))
+	for _, e := range t.elementTypes {
+		elements = append(elements, e.Name())
+	}
+	return fmt.Sprintf("(%s)", strings.Join(elements, ", "))
 }

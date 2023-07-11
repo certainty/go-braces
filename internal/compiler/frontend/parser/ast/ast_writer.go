@@ -22,14 +22,14 @@ func (w *ASTWriter) WriteNode(node Node) string {
 	case Identifier:
 		return n.ID
 	case ArgumentDecl:
-		return fmt.Sprintf("%s: %s", n.Name.ID, n.Type)
-	case FunctionDecl:
+		return fmt.Sprintf("%s: %s", n.Name.ID, n.TypeName())
+	case CallableDecl:
 		var args []string
 		for _, arg := range n.Arguments {
 			args = append(args, w.WriteNode(arg))
 		}
 		body := ""
-		for _, node := range n.Body {
+		for _, node := range n.Body.Code {
 			body += w.WriteNode(node)
 		}
 		return fmt.Sprintf("(defn %s (%s) %s)", n.Name.ID, strings.Join(args, " "), body)

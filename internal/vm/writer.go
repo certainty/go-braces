@@ -20,9 +20,9 @@ func (w *Writer) Write(v isa.Value) string {
 	switch value := v.(type) {
 	case isa.Char:
 		return w.writeChar(value)
-	case isa.UInt8, isa.UInt16, isa.UInt32, isa.UInt64:
+	case isa.Int:
 		return fmt.Sprintf("u%d", value)
-	case isa.Int, isa.Int8, isa.Int16, isa.Int32, isa.Int64:
+	case isa.UInt:
 		return fmt.Sprintf("%d", value)
 	case isa.Float:
 		return fmt.Sprintf("%f", value)

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
@@ -84,6 +85,8 @@ func (p *Parser) Parse(input *input.Input) (*ast.AST, error) {
 	p.ast = ast.New()
 	p.scanner = lexer.New(input)
 
+	println("parsing input: ", input.Source())
+
 	// now start the parsing process
 	p.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
 	defer p.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
@@ -93,11 +96,19 @@ func (p *Parser) Parse(input *input.Input) (*ast.AST, error) {
 
 func (p *Parser) parseInput() (*ast.AST, error) {
 	p.advance()
-	expr := p.parseExpression()
-	p.ast.AddExpression(expr)
+	p.parsePackageDeclaration()
+	if p.hadError {
+		log.Print("Had error, synchronizing")
+		p.synchronize()
+	}
 
-	p.advance()
-	p.consume(lexer.TOKEN_EOF, "expected end of input")
+	for {
+		log.Print("Parsing next declaration")
+		p.parseDeclaration()
+		if p.currentToken.Type == lexer.TOKEN_EOF {
+			break
+		}
+	}
 
 	if p.hadError {
 		return nil, ParseErrors{Errors: p.errors}
@@ -119,11 +130,151 @@ func (p *Parser) advance() {
 }
 
 func (p *Parser) consume(tokenType lexer.TokenType, message string) {
+	log.Printf("DEBUG consume current: %v prev: %v", p.currentToken, p.previousToken)
 	if p.currentToken.Type == tokenType {
 		p.advance()
 		return
 	}
 	p.errorAtCurrent(ParseErrorIdUnexpectedToken, message, nil)
+}
+
+// Try to recover to next synchrnization point.
+// These are:
+// * statement boundaries
+// * new blocks
+// * function boundaries
+func (p *Parser) synchronize() {
+	p.panicMode = false
+
+	for p.currentToken.Type != lexer.TOKEN_EOF {
+		if p.previousToken.Type == lexer.TOKEN_SEMICOLON {
+			return
+		}
+
+		switch p.currentToken.Type {
+		case lexer.TOKEN_RBRACE, lexer.TOKEN_FUN, lexer.TOKEN_PROC, lexer.TOKEN_IF, lexer.TOKEN_FOR:
+			return
+		default:
+			p.advance()
+		}
+	}
+}
+
+func (p *Parser) parseDeclaration() {
+	switch p.currentToken.Type {
+	case lexer.TOKEN_FUN:
+		p.parseFunctionDeclaration()
+	case lexer.TOKEN_PROC:
+		p.parseProcedureDeclaration()
+	case lexer.TOKEN_EOF:
+		p.advance()
+		return
+	default:
+		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected declaration", nil)
+	}
+
+	if p.hadError {
+		p.synchronize()
+	}
+}
+
+func (p *Parser) parsePackageDeclaration() {
+	log.Print("Parsing package declaration")
+
+	p.consume(lexer.TOKEN_PACKAGE, "expected package")
+	packageLocation := p.previousToken.Location
+
+	packageName := p.parseIdentifier()
+	packageDecl := ast.NewPackageDecl(packageName, packageLocation)
+
+	log.Printf("Package name: %s", packageName.ID)
+	log.Printf("Package location: %d %d", packageLocation.Line, packageLocation.StartOffset)
+
+	p.ast.Nodes = append(p.ast.Nodes, packageDecl)
+}
+
+func (p *Parser) parseFunctionDeclaration() {
+	p.consume(lexer.TOKEN_FUN, "expected fun")
+	location := p.currentToken.Location
+	funcName := p.parseIdentifier()
+	args := p.parseArguments()
+	tpe := p.parseTypeDeclaration()
+	body := p.parseBlock()
+	function := ast.NewFunctionDecl(tpe, funcName, args, body, location)
+	p.ast.Nodes = append(p.ast.Nodes, function)
+
+}
+
+func (p *Parser) parseProcedureDeclaration() {
+	p.consume(lexer.TOKEN_PROC, "expected proc")
+	location := p.currentToken.Location
+	procName := p.parseIdentifier()
+	args := p.parseArguments()
+	log.Printf("Arguments: %v", args)
+	// optional return type
+	tpe := p.parseTypeDeclaration()
+	log.Printf("Type: %v", tpe)
+	body := p.parseBlock()
+	log.Printf("Body: %v", body)
+	procedure := ast.NewProcedureDecl(tpe, procName, args, body, location)
+	p.ast.Nodes = append(p.ast.Nodes, procedure)
+}
+
+func (p *Parser) parseArguments() []ast.ArgumentDecl {
+	args := []ast.ArgumentDecl{}
+	p.consume(lexer.TOKEN_LPAREN, "expected '('")
+	log.Printf("Parsing arguments")
+	for {
+		log.Printf("Token: %v", p.currentToken)
+		if p.check(lexer.TOKEN_RPAREN) {
+			break
+		}
+		location := p.currentToken.Location
+		argName := p.parseIdentifier()
+		argType := p.parseTypeDeclaration()
+		args = append(args, ast.NewArgumentDecl(argName, argType, location))
+		if !p.match(lexer.TOKEN_COMMA) {
+			break
+		}
+	}
+	p.consume(lexer.TOKEN_RPAREN, "expected ')'")
+	return args
+}
+
+func (p *Parser) parseTypeDeclaration() ast.TypeDecl {
+	location := p.currentToken.Location
+	if p.check(lexer.TOKEN_COLON) {
+		p.consume(lexer.TOKEN_COLON, "expected ':'")
+		return ast.NewTypeDecl(p.parseIdentifier(), location)
+	} else {
+		return ast.NewTypeDecl(ast.NewIdentifier("void", location), location)
+	}
+}
+
+func (p *Parser) parseIdentifier() ast.Identifier {
+	p.consume(lexer.TOKEN_IDENTIFIER, "expected identifier")
+	return ast.NewIdentifier(string(p.previousToken.Text), p.previousToken.Location)
+}
+
+func (p *Parser) parseBlock() ast.Block {
+	// TODO: track scope
+	p.consume(lexer.TOKEN_LBRACE, "expected '{'")
+	location := p.previousToken.Location
+	block := ast.NewBlock([]ast.Node{}, location)
+
+	for !p.match(lexer.TOKEN_RBRACE) {
+		block.Code = append(block.Code, p.parseBlockStatment())
+	}
+
+	return block
+}
+
+func (p *Parser) parseBlockStatment() ast.Node {
+	if p.match(lexer.TOKEN_LBRACE) {
+		return p.parseBlock()
+	}
+
+	return p.parseExpression()
 }
 
 func (p *Parser) parseExpression() ast.Expression {

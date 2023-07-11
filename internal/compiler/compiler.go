@@ -93,7 +93,7 @@ func (c Compiler) lowerToIR(theAST *ast.AST, origin location.Origin) (*ir.Module
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(origin, theAST, "FIXME")
+	return ir.LowerToIR(origin, theAST)
 }
 
 func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {

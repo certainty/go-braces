@@ -2,16 +2,17 @@ package isa
 
 import "fmt"
 
-// load store architecture
-
 type OpCode uint8
 
 const (
-	OP_TRUE OpCode = iota
-	OP_FALSE
-	OP_CONST
+	OP_LOAD  = iota // load from memory
+	OP_LOADA        // load address of label
+	OP_LOADI        // load immediate value
+	OP_STORE        // store to memory
 	OP_ADD
+	OP_ADDI
 	OP_SUB
+	OP_SUBI
 	OP_MUL
 	OP_DIV
 	OP_NEG
@@ -27,7 +28,6 @@ const (
 	OP_BEQ
 	OP_BNE
 	OP_PRNT
-	OP_NEW_TABLE
 	OP_GET
 	OP_SET
 	OP_HALT
@@ -47,6 +47,8 @@ type Instruction struct {
 	Operands []Operand
 }
 
+type ImmediateValue uint8
+
 func NewInstruction(code OpCode, operands ...Operand) Instruction {
 	return Instruction{
 		Opcode:   code,
@@ -58,19 +60,30 @@ func (i Instruction) String() string {
 	return fmt.Sprintf("%d %v", i.Opcode, i.Operands)
 }
 
-func InstTrue(register Register) Instruction {
-	return NewInstruction(OP_TRUE, register)
+func InstAdd(left, right, target Register) Instruction {
+	return NewInstruction(OP_ADD, left, right, target)
 }
 
-func InstFalse(register Register) Instruction {
-	return NewInstruction(OP_FALSE, register)
+func InstAddI(left Register, right ImmediateValue, target Register) Instruction {
+	return NewInstruction(OP_ADDI, left, right, target)
+}
+
+func InstSub(left, right, target Register) Instruction {
+	return NewInstruction(OP_SUB, left, right, target)
+}
+
+func InstSubI(left Register, right ImmediateValue, target Register) Instruction {
+	return NewInstruction(OP_SUBI, left, right, target)
 }
 
 func InstHalt(returnValueRegister Register) Instruction {
 	return NewInstruction(OP_HALT, returnValueRegister)
 }
 
-// loads the constant into the given register
-func InstConst(address ConstantAddress, target Register) Instruction {
-	return NewInstruction(OP_CONST, address, target)
+func InstRet(returnValueRegister Register) Instruction {
+	return NewInstruction(OP_RET, returnValueRegister)
+}
+
+func InstLoad(address ConstantAddress, target Register) Instruction {
+	return NewInstruction(OP_LOAD, address, target)
 }

@@ -1,0 +1,38 @@
+package main
+
+api (
+  Rectangle{..},
+  Triangle{..},
+  Figure[..],
+  main,
+)
+
+data Rectangle {
+  a: Int,
+  b: Int, 
+}
+
+data Triangle {
+  a: Int,
+  b: Int,
+  c: int
+}
+
+data Figure [
+  Tri: Triangle
+  Rec: Rectangle
+]
+
+proc main() {
+  set r1 Rectangle(a: 3, b: 4)
+  set d1 Triangle(a: 5, b: 10, c: 20)
+
+  set f Figure::Tri(d1)
+
+  match f {
+    Figure::Tri[d] => print("It's a triangle") 
+    _ => print("It's something else")
+  }
+}
+
+

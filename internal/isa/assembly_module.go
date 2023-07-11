@@ -5,20 +5,13 @@ type AssemblyModule struct {
 	Closures   []Closure
 	Functions  []Function
 	EntryPoint int
-
-	// will be refined later
-	Export  []interface{}
-	Imports []interface{}
 }
 
-func NewAssemblyModule(meta AssemblyMeta, closures []Closure, funcs []Function, exports []interface{}, imports []interface{}) *AssemblyModule {
+func NewAssemblyModule(meta AssemblyMeta) *AssemblyModule {
 	return &AssemblyModule{
-		Meta:      meta,
-		Closures:  closures,
-		Functions: funcs,
-		// TODO: this is a hack
+		Meta:       meta,
+		Closures:   []Closure{},
+		Functions:  []Function{},
 		EntryPoint: -1,
-		Export:     exports,
-		Imports:    imports,
 	}
 }

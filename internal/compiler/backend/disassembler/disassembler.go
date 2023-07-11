@@ -82,9 +82,9 @@ func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.Instr
 	instr := code.Instructions[addr]
 
 	switch instr.Opcode {
-	case isa.OP_RET, isa.OP_HALT, isa.OP_TRUE, isa.OP_FALSE:
+	case isa.OP_RET, isa.OP_HALT, isa.OP_ADD, isa.OP_SUB, isa.OP_MUL, isa.OP_DIV:
 		return disass.disassSimpleInstruction(instr, addr), nil
-	case isa.OP_CONST:
+	case isa.OP_LOAD:
 		return disass.disassConstant(code, addr), nil
 	default:
 		return 0, fmt.Errorf("unknown opcode %d", instr.Opcode)
@@ -129,16 +129,34 @@ func disassOperand(operand isa.Operand) string {
 
 func disassOpCode(code isa.OpCode) string {
 	switch code {
-	case isa.OP_TRUE:
-		return "TRUE"
-	case isa.OP_FALSE:
-		return "FALSE"
+	case isa.OP_LOAD:
+		return "LOAD"
+	case isa.OP_LOADI:
+		return "LOADI"
+	case isa.OP_STORE:
+		return "STORE"
+	case isa.OP_ADD:
+		return "ADD"
+	case isa.OP_ADDI:
+		return "ADDI"
+	case isa.OP_SUB:
+		return "SUB"
+	case isa.OP_SUBI:
+		return "SUBI"
+	case isa.OP_MUL:
+		return "MUL"
+	case isa.OP_DIV:
+		return "DIV"
+	case isa.OP_MOD:
+		return "MOD"
+	case isa.OP_AND:
+		return "AND"
+	case isa.OP_OR:
+		return "OR"
 	case isa.OP_RET:
 		return "RET"
 	case isa.OP_HALT:
 		return "HALT"
-	case isa.OP_CONST:
-		return "CONST"
 	default:
 		panic("Unknown opcode")
 	}

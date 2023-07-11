@@ -32,6 +32,7 @@ type UnaryExpression struct {
 	location location.Location
 	Operator UnaryOperator
 	Operand  Expression
+	Type     TypeDecl
 }
 
 var _ Node = (*UnaryExpression)(nil)
@@ -67,6 +68,7 @@ type BinaryExpression struct {
 	Left     Expression
 	Right    Expression
 	Operator BinaryOperator
+	Type     TypeDecl
 }
 
 var _ Node = (*BinaryExpression)(nil)
