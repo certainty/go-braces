@@ -33,8 +33,8 @@ func (c *CodeUnitBuilder) BuildCodeUnit() *isa.CodeUnit {
 	}
 }
 
-func (c *CodeUnitBuilder) AddConstant(constant *isa.Value) isa.ConstantAddress {
-	c.constants = append(c.constants, *constant)
+func (c *CodeUnitBuilder) AddConstant(constant isa.Value) isa.ConstantAddress {
+	c.constants = append(c.constants, constant)
 	return isa.ConstantAddress(len(c.constants) - 1)
 }
 
@@ -121,7 +121,7 @@ func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder
 				return fmt.Errorf("emitBlock: %w", err)
 			}
 			address := builder.AddConstant(&value)
-			builder.AddInstruction(isa.InstLoad(address, c.registerAccu))
+			builder.AddInstruction(isa.InstLoad(c.registerAccu, address))
 		default:
 			return fmt.Errorf("unknown instruction type: %T", instruction)
 		}
@@ -131,31 +131,55 @@ func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder
 
 func (c *Codegenerator) emitSimpleInstruction(inst ir.SimpleInstruction, builder *CodeUnitBuilder) error {
 	switch inst.Operation {
-	case ir.Add:
-		left := inst.Operands[0].(ir.Register)
-		right := inst.Operands[1]
-
-		switch right := right.(type) {
-		case ir.Literal:
-			switch v := right.(type) {
-			case uint8:
-			case int:
-				if v <= 255 {
-					builder.AddInstruction(isa.InstAddI(isa.Register(left), isa.ImmediateValue(v), c.findRegister(inst.Register)))
-				} else {
-					builder.AddInstruction(isa.InstAdd(isa.Register(left), isa.Register(v), c.findRegister(inst.Register)))
-				}
-			}
-		case ir.Register:
-			builder.AddInstruction(isa.InstAdd(isa.Register(left), isa.Register(right), c.findRegister(inst.Register)))
-		}
-
-	case ir.Sub:
-		builder.AddInstruction(isa.InstSub(c.findRegister(inst.Register), c.registerAccu, c.registerAccu))
+	case ir.Add, ir.Sub:
+		return c.emitArithmeticInstruction(inst, builder)
 	default:
 		panic("unknown instruction")
 	}
+}
+
+// TODO: add support for immediate values
+func (c *Codegenerator) emitArithmeticInstruction(inst ir.SimpleInstruction, builder *CodeUnitBuilder) error {
+	if len(inst.Operands) != 2 {
+		return fmt.Errorf("expected 2 operands, got %d", len(inst.Operands))
+	}
+
+	var left, right isa.Register
+
+	if c.isImmediate(inst.Operands[0]) {
+		addr := builder.AddConstant(isa.Value(inst.Operands[0].(ir.Literal)))
+		left = c.NextRegister()
+		builder.AddInstruction(isa.InstLoad(left, addr))
+	} else {
+		left = c.findRegister(inst.Operands[0].(ir.Register))
+	}
+
+	if c.isImmediate(inst.Operands[1]) {
+		addr := builder.AddConstant(isa.Value(inst.Operands[1].(ir.Literal)))
+		right = c.NextRegister()
+		builder.AddInstruction(isa.InstLoad(right, addr))
+	} else {
+		right = c.findRegister(inst.Operands[1].(ir.Register))
+	}
+
+	switch inst.Operation {
+	case ir.Add:
+		builder.AddInstruction(isa.InstAdd(c.findRegister(inst.Register), left, right))
+	case ir.Sub:
+		builder.AddInstruction(isa.InstSub(c.findRegister(inst.Register), left, right))
+	}
 	return nil
+}
+
+func (c *Codegenerator) isImmediate(op ir.Operand) bool {
+	if op, ok := op.(ir.Literal); ok {
+		if v, ok := op.(int64); ok {
+			if v <= 255 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Codegenerator) findRegister(reg ir.Register) isa.Register {

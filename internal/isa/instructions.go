@@ -34,24 +34,26 @@ const (
 	OP_RET
 )
 
-type Operand interface{}
+type Register = uint64
+type ConstantAddress = uint64
+type InstructionAddress = uint64
+type ImmediateValue = uint8
 
-type Register uint32
+type Operand = int64
 
-type ConstantAddress uint64
-
-type InstructionAddress uint64
-
+// On the instruction level all type safety of operands is lost.
+// Operands are just i64 values and the opcode denotes how they are interpreted
+// This makes the VM faster, but also more dangerous.
 type Instruction struct {
-	Opcode   OpCode
+	Opcode OpCode
+	// either register, address or immediate value
 	Operands []Operand
 }
 
-type ImmediateValue uint8
-
 func NewInstruction(code OpCode, operands ...Operand) Instruction {
 	return Instruction{
-		Opcode:   code,
+		Opcode: code,
+		// operands are always target-register, op1, op2
 		Operands: operands,
 	}
 }
@@ -60,30 +62,34 @@ func (i Instruction) String() string {
 	return fmt.Sprintf("%d %v", i.Opcode, i.Operands)
 }
 
-func InstAdd(left, right, target Register) Instruction {
-	return NewInstruction(OP_ADD, left, right, target)
+func InstAdd(target, left, right Register) Instruction {
+	return NewInstruction(OP_ADD, Operand(target), Operand(left), Operand(right))
 }
 
-func InstAddI(left Register, right ImmediateValue, target Register) Instruction {
-	return NewInstruction(OP_ADDI, left, right, target)
+func InstAddI(target Register, left Register, right ImmediateValue) Instruction {
+	return NewInstruction(OP_ADDI, Operand(target), Operand(left), Operand(right))
 }
 
-func InstSub(left, right, target Register) Instruction {
-	return NewInstruction(OP_SUB, left, right, target)
+func InstSub(target, left, right Register) Instruction {
+	return NewInstruction(OP_SUB, Operand(target), Operand(left), Operand(right))
 }
 
-func InstSubI(left Register, right ImmediateValue, target Register) Instruction {
-	return NewInstruction(OP_SUBI, left, right, target)
+func InstSubI(target Register, left Operand, right Operand) Instruction {
+	return NewInstruction(OP_SUBI, Operand(target), Operand(left), Operand(right))
 }
 
-func InstHalt(returnValueRegister Register) Instruction {
-	return NewInstruction(OP_HALT, returnValueRegister)
+func InstHalt(reg Register) Instruction {
+	return NewInstruction(OP_HALT, Operand(reg))
 }
 
-func InstRet(returnValueRegister Register) Instruction {
-	return NewInstruction(OP_RET, returnValueRegister)
+func InstRet(reg Register) Instruction {
+	return NewInstruction(OP_RET, Operand(reg))
 }
 
-func InstLoad(address ConstantAddress, target Register) Instruction {
-	return NewInstruction(OP_LOAD, address, target)
+func InstLoad(target Register, address ConstantAddress) Instruction {
+	return NewInstruction(OP_LOAD, Operand(target), Operand(address))
+}
+
+func InstLoadI(target Register, value ImmediateValue) Instruction {
+	return NewInstruction(OP_LOADI, Operand(target), Operand(value))
 }

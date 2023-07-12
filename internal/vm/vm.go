@@ -75,17 +75,21 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		log.Printf("Executing instruction %s", instr)
 		switch instr.Opcode {
 		case isa.OP_RET:
-			register := instr.Operands[0].(isa.Register)
-			return vm.registers[register], nil
+			return vm.registers[instr.Operands[0]], nil
 		case isa.OP_ADD:
-			target := instr.Operands[0].(isa.Register)
-			left := instr.Operands[1].(isa.Register)
-			right := instr.Operands[2].(isa.Register)
-			vm.registers[target] = vm.registers[left].(isa.Int) + vm.registers[right].(isa.Int)
+			target := instr.Operands[0]
+			left := instr.Operands[1]
+			right := instr.Operands[2]
+			vm.registers[target] = isa.Int(vm.registers[left].(int64) + vm.registers[right].(int64))
+		case isa.OP_ADDI:
+			target := instr.Operands[0]
+			left := instr.Operands[1]
+			right := int(instr.Operands[2])
+			vm.registers[target] = (vm.registers[left].(int) + right)
 		case isa.OP_LOAD:
-			address := instr.Operands[0].(isa.ConstantAddress)
-			register := instr.Operands[1].(isa.Register)
-			value, err := vm.code.ReadConstant(address)
+			register := instr.Operands[0]
+			address := instr.Operands[1]
+			value, err := vm.code.ReadConstant(isa.ConstantAddress(address))
 			if err != nil {
 				vm.panic("invalid constant")
 			}

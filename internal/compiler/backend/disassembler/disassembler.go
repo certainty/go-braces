@@ -82,7 +82,7 @@ func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.Instr
 	instr := code.Instructions[addr]
 
 	switch instr.Opcode {
-	case isa.OP_RET, isa.OP_HALT, isa.OP_ADD, isa.OP_SUB, isa.OP_MUL, isa.OP_DIV:
+	case isa.OP_RET, isa.OP_HALT, isa.OP_ADD, isa.OP_ADDI, isa.OP_SUB, isa.OP_SUBI, isa.OP_MUL, isa.OP_DIV:
 		return disass.disassSimpleInstruction(instr, addr), nil
 	case isa.OP_LOAD:
 		return disass.disassConstant(code, addr), nil
@@ -92,39 +92,44 @@ func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.Instr
 }
 
 func (disass *Disassembler) disassSimpleInstruction(instr isa.Instruction, addr isa.InstructionAddress) isa.InstructionAddress {
-	disass.writer.WriteString(fmt.Sprintf("%s%-8s %s\n", disass.indent, disassOpCode(instr.Opcode), disassOperands(instr.Operands)))
+	disass.writer.WriteString(fmt.Sprintf("%s%-8s %s\n", disass.indent, disassOpCode(instr.Opcode), disassOperands(instr.Opcode, instr.Operands)))
 	return addr + 1
 }
 
 func (disass *Disassembler) disassConstant(code *isa.CodeUnit, addr isa.InstructionAddress) isa.InstructionAddress {
 	instr := code.Instructions[addr]
 	newAddr := disass.disassSimpleInstruction(instr, addr)
-	value := code.Constants[instr.Operands[0].(isa.ConstantAddress)]
-	disass.writer.WriteString(fmt.Sprintf("%-8s     ^--- %v\n", "|", value))
+	value := code.Constants[instr.Operands[1]]
+	disass.writer.WriteString(fmt.Sprintf("  %-8s     %-10s^--- %v\n", "|", "", value))
 	return newAddr
 }
 
-func disassOperands(operands []isa.Operand) string {
-	ops := make([]string, len(operands))
-	for _, operand := range operands {
-		ops = append(ops, disassOperand(operand))
+func disassOperands(op isa.OpCode, operands []isa.Operand) string {
+	switch op {
+	case isa.OP_LOAD, isa.OP_STORE:
+		return fmt.Sprintf("%s, %s", asRegister(operands[0]), asConstAddress(operands[1]))
+	case isa.OP_ADD, isa.OP_SUB, isa.OP_MUL, isa.OP_DIV:
+		return fmt.Sprintf("%s, %s, %s", asRegister(operands[0]), asRegister(operands[1]), asRegister(operands[2]))
+	case isa.OP_ADDI, isa.OP_SUBI:
+		return fmt.Sprintf("%s, %s, %s", asRegister(operands[0]), asRegister(operands[1]), asImmediate(operands[2]))
 	}
-	return strings.Join(ops, " ")
+	return ""
 }
 
-func disassOperand(operand isa.Operand) string {
-	switch operand.(type) {
-	case isa.Register:
-		return fmt.Sprintf("$%-4d", operand)
-	case isa.InstructionAddress:
-		return fmt.Sprintf("@%08x ", operand)
-	case isa.ConstantAddress:
-		return fmt.Sprintf("%%%08x ", operand)
-	case isa.Value:
-		return fmt.Sprintf("%v", operand)
-	default:
-		return ""
-	}
+func asRegister(operand isa.Operand) string {
+	return fmt.Sprintf("$%-4d", operand)
+}
+
+func asInstructionAddress(operand isa.Operand) string {
+	return fmt.Sprintf("@%08x ", operand)
+}
+
+func asConstAddress(operand isa.Operand) string {
+	return fmt.Sprintf("%%%08x ", operand)
+}
+
+func asImmediate(operand isa.Operand) string {
+	return fmt.Sprintf("%d", operand)
 }
 
 func disassOpCode(code isa.OpCode) string {

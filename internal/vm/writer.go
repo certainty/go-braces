@@ -21,9 +21,9 @@ func (w *Writer) Write(v isa.Value) string {
 	case isa.Char:
 		return w.writeChar(value)
 	case isa.Int:
-		return fmt.Sprintf("u%d", value)
-	case isa.UInt:
 		return fmt.Sprintf("%d", value)
+	case isa.UInt:
+		return fmt.Sprintf("u%d", value)
 	case isa.Float:
 		return fmt.Sprintf("%f", value)
 	case isa.String:

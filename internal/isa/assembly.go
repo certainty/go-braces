@@ -1,7 +1,7 @@
 package isa
 
 type Label string
-type Address uint64
+type Address int64
 
 type Assembly interface {
 	Meta() AssemblyMeta
