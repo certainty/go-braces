@@ -100,7 +100,7 @@ func (disass *Disassembler) disassConstant(code *isa.CodeUnit, addr isa.Instruct
 	instr := code.Instructions[addr]
 	newAddr := disass.disassSimpleInstruction(instr, addr)
 	value := code.Constants[instr.Operands[1]]
-	disass.writer.WriteString(fmt.Sprintf("  %-8s     %-10s^--- %v\n", "|", "", value))
+	disass.writer.WriteString(fmt.Sprintf("  %-8s     %-17s^--- %v\n", "|", "", value))
 	return newAddr
 }
 

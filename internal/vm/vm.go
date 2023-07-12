@@ -2,8 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/internal/introspection/vm_introspection"
 	"github.com/certainty/go-braces/internal/isa"
@@ -72,7 +70,6 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		instr := (*vm.code).Instructions[vm.pc]
 		vm.pc++
 
-		log.Printf("Executing instruction %s", instr)
 		switch instr.Opcode {
 		case isa.OP_RET:
 			return vm.registers[instr.Operands[0]], nil

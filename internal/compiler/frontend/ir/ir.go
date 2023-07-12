@@ -160,7 +160,6 @@ func (b *IrBuilder) lowerFunction(decl ast.CallableDecl) (*Function, error) {
 	blockBuilder := NewBlockBuilder(Label("entry"), registerAllocator)
 
 	for _, stmt := range decl.Body.Code {
-		log.Printf("stmt: %T", stmt)
 		switch stmt := stmt.(type) {
 		case ast.BinaryExpression:
 			b.lowerBinaryExpression(blockBuilder, stmt)

@@ -2,8 +2,6 @@ package codegen
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
@@ -106,12 +104,10 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 
 func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder) error {
 	for _, instruction := range block.Instructions {
-		log.Printf("emitBlock: %s", instruction)
 		switch inst := instruction.(type) {
 		case ir.ReturnInstruction:
 			builder.AddInstruction(isa.InstRet(c.findRegister(inst.Register)))
 		case ir.SimpleInstruction:
-			log.Printf("emitSimple: %T", inst)
 			if err := c.emitSimpleInstruction(inst, builder); err != nil {
 				return fmt.Errorf("emitSimpleInstruction: %w", err)
 			}

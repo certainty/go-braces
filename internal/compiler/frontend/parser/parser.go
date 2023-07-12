@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
@@ -85,7 +84,7 @@ func (p *Parser) Parse(input *input.Input) (*ast.AST, error) {
 	p.ast = ast.New()
 	p.scanner = lexer.New(input)
 
-	println("parsing input: ", input.Source())
+	println("parsing input:\n\n", input.Source())
 
 	// now start the parsing process
 	p.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
@@ -98,12 +97,10 @@ func (p *Parser) parseInput() (*ast.AST, error) {
 	p.advance()
 	p.parsePackageDeclaration()
 	if p.hadError {
-		log.Print("Had error, synchronizing")
 		p.synchronize()
 	}
 
 	for {
-		log.Print("Parsing next declaration")
 		p.parseDeclaration()
 		if p.currentToken.Type == lexer.TOKEN_EOF {
 			break
@@ -130,7 +127,6 @@ func (p *Parser) advance() {
 }
 
 func (p *Parser) consume(tokenType lexer.TokenType, message string) {
-	log.Printf("DEBUG consume current: %v prev: %v", p.currentToken, p.previousToken)
 	if p.currentToken.Type == tokenType {
 		p.advance()
 		return
@@ -179,16 +175,11 @@ func (p *Parser) parseDeclaration() {
 }
 
 func (p *Parser) parsePackageDeclaration() {
-	log.Print("Parsing package declaration")
-
 	p.consume(lexer.TOKEN_PACKAGE, "expected package")
 	packageLocation := p.previousToken.Location
 
 	packageName := p.parseIdentifier()
 	packageDecl := ast.NewPackageDecl(packageName, packageLocation)
-
-	log.Printf("Package name: %s", packageName.ID)
-	log.Printf("Package location: %d %d", packageLocation.Line, packageLocation.StartOffset)
 
 	p.ast.Nodes = append(p.ast.Nodes, packageDecl)
 }
@@ -210,12 +201,9 @@ func (p *Parser) parseProcedureDeclaration() {
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
 	args := p.parseArguments()
-	log.Printf("Arguments: %v", args)
 	// optional return type
 	tpe := p.parseTypeDeclaration()
-	log.Printf("Type: %v", tpe)
 	body := p.parseBlock()
-	log.Printf("Body: %v", body)
 	procedure := ast.NewProcedureDecl(tpe, procName, args, body, location)
 	p.ast.Nodes = append(p.ast.Nodes, procedure)
 }
@@ -223,9 +211,7 @@ func (p *Parser) parseProcedureDeclaration() {
 func (p *Parser) parseArguments() []ast.ArgumentDecl {
 	args := []ast.ArgumentDecl{}
 	p.consume(lexer.TOKEN_LPAREN, "expected '('")
-	log.Printf("Parsing arguments")
 	for {
-		log.Printf("Token: %v", p.currentToken)
 		if p.check(lexer.TOKEN_RPAREN) {
 			break
 		}
