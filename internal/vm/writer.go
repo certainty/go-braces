@@ -2,8 +2,8 @@ package vm
 
 import (
 	"fmt"
-
 	"github.com/certainty/go-braces/internal/isa"
+	"log"
 )
 
 type Writer struct {
@@ -18,26 +18,23 @@ func NewWriter(internedStrings *InternedStringTable) *Writer {
 
 func (w *Writer) Write(v isa.Value) string {
 	switch value := v.(type) {
-	case isa.BoolValue:
-		if value {
-			return "true"
-		} else {
-			return "false"
-		}
-	case isa.CharValue:
+	case isa.Char:
 		return w.writeChar(value)
-	case isa.IntegerValue:
+	case isa.Int:
 		return fmt.Sprintf("%d", value)
-	case isa.FloatValue:
+	case isa.UInt:
+		return fmt.Sprintf("u%d", value)
+	case isa.Float:
 		return fmt.Sprintf("%f", value)
-	case isa.StringValue:
+	case isa.String:
 		return fmt.Sprintf("%q", string(value))
 	default:
-		panic("CompilerBug: unknown value")
+		log.Panicf("unhandled value type: %T", value)
+		return ""
 	}
 }
 
-func (w *Writer) writeChar(value isa.CharValue) string {
+func (w *Writer) writeChar(value isa.Char) string {
 	switch value {
 	case '\n':
 		return "#\\newline"

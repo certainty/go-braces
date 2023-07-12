@@ -34,7 +34,6 @@ func RegisterTypes() {
 	gob.Register(isa.Instruction{})
 	gob.Register(isa.OpCode(0))
 	gob.Register(isa.Register(0))
-	gob.Register(isa.BoolValue(true))
-	gob.Register(isa.ProcedureValue{})
-	gob.Register(isa.ClosureValue{})
+	gob.Register(isa.Function{})
+	gob.Register(isa.Closure{})
 }

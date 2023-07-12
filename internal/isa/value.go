@@ -1,58 +1,77 @@
 package isa
 
-// Values are not actullay part of the ISA normally
-// and this file will go away eventually, but in the
-// beginning it's very helpful to take some shortcuts
-// during development. The compiler doesn't need to care too
-// much about layout and encoding of the values in the constant pool
-// for example.
+import "github.com/certainty/go-braces/internal/isa/arity"
 
 type Value interface{}
 
-type BoolValue bool
-
-func (b BoolValue) String() string {
-	return "BoolValue"
+type Bool bool
+type Byte byte
+type Int int64
+type UInt uint64
+type Float float64
+type Char rune
+type String string
+type Vector []Value
+type Map map[Value]Value
+type Closure struct {
+	Function Function
+	UpValues []*Value
 }
 
-type CharValue rune
+type Function struct {
+	Label Label
+	Arity arity.Arity
+	Code  CodeUnit
+}
 
-func (v CharValue) String() string {
+var _ Value = Bool(false)
+var _ Value = Byte(0)
+var _ Value = Int(0)
+var _ Value = UInt(0)
+var _ Value = Float(0.0)
+var _ Value = Char(0)
+var _ Value = String("")
+var _ Value = (*Closure)(nil)
+var _ Value = (*Function)(nil)
+var _ Value = Vector{}
+var _ Value = Map{}
+
+func (v Char) String() string {
 	return "CharValue"
 }
 
-type StringValue string
-
-func (v StringValue) String() string {
+func (v String) String() string {
 	return "StringValue"
 }
 
-type IntegerValue int64
+func (v Byte) String() string {
+	return "ByteValue"
+}
 
-func (v IntegerValue) String() string {
+func (v Bool) String() string {
+	return "BoolValue"
+}
+
+func (Int) String() string {
 	return "IntegerValue"
 }
 
-type FloatValue float64
-
-func (v FloatValue) String() string {
+func (v Float) String() string {
 	return "FloatValue"
 }
 
-type ProcedureValue struct {
-	Code CodeUnit
-	// more to come later: like arity
+func (v Vector) String() string {
+	return "VectorValue"
 }
 
-func (p *ProcedureValue) String() string {
+func (v Map) String() string {
+	return "MapValue"
+}
+
+func (p *Function) String() string {
 	return "ProcedureValue"
 }
 
-type ClosureValue struct {
-	Procedure ProcedureValue
-	UpValues  []*Value
-}
-
-func (c *ClosureValue) String() string {
+func (c *Closure) String() string {
 	return "ClosureValue"
 }

@@ -29,10 +29,12 @@ const (
 
 type Model struct {
 	containerWidth, containerHeight int
-	theme                           theme.Theme
-	sections                        []tea.Model
-	phasePanes                      []tea.Model
-	keyMap                          common.KeyMap
+	// nolint:unused
+	theme      theme.Theme
+	sections   []tea.Model
+	phasePanes []tea.Model
+	// nolint:unused
+	keyMap common.KeyMap
 
 	client          *compiler_introspection.Client
 	activePhasePane Pane

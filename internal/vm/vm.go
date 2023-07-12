@@ -1,8 +1,8 @@
 package vm
 
 import (
-	"log"
-
+	"fmt"
+	"github.com/certainty/go-braces/internal/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/internal/introspection/vm_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -48,30 +48,45 @@ func (vm *VM) WriteValue(value isa.Value) string {
 	return vm.writer.Write(value)
 }
 
-func (vm *VM) LoadModule(module *isa.AssemblyModule) {
-	vm.code = module.Code
+func (vm *VM) LoadModule(module *isa.AssemblyModule) error {
+	if module.EntryPoint < 0 {
+		return fmt.Errorf("invalid entry point")
+	}
+
+	vm.code = &module.Functions[module.EntryPoint].Code
 	vm.pc = 0
+
+	return nil
 }
 
 func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
-	vm.LoadModule(module)
+	if err := vm.LoadModule(module); err != nil {
+		return nil, err
+	}
+
+	fmt.Print(disassembler.DisassModule(module))
 
 	for vm.pc < len((*vm.code).Instructions) {
 		instr := (*vm.code).Instructions[vm.pc]
 		vm.pc++
 
-		log.Printf("Executing instruction %s", instr)
 		switch instr.Opcode {
-		case isa.OP_TRUE:
-			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.BoolValue(true)
-		case isa.OP_FALSE:
-			register := instr.Operands[0].(isa.Register)
-			vm.registers[register] = isa.BoolValue(false)
-		case isa.OP_CONST:
-			address := instr.Operands[0].(isa.ConstantAddress)
-			register := instr.Operands[1].(isa.Register)
-			value, err := vm.code.ReadConstant(address)
+		case isa.OP_RET:
+			return vm.registers[instr.Operands[0]], nil
+		case isa.OP_ADD:
+			target := instr.Operands[0]
+			left := instr.Operands[1]
+			right := instr.Operands[2]
+			vm.registers[target] = isa.Int(vm.registers[left].(int64) + vm.registers[right].(int64))
+		case isa.OP_ADDI:
+			target := instr.Operands[0]
+			left := instr.Operands[1]
+			right := int(instr.Operands[2])
+			vm.registers[target] = (vm.registers[left].(int) + right)
+		case isa.OP_LOAD:
+			register := instr.Operands[0]
+			address := instr.Operands[1]
+			value, err := vm.code.ReadConstant(isa.ConstantAddress(address))
 			if err != nil {
 				vm.panic("invalid constant")
 			}

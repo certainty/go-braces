@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
@@ -9,6 +10,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
 	"github.com/certainty/go-braces/internal/compiler/input"
+	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
@@ -32,38 +34,36 @@ func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule,
 func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
-	// frontend
 	ast, err := c.parse(input)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
+	log.Printf("AST: %s", ast.ASTring())
 
-	coreAST, err := c.lowerToCore(ast)
-	if err != nil {
-		return nil, fmt.Errorf("IRError: %w", err)
-	}
-
-	coreAST, err = c.typeCheck(coreAST)
+	err = c.typeCheck(ast)
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(coreAST)
+	ir, err := c.lowerToIR(ast, input.Origin)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
+	log.Printf("IR %v", ir)
 
 	optimizedIr, err := c.optimize(ir)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
+	log.Printf("Optimized IR %v", optimizedIr)
 
 	// backend
 	assemblyModule, err := c.generateCode(optimizedIr)
 	if err != nil {
 		return nil, fmt.Errorf("CodeGenError: %w", err)
 	}
+	log.Printf("AssemblyModule %v", assemblyModule)
 
 	c.instrumentation.LeaveCompilerModule(*assemblyModule)
 	return assemblyModule, nil
@@ -77,33 +77,26 @@ func (c Compiler) parse(input *input.Input) (*ast.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) typeCheck(theAST *ir.CoreAST) (*ir.CoreAST, error) {
+func (c Compiler) typeCheck(theAST *ast.AST) error {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
 	typechecker := typechecker.NewTypeChecker(c.instrumentation)
 	if err := typechecker.Check(theAST); err != nil {
-		return nil, fmt.Errorf("TypeError: %w", err)
+		return fmt.Errorf("TypeError: %w", err)
 	}
 
-	return theAST, nil
+	return nil
 }
 
-func (c Compiler) lowerToCore(theAST *ast.AST) (*ir.CoreAST, error) {
-	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToCore)
-	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToCore)
-
-	return ir.LowerToCore(theAST)
-}
-
-func (c Compiler) lowerToIR(theAST *ir.CoreAST) (*ir.IR, error) {
+func (c Compiler) lowerToIR(theAST *ast.AST, origin location.Origin) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(theAST)
+	return ir.LowerToIR(origin, theAST)
 }
 
-func (c Compiler) optimize(ir *ir.IR) (*ir.IR, error) {
+func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
 
@@ -115,7 +108,7 @@ func (c Compiler) optimize(ir *ir.IR) (*ir.IR, error) {
 	return optimized, nil
 }
 
-func (c Compiler) generateCode(ir *ir.IR) (*isa.AssemblyModule, error) {
+func (c Compiler) generateCode(ir *ir.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 

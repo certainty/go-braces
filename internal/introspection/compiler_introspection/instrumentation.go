@@ -56,19 +56,19 @@ func (e EventBeginCompileModule) String() string {
 }
 
 type EventEndCompileModule struct {
-	Meta isa.AssemblyMeta
-	Code isa.CodeUnit
+	Meta      isa.AssemblyMeta
+	Functions []isa.Function
+	Closures  []isa.Closure
 }
 
 func NewEventEndCompileModule(module isa.AssemblyModule) EventEndCompileModule {
 	return EventEndCompileModule{
 		Meta: module.Meta,
-		Code: *module.Code,
 	}
 }
 
 func (e EventEndCompileModule) String() string {
-	return fmt.Sprintf("EventEndCompileModule{Meta: %v CodeSize: %d ConstandPoolSize: %d}", e.Meta, len(e.Code.Instructions), len(e.Code.Constants))
+	return fmt.Sprintf("EventEndCompileModule{Meta: %v }", e.Meta)
 }
 
 type EventEnterPhase struct {

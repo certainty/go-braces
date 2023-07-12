@@ -1,22 +1,17 @@
 package isa
 
 type AssemblyModule struct {
-	Meta AssemblyMeta
-	Code *CodeUnit
-
-	Closures []ClosureValue
-
-	// will be refined later
-	Export  []interface{}
-	Imports []interface{}
+	Meta       AssemblyMeta
+	Closures   []Closure
+	Functions  []Function
+	EntryPoint int
 }
 
-func NewAssemblyModule(meta AssemblyMeta, code *CodeUnit, closures []ClosureValue, exports []interface{}, imports []interface{}) *AssemblyModule {
+func NewAssemblyModule(meta AssemblyMeta) *AssemblyModule {
 	return &AssemblyModule{
-		Meta:     meta,
-		Code:     code,
-		Closures: closures,
-		Export:   exports,
-		Imports:  imports,
+		Meta:       meta,
+		Closures:   []Closure{},
+		Functions:  []Function{},
+		EntryPoint: -1,
 	}
 }

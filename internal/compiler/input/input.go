@@ -14,6 +14,10 @@ type Input struct {
 	Buffer *[]rune
 }
 
+func (i Input) Source() string {
+	return string(*i.Buffer)
+}
+
 func NewStringInput(label string, s string) *Input {
 	buffer := []rune(s)
 	return &Input{

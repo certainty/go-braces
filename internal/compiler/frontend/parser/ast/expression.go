@@ -7,8 +7,6 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
-type Expression interface{ RValue }
-
 type UnaryOperator uint8
 
 const (
@@ -28,18 +26,17 @@ const (
 	BinOpMod
 	BinOpAnd
 	BinOpOr
-	BinOpNot
 )
 
 type UnaryExpression struct {
 	location location.Location
 	Operator UnaryOperator
 	Operand  Expression
+	Type     TypeDecl
 }
 
-var _ Expression = (*UnaryExpression)(nil)
-var _ RValue = (*UnaryExpression)(nil)
 var _ Node = (*UnaryExpression)(nil)
+var _ Expression = (*UnaryExpression)(nil)
 
 func UnaryOp(location location.Location, operator UnaryOperator, operand Expression) UnaryExpression {
 	return UnaryExpression{
@@ -71,11 +68,11 @@ type BinaryExpression struct {
 	Left     Expression
 	Right    Expression
 	Operator BinaryOperator
+	Type     TypeDecl
 }
 
-var _ Expression = (*BinaryExpression)(nil)
-var _ RValue = (*BinaryExpression)(nil)
 var _ Node = (*BinaryExpression)(nil)
+var _ Expression = (*BinaryExpression)(nil)
 
 func BinOp(location location.Location, operator BinaryOperator, left Expression, right Expression) BinaryExpression {
 	return BinaryExpression{
@@ -119,9 +116,8 @@ type LiteralExpression struct {
 	location location.Location
 }
 
-var _ Expression = (*LiteralExpression)(nil)
-var _ RValue = (*LiteralExpression)(nil)
 var _ Node = (*LiteralExpression)(nil)
+var _ Expression = (*LiteralExpression)(nil)
 
 func NewLiteralExpression(token lexer.Token, location location.Location) LiteralExpression {
 	return LiteralExpression{

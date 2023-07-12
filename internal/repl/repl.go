@@ -154,8 +154,11 @@ func (r *Repl) getInput() (string, error) {
 	}
 }
 
+// TODO: actually assemble the main function from all previous (valid) repl inputs
 func (r *Repl) compileAndRun(source string) (isa.Value, error) {
-	replInput := input.NewReplInput(uint64(r.inputCount), source)
+	//FIXME: dirty hack for now to make the repl work :D
+	hackedSource := fmt.Sprintf("package main\n proc main(){\n %s \n}", source)
+	replInput := input.NewReplInput(uint64(r.inputCount), hackedSource)
 	assemblyModule, err := r.compiler.CompileModule(replInput)
 
 	if err != nil {
