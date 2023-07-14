@@ -332,11 +332,12 @@ func (s *Scanner) scanIntWithBase() (Token, error) {
 	s.advance()
 	s.scanDigits(base)
 	text := string(s.tokenText())[2:]
+	// we need to know the widt of ints on this platform
 	value, err := strconv.ParseInt(text, int(base), 64)
 	if err != nil {
 		return s.invalidNumberLiteral()
 	}
-	return s.makeTokenWithValue(TOKEN_INTEGER, value), nil
+	return s.makeTokenWithValue(TOKEN_INTEGER, int(value)), nil
 }
 
 func (s *Scanner) scanFloatOrInt() (Token, error) {
@@ -364,7 +365,7 @@ func (s *Scanner) scanFloatOrInt() (Token, error) {
 		if err != nil {
 			return s.invalidNumberLiteral()
 		}
-		return s.makeTokenWithValue(TOKEN_INTEGER, value), nil
+		return s.makeTokenWithValue(TOKEN_INTEGER, int(value)), nil
 	}
 }
 

@@ -59,7 +59,7 @@ type Parser struct {
 	scanner         *lexer.Scanner
 	previousToken   *lexer.Token
 	currentToken    *lexer.Token
-	ast             *ast.AST
+	astBuilder      *ast.Builder
 	errors          []ParseError
 	panicMode       bool
 	hadError        bool
@@ -81,7 +81,7 @@ func (p *Parser) Parse(input *input.Input) (*ast.AST, error) {
 	p.hadError = false
 	p.previousToken = nil
 	p.currentToken = nil
-	p.ast = ast.New()
+	p.astBuilder = ast.NewBuilder()
 	p.scanner = lexer.New(input)
 
 	println("parsing input:\n\n", input.Source())
@@ -110,7 +110,7 @@ func (p *Parser) parseInput() (*ast.AST, error) {
 	if p.hadError {
 		return nil, ParseErrors{Errors: p.errors}
 	} else {
-		return p.ast, nil
+		return p.astBuilder.Result(), nil
 	}
 }
 
@@ -179,9 +179,8 @@ func (p *Parser) parsePackageDeclaration() {
 	packageLocation := p.previousToken.Location
 
 	packageName := p.parseIdentifier()
-	packageDecl := ast.NewPackageDecl(packageName, packageLocation)
-
-	p.ast.Nodes = append(p.ast.Nodes, packageDecl)
+	packageDecl := p.astBuilder.NewPackageDecl(packageName, packageLocation)
+	p.astBuilder.AddNode(packageDecl)
 }
 
 func (p *Parser) parseFunctionDeclaration() {
@@ -191,8 +190,8 @@ func (p *Parser) parseFunctionDeclaration() {
 	args := p.parseArguments()
 	tpe := p.parseTypeDeclaration()
 	body := p.parseBlock()
-	function := ast.NewFunctionDecl(tpe, funcName, args, body, location)
-	p.ast.Nodes = append(p.ast.Nodes, function)
+	function := p.astBuilder.NewFunctionDecl(tpe, funcName, args, body, location)
+	p.astBuilder.AddNode(function)
 
 }
 
@@ -204,8 +203,8 @@ func (p *Parser) parseProcedureDeclaration() {
 	// optional return type
 	tpe := p.parseTypeDeclaration()
 	body := p.parseBlock()
-	procedure := ast.NewProcedureDecl(tpe, procName, args, body, location)
-	p.ast.Nodes = append(p.ast.Nodes, procedure)
+	procedure := p.astBuilder.NewProcedureDecl(tpe, procName, args, body, location)
+	p.astBuilder.AddNode(procedure)
 }
 
 func (p *Parser) parseArguments() []ast.ArgumentDecl {
@@ -218,7 +217,7 @@ func (p *Parser) parseArguments() []ast.ArgumentDecl {
 		location := p.currentToken.Location
 		argName := p.parseIdentifier()
 		argType := p.parseTypeDeclaration()
-		args = append(args, ast.NewArgumentDecl(argName, argType, location))
+		args = append(args, p.astBuilder.NewArgumentDecl(argName, argType, location))
 		if !p.match(lexer.TOKEN_COMMA) {
 			break
 		}
@@ -231,22 +230,22 @@ func (p *Parser) parseTypeDeclaration() ast.TypeDecl {
 	location := p.currentToken.Location
 	if p.check(lexer.TOKEN_COLON) {
 		p.consume(lexer.TOKEN_COLON, "expected ':'")
-		return ast.NewTypeDecl(p.parseIdentifier(), location)
+		return p.astBuilder.NewTypeDecl(p.parseIdentifier(), location)
 	} else {
-		return ast.NewTypeDecl(ast.NewIdentifier("void", location), location)
+		return p.astBuilder.NewTypeDecl(p.astBuilder.NewIdentifier("void", location), location)
 	}
 }
 
 func (p *Parser) parseIdentifier() ast.Identifier {
 	p.consume(lexer.TOKEN_IDENTIFIER, "expected identifier")
-	return ast.NewIdentifier(string(p.previousToken.Text), p.previousToken.Location)
+	return p.astBuilder.NewIdentifier(string(p.previousToken.Text), p.previousToken.Location)
 }
 
 func (p *Parser) parseBlock() ast.Block {
 	// TODO: track scope
 	p.consume(lexer.TOKEN_LBRACE, "expected '{'")
 	location := p.previousToken.Location
-	block := ast.NewBlock([]ast.Node{}, location)
+	block := p.astBuilder.NewBlock([]ast.Node{}, location)
 
 	for !p.match(lexer.TOKEN_RBRACE) {
 		block.Code = append(block.Code, p.parseBlockStatment())
@@ -286,7 +285,7 @@ func (p *Parser) parseBinaryExpressions(minPrecedence Precedence) ast.Expression
 			right = p.parseBinaryExpressions(precedence)
 		}
 
-		left = ast.BinOp(tok.Location, ast.TokenToBinaryOp(*tok), left, right)
+		left = p.astBuilder.NewBinOp(tok.Location, ast.TokenToBinaryOp(*tok), left, right)
 	}
 	return left
 }
@@ -295,7 +294,7 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 	if p.match(lexer.TOKEN_BANG) || p.match(lexer.TOKEN_MINUS) || p.match(lexer.TOKEN_PLUS) {
 		tok := p.previousToken
 		right := p.parseUnaryExpression()
-		return ast.UnaryOp(tok.Location, ast.TokenToUnaryOp(*tok), right)
+		return p.astBuilder.NewUnaryOp(tok.Location, ast.TokenToUnaryOp(*tok), right)
 	} else if p.match(lexer.TOKEN_LPAREN) {
 		expr := p.parseBinaryExpressions(PREC_SET)
 		p.consume(lexer.TOKEN_RPAREN, "expected closing parenthesis")
@@ -304,7 +303,7 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 		fmt.Printf("Parsing identifier - not yes supported\n")
 		return nil
 	} else if p.matchLiteral() {
-		return ast.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
+		return p.astBuilder.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
 	} else if p.match(lexer.TOKEN_EOF) {
 		p.errorAtCurrent(ParseErrorIdUnexpectedEOF, "unexpected end of input", nil)
 		return nil

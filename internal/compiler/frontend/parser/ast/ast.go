@@ -1,183 +1,158 @@
 package ast
 
 import (
+	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
-type AST struct {
-	Nodes []Node
-}
+type (
+	NodeId uint64
 
-type Node interface {
-	Location() location.Location
-}
-
-type TypedNode interface {
-	TypeName() string
-}
-
-type Declaration interface{ Node }
-type Expression interface{ Node }
-type Statement interface{ Node }
-
-type Identifier struct {
-	ID       string
-	location location.Location
-}
-
-var _ Node = (*Identifier)(nil)
-
-func NewIdentifier(id string, location location.Location) Identifier {
-	return Identifier{
-		ID:       id,
-		location: location,
+	AST struct {
+		Nodes []Node
 	}
-}
 
-func (id Identifier) Location() location.Location {
-	return id.location
-}
-
-var _ Node = (*Identifier)(nil)
-var _ Declaration = (*Identifier)(nil)
-
-type TypeDecl struct {
-	Name     Identifier
-	location location.Location
-}
-
-func NewTypeDecl(name Identifier, location location.Location) TypeDecl {
-	return TypeDecl{
-		Name:     name,
-		location: location,
+	Node interface {
+		ID() NodeId
+		Location() location.Location
 	}
-}
 
-func (d TypeDecl) Location() location.Location {
-	return d.location
-}
+	TypedNode interface{ TypeDecl() TypeDecl }
 
-var _ Node = (*TypeDecl)(nil)
-var _ Declaration = (*TypeDecl)(nil)
-
-type PackageDecl struct {
-	Name     Identifier
-	location location.Location
-}
-
-func NewPackageDecl(name Identifier, location location.Location) PackageDecl {
-	return PackageDecl{
-		Name:     name,
-		location: location,
+	Declaration interface {
+		Node
+		declNode()
 	}
-}
 
-func (d PackageDecl) Location() location.Location {
-	return d.location
-}
-
-var _ Node = (*PackageDecl)(nil)
-var _ Declaration = (*PackageDecl)(nil)
-
-type CallableDecl struct {
-	Type        TypeDecl
-	IsProcedure bool
-	Name        Identifier
-	Arguments   []ArgumentDecl
-	Body        Block
-	location    location.Location
-}
-
-func NewFunctionDecl(
-	t TypeDecl,
-	name Identifier,
-	arguments []ArgumentDecl,
-	body Block,
-	location location.Location,
-) CallableDecl {
-	return CallableDecl{
-		Type:        t,
-		IsProcedure: false,
-		Name:        name,
-		Arguments:   arguments,
-		Body:        body,
-		location:    location,
+	BadDeclaration struct {
+		id NodeId
 	}
-}
 
-func NewProcedureDecl(
-	t TypeDecl,
-	name Identifier,
-	arguments []ArgumentDecl,
-	body Block,
-	location location.Location,
-) CallableDecl {
-	return CallableDecl{
-		Type:        t,
-		IsProcedure: true,
-		Name:        name,
-		Arguments:   arguments,
-		Body:        body,
-		location:    location,
+	Expression interface {
+		Node
+		exprNode()
 	}
-}
 
-func (d CallableDecl) Location() location.Location {
-	return d.location
-}
-
-func (d CallableDecl) TypeName() string {
-	return d.Type.Name.ID
-}
-
-var _ Node = (*CallableDecl)(nil)
-var _ Declaration = (*CallableDecl)(nil)
-var _ TypedNode = (*CallableDecl)(nil)
-
-type ArgumentDecl struct {
-	Name     Identifier
-	Type     TypeDecl
-	location location.Location
-}
-
-func NewArgumentDecl(name Identifier, t TypeDecl, location location.Location) ArgumentDecl {
-	return ArgumentDecl{
-		Name:     name,
-		Type:     t,
-		location: location,
+	BadExpression struct {
+		id NodeId
 	}
-}
 
-func (def ArgumentDecl) Location() location.Location {
-	return def.location
-}
-
-func (def ArgumentDecl) TypeName() string {
-	return def.Type.Name.ID
-}
-
-var _ Node = (*ArgumentDecl)(nil)
-var _ Declaration = (*ArgumentDecl)(nil)
-var _ TypedNode = (*ArgumentDecl)(nil)
-
-type Block struct {
-	Code     []Node
-	location location.Location
-}
-
-func NewBlock(body []Node, location location.Location) Block {
-	return Block{
-		Code:     body,
-		location: location,
+	Statement interface {
+		Node
+		stmtNode()
 	}
-}
 
-func (b Block) Location() location.Location {
-	return b.location
-}
+	BadStatement struct {
+		id NodeId
+	}
 
-var _ Node = (*Block)(nil)
-var _ Expression = (*Block)(nil)
+	Identifier struct {
+		id       NodeId
+		location location.Location
+		Label    string
+	}
+
+	TypeDecl struct {
+		id       NodeId
+		location location.Location
+		Name     Identifier
+	}
+
+	PackageDecl struct {
+		id       NodeId
+		location location.Location
+		Name     Identifier
+	}
+
+	CallableDecl struct {
+		id       NodeId
+		location location.Location
+		// the declared type
+		TpeDecl TypeDecl
+
+		IsProcedure bool
+		Name        Identifier
+		Arguments   []ArgumentDecl
+		Body        Block
+	}
+
+	ArgumentDecl struct {
+		id       NodeId
+		location location.Location
+		Name     Identifier
+		TpeDecl  TypeDecl
+	}
+
+	Block struct {
+		id       NodeId
+		location location.Location
+		Code     []Node
+	}
+
+	LiteralExpression struct {
+		id       NodeId
+		location location.Location
+		Token    lexer.Token
+		Value    interface{}
+	}
+
+	UnaryExpression struct {
+		id       NodeId
+		location location.Location
+		Type     TypeDecl
+		Operator UnaryOperator
+		Operand  Expression
+	}
+
+	BinaryExpression struct {
+		id       NodeId
+		location location.Location
+		Left     Expression
+		Right    Expression
+		Operator BinaryOperator
+		Type     TypeDecl
+	}
+)
+
+func (BadExpression) exprNode()       {}
+func (Identifier) exprNode()          {}
+func (Block) exprNode()               {}
+func (UnaryExpression) exprNode()     {}
+func (b BinaryExpression) exprNode()  {}
+func (l LiteralExpression) exprNode() {}
+
+func (BadStatement) stmtNode() {}
+
+func (BadDeclaration) declNode() {}
+func (CallableDecl) declNode()   {}
+func (ArgumentDecl) declNode()   {}
+func (PackageDecl) declNode()    {}
+
+func (e BadExpression) ID() NodeId     { return e.id }
+func (e Identifier) ID() NodeId        { return e.id }
+func (e Block) ID() NodeId             { return e.id }
+func (e UnaryExpression) ID() NodeId   { return e.id }
+func (e BinaryExpression) ID() NodeId  { return e.id }
+func (e LiteralExpression) ID() NodeId { return e.id }
+func (e BadStatement) ID() NodeId      { return e.id }
+func (e BadDeclaration) ID() NodeId    { return e.id }
+func (e CallableDecl) ID() NodeId      { return e.id }
+func (e ArgumentDecl) ID() NodeId      { return e.id }
+func (e PackageDecl) ID() NodeId       { return e.id }
+func (e TypeDecl) ID() NodeId          { return e.id }
+
+func (id Identifier) Location() location.Location       { return id.location }
+func (d TypeDecl) Location() location.Location          { return d.location }
+func (d PackageDecl) Location() location.Location       { return d.location }
+func (def ArgumentDecl) Location() location.Location    { return def.location }
+func (b Block) Location() location.Location             { return b.location }
+func (d CallableDecl) Location() location.Location      { return d.location }
+func (l LiteralExpression) Location() location.Location { return l.location }
+func (u UnaryExpression) Location() location.Location   { return u.location }
+func (b BinaryExpression) Location() location.Location  { return b.location }
+
+func (d CallableDecl) TypeDecl() TypeDecl { return d.TpeDecl }
+func (d ArgumentDecl) TypeDecl() TypeDecl { return d.TpeDecl }
 
 func New() *AST {
 	return &AST{
@@ -187,8 +162,4 @@ func New() *AST {
 
 func (ast *AST) ASTring() string {
 	return NewASTWriter().Write(ast)
-}
-
-func (ast *AST) AddExpression(expression Expression) {
-	ast.Nodes = append(ast.Nodes, expression)
 }

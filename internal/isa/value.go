@@ -6,8 +6,8 @@ type Value interface{}
 
 type Bool bool
 type Byte byte
-type Int int64
-type UInt uint64
+type Int int
+type UInt uint
 type Float float64
 type Char rune
 type String string

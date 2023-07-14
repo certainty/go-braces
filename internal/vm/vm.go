@@ -77,7 +77,7 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 			target := instr.Operands[0]
 			left := instr.Operands[1]
 			right := instr.Operands[2]
-			vm.registers[target] = isa.Int(vm.registers[left].(int64) + vm.registers[right].(int64))
+			vm.registers[target] = isa.Int(vm.registers[left].(int) + vm.registers[right].(int))
 		case isa.OP_ADDI:
 			target := instr.Operands[0]
 			left := instr.Operands[1]

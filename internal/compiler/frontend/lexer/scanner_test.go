@@ -182,7 +182,7 @@ func TestScanner(t *testing.T) {
 			input:         "35",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "35",
-			expectedValue: int64(35),
+			expectedValue: int(35),
 		},
 		{
 
@@ -196,28 +196,28 @@ func TestScanner(t *testing.T) {
 			input:         "#b0",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "#b0",
-			expectedValue: int64(0),
+			expectedValue: int(0),
 		},
 		{
 
 			input:         "#d1344",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "#d1344",
-			expectedValue: int64(1344),
+			expectedValue: int(1344),
 		},
 		{
 
 			input:         "#b01011",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "#b01011",
-			expectedValue: int64(11),
+			expectedValue: int(11),
 		},
 		{
 
 			input:         "#x2f2f",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "#x2f2f",
-			expectedValue: int64(0x2f2f),
+			expectedValue: int(0x2f2f),
 		},
 
 		{
@@ -225,7 +225,7 @@ func TestScanner(t *testing.T) {
 			input:         "#o777",
 			expectedType:  lexer.TOKEN_INTEGER,
 			expectedText:  "#o777",
-			expectedValue: int64(511),
+			expectedValue: int(511),
 		},
 
 		// strings

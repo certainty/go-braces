@@ -14,15 +14,15 @@ func NewASTWriter() *ASTWriter {
 func (w *ASTWriter) WriteNode(node Node) string {
 	switch n := node.(type) {
 	case UnaryExpression:
-		return fmt.Sprintf("(%s %s)", unaryOpToString(n.Operator), w.WriteNode(n.Operand))
+		return fmt.Sprintf("(unExp %s %s)#%d", unaryOpToString(n.Operator), w.WriteNode(n.Operand), n.ID())
 	case BinaryExpression:
-		return fmt.Sprintf("(%s %s %s)", binOpToString(n.Operator), w.WriteNode(n.Left), w.WriteNode(n.Right))
+		return fmt.Sprintf("(binExp %s %s %s)#%d", binOpToString(n.Operator), w.WriteNode(n.Left), w.WriteNode(n.Right), n.ID())
 	case LiteralExpression:
-		return fmt.Sprintf("%v", n.Value)
+		return fmt.Sprintf("(lit %v)#%d", n.Value, n.ID())
 	case Identifier:
-		return n.ID
+		return fmt.Sprintf("(id %s)#%d", n.Label, n.ID())
 	case ArgumentDecl:
-		return fmt.Sprintf("%s: %s", n.Name.ID, n.TypeName())
+		return fmt.Sprintf("(arg %s %s)#%d", n.Name.Label, n.TypeDecl().Name.Label, n.ID())
 	case CallableDecl:
 		var args []string
 		for _, arg := range n.Arguments {
@@ -32,7 +32,7 @@ func (w *ASTWriter) WriteNode(node Node) string {
 		for _, node := range n.Body.Code {
 			body += w.WriteNode(node)
 		}
-		return fmt.Sprintf("(defn %s (%s) %s)", n.Name.ID, strings.Join(args, " "), body)
+		return fmt.Sprintf("(defn %s (%s) %s)#%d", n.Name.Label, strings.Join(args, " "), body, n.ID())
 	default:
 		return ""
 	}

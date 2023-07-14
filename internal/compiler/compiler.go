@@ -8,7 +8,7 @@ import (
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
-	"github.com/certainty/go-braces/internal/compiler/frontend/typechecker"
+	"github.com/certainty/go-braces/internal/compiler/frontend/types"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
@@ -40,13 +40,13 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	}
 	log.Printf("AST: %s", ast.ASTring())
 
-	err = c.typeCheck(ast)
+	tpeUniverse, err := c.typeCheck(ast)
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(ast, input.Origin)
+	ir, err := c.lowerToIR(ast, tpeUniverse, input.Origin)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
@@ -77,23 +77,24 @@ func (c Compiler) parse(input *input.Input) (*ast.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) typeCheck(theAST *ast.AST) error {
+func (c Compiler) typeCheck(theAST *ast.AST) (types.TypeUniverse, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
-	typechecker := typechecker.NewTypeChecker(c.instrumentation)
-	if err := typechecker.Check(theAST); err != nil {
-		return fmt.Errorf("TypeError: %w", err)
+	typechecker := types.NewChecker(c.instrumentation)
+	typeUniverse, err := typechecker.Check(theAST)
+	if err != nil {
+		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
-	return nil
+	return typeUniverse, nil
 }
 
-func (c Compiler) lowerToIR(theAST *ast.AST, origin location.Origin) (*ir.Module, error) {
+func (c Compiler) lowerToIR(theAST *ast.AST, tpeUniverse types.TypeUniverse, origin location.Origin) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(origin, theAST)
+	return ir.LowerToIR(origin, theAST, tpeUniverse)
 }
 
 func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {

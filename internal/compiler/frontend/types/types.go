@@ -18,6 +18,7 @@ type Complex complex128
 type Bool struct{}
 type String struct{}
 type Char struct{}
+type Unknown struct{}
 
 type Struct struct {
 	Name   string
@@ -65,13 +66,18 @@ type Procedure struct {
 }
 
 var (
-	IntType    = Int{}
-	UIntType   = UInt{}
-	FloatType  = Float{}
-	BoolType   = Bool{}
-	StringType = String{}
-	CharType   = Char{}
+	IntType     = Int{}
+	UIntType    = UInt{}
+	FloatType   = Float{}
+	BoolType    = Bool{}
+	StringType  = String{}
+	CharType    = Char{}
+	UnknownType = Unknown{}
 )
+
+func (Unknown) String() string {
+	return "unknown"
+}
 
 func (Int) String() string {
 	return "int"
@@ -95,6 +101,10 @@ func (Bool) String() string {
 
 func (String) String() string {
 	return "string"
+}
+
+func (Char) String() string {
+	return "char"
 }
 
 func (m Map) String() string {

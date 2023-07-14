@@ -169,7 +169,7 @@ func (c *Codegenerator) emitArithmeticInstruction(inst ir.SimpleInstruction, bui
 
 func (c *Codegenerator) isImmediate(op ir.Operand) bool {
 	if op, ok := op.(ir.Literal); ok {
-		if v, ok := op.(int64); ok {
+		if v, ok := op.(int); ok {
 			if v <= 255 {
 				return true
 			}

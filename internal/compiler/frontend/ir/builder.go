@@ -35,6 +35,14 @@ func CreateSimpleInstruction(register Register, operation Operation, tpe Type, o
 	}
 }
 
+func CreateAssignmentInstruction(register Register, tpe Type, operand Operand) AssignmentInstruction {
+	return AssignmentInstruction{
+		Register: register,
+		tpe:      tpe,
+		Operand:  operand,
+	}
+}
+
 func CreateReturnInstruction(tpe Type, register Register) ReturnInstruction {
 	return ReturnInstruction{
 		tpe:      tpe,
@@ -52,6 +60,11 @@ func NewBlockBuilder(label Label, registers *RegisterAllocator) *BlockBuilder {
 		Block:             CreateBasicBlock(label),
 		RegisterAllocator: registers,
 	}
+}
+
+func (b *BlockBuilder) OpLit(tpe Type, operand Operand) {
+	instruction := CreateAssignmentInstruction(b.RegisterAllocator.Next(""), tpe, operand)
+	b.Block.Instructions = append(b.Block.Instructions, instruction)
 }
 
 func (b *BlockBuilder) OpAdd(tpe Type, lhs Operand, rhs Operand) {
