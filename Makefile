@@ -58,6 +58,10 @@ tidy:
 	@echo "Tidying up..."
 	@go mod tidy
 
+doc:
+	@echo "Starting godoc server at localhost:6060"
+	@godoc -http=:6060
+
 install-tools: install-linter install-gotestsum  install-staticcheck
 
 install-linter:
