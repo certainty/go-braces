@@ -7,67 +7,54 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
-type UnknownTokenError struct {
-	location location.Location
-}
+type (
+	Scanner struct {
+		// the source code producer
+		*input.Input
 
-func (m UnknownTokenError) Error() string {
-	return fmt.Sprintf("Unknown token at %v", m.location)
-}
+		// temporary start of a given scan attempt
+		start uint64
+		// the position until we have scanned
+		cursor uint64
+		// line of start
+		line token.Line
+		// column of start
+		column token.Column
 
-type UnterminatedLiteralError struct {
-	location location.Location
-}
-
-func (m UnterminatedLiteralError) Error() string {
-	return fmt.Sprintf("Unterminated literal at %v", m.location)
-}
-
-type InvalidCharacterLiteralError struct {
-	location location.Location
-}
-
-func (m InvalidCharacterLiteralError) Error() string {
-	return fmt.Sprintf("Invalid character literal at %v", m.location)
-}
-
-type InvalidStringLiteralError struct {
-	location location.Location
-}
-
-func (m InvalidStringLiteralError) Error() string {
-	return fmt.Sprintf("Invalid string literal at %v", m.location)
-}
-
-type InvalidNumberLiteralError struct {
-	location location.Location
-}
-
-func (m InvalidNumberLiteralError) Error() string {
-	return fmt.Sprintf("Invalid number literal at %v", m.location)
-}
-
-type Scanner struct {
-	*input.Input
-	start  uint64
-	cursor uint64
-	line   uint64
-}
+		// encountered errors
+		Errors []error
+	}
+)
 
 func New(input *input.Input) *Scanner {
-	return &Scanner{Input: input, start: 0, cursor: 0, line: 1}
+	scanner := &Scanner{}
+	scanner.Reset(input)
+
+	return scanner
 }
 
-func (s *Scanner) NextToken() (Token, error) {
+func (s *Scanner) Reset(input *input.Input) {
+	s.Input = input
+	s.start = 0
+	s.cursor = 0
+	s.line = 1
+	s.column = 1
+	s.Errors = []error{}
+}
+
+// Returns the next token from the input.
+// If an error is encoutered a token of type token.ILLEGAL is returned..
+// In this case the caller can inspect the scanner's Errors slice for more information.
+func (s *Scanner) NextToken() token.Token {
 	s.skipWhitespace()
 
 	s.start = s.cursor
 	if s.isEof() {
-		return s.makeToken(TOKEN_EOF), nil
+		return s.makeToken(token.EOF)
 	}
 
 	next := s.peek()
@@ -87,105 +74,115 @@ func (s *Scanner) NextToken() (Token, error) {
 
 	next = s.advance()
 	switch next {
+	// token recognizable with one byte lookahead
 	case '{':
-		return s.makeToken(TOKEN_LBRACE), nil
+		return s.makeToken(token.LBRACE)
 	case '}':
-		return s.makeToken(TOKEN_RBRACE), nil
+		return s.makeToken(token.RBRACE)
 	case '[':
-		return s.makeToken(TOKEN_LBRACKET), nil
+		return s.makeToken(token.LBRACK)
 	case ']':
-		return s.makeToken(TOKEN_RBRACKET), nil
+		return s.makeToken(token.RBRACK)
 	case '(':
-		return s.makeToken(TOKEN_LPAREN), nil
+		return s.makeToken(token.LPAREN)
 	case ')':
-		return s.makeToken(TOKEN_RPAREN), nil
-	case ',':
-		return s.makeToken(TOKEN_COMMA), nil
+		return s.makeToken(token.RBRACE)
 	case '+':
-		return s.makeToken(TOKEN_PLUS), nil
+		return s.makeToken(token.ADD)
 	case '/':
-		return s.makeToken(TOKEN_SLASH), nil
-	case '^':
-		return s.makeToken(TOKEN_CARET), nil
+		return s.makeToken(token.DIV)
 	case '%':
-		return s.makeToken(TOKEN_MOD), nil
+		return s.makeToken(token.REM)
+	case '^':
+		return s.makeToken(token.XOR)
+	case ',':
+		return s.makeToken(token.COMMA)
+
 	case '#':
 		if s.match('\\') {
 			return s.scanChar()
 		}
-
-	// multi char tokens
 	case ':':
 		if s.match(':') {
-			return s.makeToken(TOKEN_COLON_COLON), nil
+			return s.makeToken(token.DBLCOLON)
 		} else {
-			return s.makeToken(TOKEN_COLON), nil
+			return s.makeToken(token.COLON)
 		}
 	case '=':
 		if s.match('=') {
-			return s.makeToken(TOKEN_EQUAL_EQUAL), nil
-		} else {
-			return s.makeToken(TOKEN_EQUAL), nil
+			return s.makeToken(token.EQ)
 		}
 	case '!':
 		if s.match('=') {
-			return s.makeToken(TOKEN_BANG_EQUAL), nil
+			return s.makeToken(token.NEQ)
 		} else {
-			return s.makeToken(TOKEN_BANG), nil
+			return s.makeToken(token.NOT)
 		}
 	case '-':
 		if s.match('>') {
-			return s.makeToken(TOKEN_ARROW), nil
+			return s.makeToken(token.ARROW)
 		}
-		return s.makeToken(TOKEN_MINUS), nil
+		return s.makeToken(token.SUB)
 	case '*':
 		if s.match('*') {
-			return s.makeToken(TOKEN_POWER), nil
+			return s.makeToken(token.POW)
 		}
-		return s.makeToken(TOKEN_STAR), nil
+		return s.makeToken(token.MUL)
 
 	case '>':
 		if s.match('=') {
-			return s.makeToken(TOKEN_GT_EQUAL), nil
+			return s.makeToken(token.GTE)
+		} else if s.match('>') {
+			return s.makeToken(token.SHR)
 		} else {
-			return s.makeToken(TOKEN_GT), nil
+			return s.makeToken(token.GT)
 		}
 	case '<':
 		if s.match('=') {
-			return s.makeToken(TOKEN_LT_EQUAL), nil
+			return s.makeToken(token.LTE)
+		} else if s.match('<') {
+			return s.makeToken(token.SHL)
 		} else {
-			return s.makeToken(TOKEN_LT), nil
+			return s.makeToken(token.LT)
 		}
 	case '&':
 		if s.match('&') {
-			return s.makeToken(TOKEN_AMPERSAND_AMPERSAND), nil
+			return s.makeToken(token.LAND)
+		} else if s.match('^') {
+			return s.makeToken(token.AND_NOT)
 		} else {
-			return s.makeToken(TOKEN_AMPERSAND), nil
+			return s.makeToken(token.AND)
 		}
 	case '|':
 		if s.match('|') {
-			return s.makeToken(TOKEN_PIPE_PIPE), nil
+			return s.makeToken(token.LOR)
 		} else if s.match('>') {
-			return s.makeToken(TOKEN_PIPE_GT), nil
+			return s.makeToken(token.PIPE)
 		} else {
-			return s.makeToken(TOKEN_PIPE), nil
+			return s.makeToken(token.OR)
 		}
+
 	// literals
 	case '"':
 		return s.scanString()
 	}
-	return s.unknownTokenError()
+	return s.illegalToken("Unexpected character")
+}
+
+func (s *Scanner) illegalToken(message string) token.Token {
+	s.Errors = append(s.Errors, fmt.Errorf("%s '%c' at %v", message, s.peek(), s.location()))
+	return s.makeToken(token.ILLEGAL)
 }
 
 ////////////////////////////////////////////////////////////////////
 // Strings
 ////////////////////////////////////////////////////////////////////
 
-func (s *Scanner) scanString() (Token, error) {
+func (s *Scanner) scanString() token.Token {
 	value := ""
 	for {
 		if s.isEof() {
-			return s.unterminatedLiteralError()
+			return s.illegalToken("Unterminated string literal")
 		} else if s.match('\n') {
 			value += "\n"
 			s.line++
@@ -206,11 +203,11 @@ func (s *Scanner) scanString() (Token, error) {
 			case '\\':
 				value += "\\"
 			default:
-				return s.invalidStringLiteral()
+				return s.illegalToken("invalid escape sequence")
 			}
 			s.advance()
 		} else if s.match('"') {
-			return s.makeTokenWithValue(TOKEN_STRING, value), nil
+			return s.makeToken(token.STRING, value)
 		} else {
 			value += string(s.advance())
 		}
@@ -234,36 +231,42 @@ var (
 	}
 )
 
-func (s *Scanner) scanChar() (Token, error) {
+func (s *Scanner) scanChar() token.Token {
 	if s.isEof() {
-		return s.unterminatedLiteralError()
+		return s.illegalToken("unterminated character literal")
 	}
 
+	// identify named characters
 	for name, char := range namedChars {
 		if s.matchString(name) {
-			return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{char}), nil
+			return s.makeToken(token.CHAR, char)
 		}
 	}
 
 	next := s.advance()
+
+	// scan a unicode escape sequence
+	// which is \u followed by exactly 4 digits (leading zeros are expected)
 	if next == 'u' && unicode.IsDigit(s.peek()) {
 		return s.scanCharUnicodeEscape()
+
+		// scan a unicode escape sequence
+		// which is \x followed hex digits
 	} else if next == 'x' && isHexDigit(s.peek()) {
 		return s.scanCharHexEscape()
 	} else if unicode.IsPrint(next) {
-		return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{next}), nil
+		return s.makeToken(token.CHAR, next)
 	} else {
-		return s.invalidCharacterLiteral()
+		return s.illegalToken("invalid character literal")
 	}
 }
 
-func (s *Scanner) scanCharUnicodeEscape() (Token, error) {
-	// exactly 4 digits (leading zeros are expected)
+func (s *Scanner) scanCharUnicodeEscape() token.Token {
 	for i := 0; i < 4; i++ {
 		if s.isEof() {
-			return s.invalidCharacterLiteral()
+			return s.illegalToken("unterminated character literal")
 		} else if !unicode.IsDigit(s.peek()) {
-			return s.invalidCharacterLiteral()
+			return s.illegalToken("invalid unicode escape sequence")
 		}
 		s.advance()
 	}
@@ -271,18 +274,18 @@ func (s *Scanner) scanCharUnicodeEscape() (Token, error) {
 	text := strings.Trim(string(s.tokenText()[3:]), "0") // remove leading zeros
 	value, err := strconv.ParseInt(text, 10, 32)
 	if err != nil {
-		return s.invalidCharacterLiteral()
+		return s.illegalToken("invalid unicode escape sequence")
 	}
-	return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{rune(value)}), nil
+	return s.makeToken(token.CHAR, rune(value))
 }
 
-func (s *Scanner) scanCharHexEscape() (Token, error) {
-	// exactly 3 bytes hex encoded, so six chars
+// scan exactly 3 bytes hex encoded, so six chars
+func (s *Scanner) scanCharHexEscape() token.Token {
 	for i := 0; i < 6; i++ {
 		if s.isEof() {
-			return s.invalidCharacterLiteral()
+			return s.illegalToken("unexpected EOF")
 		} else if !isHexDigit(s.peek()) {
-			return s.invalidCharacterLiteral()
+			return s.illegalToken("invalid hex escape sequence")
 		}
 		s.advance()
 	}
@@ -290,29 +293,29 @@ func (s *Scanner) scanCharHexEscape() (Token, error) {
 	text := string(s.tokenText()[3:])
 	value, err := strconv.ParseInt(text, 16, 32)
 	if err != nil {
-		return s.invalidCharacterLiteral()
+		return s.illegalToken("invalid hex escape sequence")
 	}
-	return s.makeTokenWithValue(TOKEN_CHARACTER, CodePoint{rune(value)}), nil
+	return s.makeToken(token.CHAR, rune(value))
 }
 
 // //////////////////////////////////////////////////////////////////
 // Numbers
 // //////////////////////////////////////////////////////////////////
-func (s *Scanner) scanNumber() (Token, error) {
+func (s *Scanner) scanNumber() token.Token {
 	if s.match('#') {
 		return s.scanIntWithBase()
 	} else if s.matchString("+nan.0") || s.matchString("-nan.0") {
-		return s.makeTokenWithValue(TOKEN_FLOAT, math.NaN()), nil
+		return s.makeToken(token.FLONUM, math.NaN())
 	} else if s.matchString("+inf.0") {
-		return s.makeTokenWithValue(TOKEN_FLOAT, math.Inf(1)), nil
+		return s.makeToken(token.FLONUM, math.Inf(1))
 	} else if s.matchString("-inf.0") {
-		return s.makeTokenWithValue(TOKEN_FLOAT, math.Inf(-1)), nil
+		return s.makeToken(token.FLONUM, math.Inf(-1))
 	} else {
 		return s.scanFloatOrInt()
 	}
 }
 
-func (s *Scanner) scanIntWithBase() (Token, error) {
+func (s *Scanner) scanIntWithBase() token.Token {
 	var base uint8
 	baseSign := s.peek()
 
@@ -326,7 +329,7 @@ func (s *Scanner) scanIntWithBase() (Token, error) {
 	case 'd':
 		base = 10
 	default:
-		return s.invalidNumberLiteral()
+		return s.illegalToken("invalid base signifier for number literal")
 	}
 
 	s.advance()
@@ -335,18 +338,15 @@ func (s *Scanner) scanIntWithBase() (Token, error) {
 	// we need to know the widt of ints on this platform
 	value, err := strconv.ParseInt(text, int(base), 64)
 	if err != nil {
-		return s.invalidNumberLiteral()
+		return s.illegalToken("invalid fixnum literal")
 	}
-	return s.makeTokenWithValue(TOKEN_INTEGER, int(value)), nil
+	return s.makeToken(token.FIXNUM, int(value))
 }
 
-func (s *Scanner) scanFloatOrInt() (Token, error) {
-	sign := s.peek()
-
-	if sign == '+' || sign == '-' {
+func (s *Scanner) scanFloatOrInt() token.Token {
+	if sign := s.peek(); sign == '+' || sign == '-' {
 		s.advance()
 	}
-
 	s.scanDigits(10)
 
 	if s.peek() == '.' && unicode.IsDigit(s.peekN(1)) {
@@ -356,16 +356,16 @@ func (s *Scanner) scanFloatOrInt() (Token, error) {
 		text := string(s.tokenText())
 		value, err := strconv.ParseFloat(text, 64)
 		if err != nil {
-			return s.invalidNumberLiteral()
+			return s.illegalToken("invalid flonum literal")
 		}
-		return s.makeTokenWithValue(TOKEN_FLOAT, value), nil
+		return s.makeToken(token.FLONUM, value)
 	} else {
 		text := string(s.tokenText())
 		value, err := strconv.ParseInt(text, 10, 64)
 		if err != nil {
-			return s.invalidNumberLiteral()
+			return s.illegalToken("invalid fixnum literal")
 		}
-		return s.makeTokenWithValue(TOKEN_INTEGER, int(value)), nil
+		return s.makeToken(token.FIXNUM, int(value))
 	}
 }
 
@@ -405,56 +405,31 @@ func isDigit(c rune, base uint8) bool {
 // //////////////////////////////////////////////////////////////////
 // Identifiers
 // //////////////////////////////////////////////////////////////////
-var keywords = map[string]TokenType{
-	"package": TOKEN_PACKAGE,
-	"import":  TOKEN_IMPORT,
-	"api":     TOKEN_API,
-	"data":    TOKEN_DATA,
-	"alias":   TOKEN_ALIAS,
-	"fun":     TOKEN_FUN,
-	"proc":    TOKEN_PROC,
-	"if":      TOKEN_IF,
-	"else":    TOKEN_ELSE,
-	"let":     TOKEN_LET,
-	"set":     TOKEN_SET,
-	"match":   TOKEN_MATCH,
-	"for":     TOKEN_FOR,
-	"from":    TOKEN_FROM,
-	"break":   TOKEN_BREAK,
-	"return":  TOKEN_RETURN,
-	"defer":   TOKEN_DEFER,
-	"...":     TOKEN_ELLIPSIS,
-	"true":    TOKEN_TRUE,
-	"false":   TOKEN_FALSE,
-}
-
-func (s *Scanner) scanIdentifier() (Token, error) {
+func (s *Scanner) scanIdentifier() token.Token {
 	for {
 		if s.isEof() {
 			break
+		}
+
+		next := s.peek()
+		if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' || next == '\'' {
+			s.advance()
 		} else {
-			next := s.peek()
-			if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' || next == '\'' {
-				s.advance()
-			} else {
-				break
-			}
+			break
 		}
 	}
 
-	for kw, token := range keywords {
-		if string(s.tokenText()) == kw {
-			if token == TOKEN_TRUE {
-				return s.makeTokenWithValue(TOKEN_TRUE, true), nil
-			} else if token == TOKEN_FALSE {
-				return s.makeTokenWithValue(TOKEN_FALSE, false), nil
-			} else {
-				return s.makeToken(token), nil
-			}
+	keyword := token.ByKeyword(s.location(), string(s.tokenText()))
+
+	if keyword.IsKeyword() {
+		if keyword.Type == token.TRUE || keyword.Type == token.FALSE {
+			keyword.LitValue = keyword.Type == token.TRUE
 		}
+
+		return keyword
 	}
 
-	return s.makeToken(TOKEN_IDENTIFIER), nil
+	return s.makeToken(token.IDENTIFIER)
 }
 
 // //////////////////////////////////////////////////////////////////
@@ -465,6 +440,7 @@ func (s *Scanner) isEof() bool {
 }
 
 func (s *Scanner) advance() rune {
+	s.column++
 	s.cursor++
 	return (*s.Buffer)[s.cursor-1]
 }
@@ -503,6 +479,7 @@ func (s *Scanner) skipWhitespace() {
 		case '\n':
 			s.advance()
 			s.line++
+			s.column = 1
 		case '/':
 			if s.peekN(1) == '/' {
 				for !s.isEof() && s.peek() != '\n' {
@@ -530,38 +507,20 @@ func (s *Scanner) peekN(offset uint64) rune {
 	return (*s.Buffer)[nextCursor]
 }
 
-func (s *Scanner) location() location.Location {
-	return location.Location{Origin: &s.Origin, Line: s.line, StartOffset: s.start, EndOffset: s.cursor}
+func (s *Scanner) makeToken(tokenType token.Type, value ...interface{}) token.Token {
+	return token.New(s.location(), tokenType, s.tokenText(), value)
 }
 
-func (s *Scanner) makeToken(tokenType TokenType) Token {
-	return MakeToken(tokenType, s.tokenText(), s.location())
-}
-
-func (s *Scanner) makeTokenWithValue(tokenType TokenType, value interface{}) Token {
-	return MakeTokenWithValue(tokenType, s.tokenText(), value, s.location())
+func (s *Scanner) location() token.Location {
+	return token.NewLocation(
+		s.Origin,
+		token.Line(s.line),
+		token.Column(s.column),
+		token.From(s.start),
+		token.To(s.cursor),
+	)
 }
 
 func (s *Scanner) tokenText() []rune {
 	return (*s.Buffer)[s.start:s.cursor]
-}
-
-func (s *Scanner) unknownTokenError() (Token, error) {
-	return Token{}, UnknownTokenError{location: s.location()}
-}
-
-func (s *Scanner) unterminatedLiteralError() (Token, error) {
-	return Token{}, UnterminatedLiteralError{location: s.location()}
-}
-
-func (s *Scanner) invalidCharacterLiteral() (Token, error) {
-	return Token{}, InvalidCharacterLiteralError{location: s.location()}
-}
-
-func (s *Scanner) invalidStringLiteral() (Token, error) {
-	return Token{}, InvalidStringLiteralError{location: s.location()}
-}
-
-func (s *Scanner) invalidNumberLiteral() (Token, error) {
-	return Token{}, InvalidNumberLiteralError{location: s.location()}
 }

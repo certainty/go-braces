@@ -2,245 +2,273 @@ package lexer_test
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestScanner(t *testing.T) {
 	testCases := []struct {
 		input         string
-		expectedType  lexer.TokenType
+		expectedType  token.Type
 		expectedText  string
 		expectedValue interface{}
 	}{
 		{
 			input:         "",
-			expectedType:  lexer.TOKEN_EOF,
+			expectedType:  token.EOF,
 			expectedText:  "",
 			expectedValue: nil,
 		},
 		{
 			input:         "!",
-			expectedType:  lexer.TOKEN_BANG,
+			expectedType:  token.NOT,
 			expectedText:  "!",
 			expectedValue: nil,
 		},
 		{
 			input:         "*",
-			expectedType:  lexer.TOKEN_STAR,
+			expectedType:  token.MUL,
 			expectedText:  "*",
 			expectedValue: nil,
 		},
 		{
 			input:         "+",
-			expectedType:  lexer.TOKEN_PLUS,
+			expectedType:  token.ADD,
 			expectedText:  "+",
 			expectedValue: nil,
 		},
 		{
 			input:         "-",
-			expectedType:  lexer.TOKEN_MINUS,
+			expectedType:  token.SUB,
 			expectedText:  "-",
 			expectedValue: nil,
 		},
 		{
 			input:         "/",
-			expectedType:  lexer.TOKEN_SLASH,
+			expectedType:  token.DIV,
 			expectedText:  "/",
 			expectedValue: nil,
 		},
 		{
 
 			input:         "%",
-			expectedType:  lexer.TOKEN_MOD,
+			expectedType:  token.REM,
 			expectedText:  "%",
 			expectedValue: nil,
 		},
 		{
 			input:         "<",
-			expectedType:  lexer.TOKEN_LT,
+			expectedType:  token.LT,
 			expectedText:  "<",
 			expectedValue: nil,
 		},
 		{
 			input:         ">",
-			expectedType:  lexer.TOKEN_GT,
+			expectedType:  token.GT,
 			expectedText:  ">",
 			expectedValue: nil,
 		},
 		{
 			input:         "&",
-			expectedType:  lexer.TOKEN_AMPERSAND,
+			expectedType:  token.AND,
 			expectedText:  "&",
 			expectedValue: nil,
 		},
 		{
 			input:         "|",
-			expectedType:  lexer.TOKEN_PIPE,
+			expectedType:  token.OR,
 			expectedText:  "|",
 			expectedValue: nil,
 		},
-
 		{
 			input:         ",",
-			expectedType:  lexer.TOKEN_COMMA,
+			expectedType:  token.COMMA,
 			expectedText:  ",",
 			expectedValue: nil,
 		},
-
+		{
+			input:         ";",
+			expectedType:  token.SEMICOLON,
+			expectedText:  ";",
+			expectedValue: nil,
+		},
+		{
+			input:         ".",
+			expectedType:  token.DOT,
+			expectedText:  ".",
+			expectedValue: nil,
+		},
 		{
 			input:         "{",
-			expectedType:  lexer.TOKEN_LBRACE,
+			expectedType:  token.LBRACE,
 			expectedText:  "{",
 			expectedValue: nil,
 		},
 		{
 
 			input:         "}",
-			expectedType:  lexer.TOKEN_RBRACE,
+			expectedType:  token.RBRACE,
 			expectedText:  "}",
 			expectedValue: nil,
 		},
 		{
-
 			input:         ":",
-			expectedType:  lexer.TOKEN_COLON,
+			expectedType:  token.COLON,
 			expectedText:  ":",
 			expectedValue: nil,
 		},
 		{
-
+			input:         "::",
+			expectedType:  token.DBLCOLON,
+			expectedText:  "::",
+			expectedValue: nil,
+		},
+		{
 			input:         "^",
-			expectedType:  lexer.TOKEN_CARET,
+			expectedType:  token.XOR,
 			expectedText:  "^",
 			expectedValue: nil,
 		},
 		{
 			input:         "**",
-			expectedType:  lexer.TOKEN_POWER,
+			expectedType:  token.POW,
 			expectedText:  "**",
 			expectedValue: nil,
 		},
 		{
 
-			input:         "::",
-			expectedType:  lexer.TOKEN_COLON_COLON,
-			expectedText:  "::",
-			expectedValue: nil,
-		},
-		{
-
 			input:         "==",
-			expectedType:  lexer.TOKEN_EQUAL_EQUAL,
+			expectedType:  token.EQ,
 			expectedText:  "==",
 			expectedValue: nil,
 		},
 		{
-
 			input:         ">=",
-			expectedType:  lexer.TOKEN_GT_EQUAL,
+			expectedType:  token.GTE,
 			expectedText:  ">=",
 			expectedValue: nil,
 		},
 		{
-
 			input:         "<=",
-			expectedType:  lexer.TOKEN_LT_EQUAL,
+			expectedType:  token.LTE,
 			expectedText:  "<=",
 			expectedValue: nil,
 		},
 		{
-
+			input:         ">>",
+			expectedType:  token.SHR,
+			expectedText:  ">>",
+			expectedValue: nil,
+		},
+		{
+			input:         "<<",
+			expectedType:  token.SHL,
+			expectedText:  "<<",
+			expectedValue: nil,
+		},
+		{
 			input:         "||",
-			expectedType:  lexer.TOKEN_PIPE_PIPE,
+			expectedType:  token.LOR,
 			expectedText:  "||",
+			expectedValue: nil,
+		},
+		{
+			input:         "&&",
+			expectedType:  token.LAND,
+			expectedText:  "&&",
+			expectedValue: nil,
+		},
+		{
+			input:         "&^",
+			expectedType:  token.AND_NOT,
+			expectedText:  "&^",
+			expectedValue: nil,
+		},
+		{
+			input:         "->",
+			expectedType:  token.ARROW,
+			expectedText:  "->",
+			expectedValue: nil,
+		},
+		{
+			input:         "|>",
+			expectedType:  token.PIPE,
+			expectedText:  "|>",
 			expectedValue: nil,
 		},
 
 		// whitespaces
 		{
-
 			input:         "   >=",
-			expectedType:  lexer.TOKEN_GT_EQUAL,
+			expectedType:  token.GTE,
 			expectedText:  ">=",
 			expectedValue: nil,
 		},
 		{
-
 			input:         "//this is a comment\n >=",
-			expectedType:  lexer.TOKEN_GT_EQUAL,
+			expectedType:  token.GTE,
 			expectedText:  ">=",
 			expectedValue: nil,
 		},
 
 		// numbers
 		{
-
 			input:         "35",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "35",
 			expectedValue: int(35),
 		},
 		{
-
 			input:         "35.34",
-			expectedType:  lexer.TOKEN_FLOAT,
+			expectedType:  token.FLONUM,
 			expectedText:  "35.34",
 			expectedValue: 35.34,
 		},
 		{
-
 			input:         "#b0",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "#b0",
 			expectedValue: int(0),
 		},
 		{
-
 			input:         "#d1344",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "#d1344",
 			expectedValue: int(1344),
 		},
 		{
-
 			input:         "#b01011",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "#b01011",
 			expectedValue: int(11),
 		},
 		{
-
 			input:         "#x2f2f",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "#x2f2f",
 			expectedValue: int(0x2f2f),
 		},
 
 		{
-
 			input:         "#o777",
-			expectedType:  lexer.TOKEN_INTEGER,
+			expectedType:  token.FIXNUM,
 			expectedText:  "#o777",
 			expectedValue: int(511),
 		},
 
 		// strings
 		{
-
 			input:         "\"hello world\"",
-			expectedType:  lexer.TOKEN_STRING,
+			expectedType:  token.STRING,
 			expectedText:  "\"hello world\"",
 			expectedValue: "hello world",
 		},
-
 		{
-
 			input:         "\"hello \\\" world\"",
-			expectedType:  lexer.TOKEN_STRING,
+			expectedType:  token.STRING,
 			expectedText:  "\"hello \\\" world\"",
 			expectedValue: "hello \" world",
 		},
@@ -248,175 +276,167 @@ func TestScanner(t *testing.T) {
 		// chars
 		{
 			input:         "#\\a",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\a",
-			expectedValue: lexer.CodePoint{'a'},
+			expectedValue: rune('a'),
 		},
 		{
 			input:         "#\\٭",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\٭",
-			expectedValue: lexer.CodePoint{'٭'},
+			expectedValue: rune('٭'),
 		},
 		{
 			input:         "#\\u1324",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\u1324",
-			expectedValue: lexer.CodePoint{rune(1324)},
+			expectedValue: rune(1324),
 		},
 		{
 			input:         "#\\u0024",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\u0024",
-			expectedValue: lexer.CodePoint{rune(24)},
+			expectedValue: rune(24),
 		},
 		{
 			input:         "#\\x00002f",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\x00002f",
-			expectedValue: lexer.CodePoint{rune(0x2f)},
+			expectedValue: rune(0x2f),
 		},
 		{
-
 			input:         "#\\newline",
-			expectedType:  lexer.TOKEN_CHARACTER,
+			expectedType:  token.CHAR,
 			expectedText:  "#\\newline",
-			expectedValue: lexer.CodePoint{'\n'},
+			expectedValue: rune('\n'),
 		},
 
 		// keywords
 		{
-			input:         "defer",
-			expectedType:  lexer.TOKEN_DEFER,
-			expectedText:  "defer",
+			input:         "ensure",
+			expectedType:  token.ENSURE,
+			expectedText:  "ensure",
 			expectedValue: nil,
 		},
 		{
 			input:         "true",
-			expectedType:  lexer.TOKEN_TRUE,
+			expectedType:  token.TRUE,
 			expectedText:  "true",
 			expectedValue: true,
 		},
 		{
 			input:         "false",
-			expectedType:  lexer.TOKEN_FALSE,
+			expectedType:  token.FALSE,
 			expectedText:  "false",
 			expectedValue: false,
 		},
 		{
 			input:         "for",
-			expectedType:  lexer.TOKEN_FOR,
+			expectedType:  token.FOR,
 			expectedText:  "for",
 			expectedValue: nil,
 		},
 		{
-
-			input:         "from",
-			expectedType:  lexer.TOKEN_FROM,
-			expectedText:  "from",
-			expectedValue: nil,
-		},
-		{
 			input:         "return",
-			expectedType:  lexer.TOKEN_RETURN,
+			expectedType:  token.RETURN,
 			expectedText:  "return",
 			expectedValue: nil,
 		},
 		{
 			input:         "proc",
-			expectedType:  lexer.TOKEN_PROC,
+			expectedType:  token.PROC,
 			expectedText:  "proc",
 			expectedValue: nil,
 		},
 		{
 			input:         "if",
-			expectedType:  lexer.TOKEN_IF,
+			expectedType:  token.IF,
 			expectedText:  "if",
 			expectedValue: nil,
 		},
 		{
 			input:         "else",
-			expectedType:  lexer.TOKEN_ELSE,
+			expectedType:  token.ELSE,
 			expectedText:  "else",
 			expectedValue: nil,
 		},
 		{
 			input:         "break",
-			expectedType:  lexer.TOKEN_BREAK,
+			expectedType:  token.BREAK,
 			expectedText:  "break",
 			expectedValue: nil,
 		},
 		{
 			input:         "let",
-			expectedType:  lexer.TOKEN_LET,
+			expectedType:  token.LET,
 			expectedText:  "let",
 			expectedValue: nil,
 		},
 		{
 			input:         "set",
-			expectedType:  lexer.TOKEN_SET,
+			expectedType:  token.SET,
 			expectedText:  "set",
 			expectedValue: nil,
 		},
 		{
 			input:         "api",
-			expectedType:  lexer.TOKEN_API,
+			expectedType:  token.API,
 			expectedText:  "api",
 			expectedValue: nil,
 		},
 		{
 			input:         "import",
-			expectedType:  lexer.TOKEN_IMPORT,
+			expectedType:  token.IMPORT,
 			expectedText:  "import",
 			expectedValue: nil,
 		},
 		{
 			input:         "someIdentifier",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "someIdentifier",
 			expectedValue: nil,
 		},
 		{
 			input:         "someIdent3_3_3_ifier",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "someIdent3_3_3_ifier",
 			expectedValue: nil,
 		},
 		{
 			input:         "setter",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "setter",
 			expectedValue: nil,
 		},
 		{
 			input:         "set'",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "set'",
 			expectedValue: nil,
 		},
 		{
 			input:         "relse",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "relse",
 			expectedValue: nil,
 		},
 
 		{
 			input:         "foo'",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "foo'",
 			expectedValue: nil,
 		},
 		{
 			input:         "_",
-			expectedType:  lexer.TOKEN_IDENTIFIER,
+			expectedType:  token.IDENTIFIER,
 			expectedText:  "_",
 			expectedValue: nil,
 		},
 		{
-			input:         "->",
-			expectedType:  lexer.TOKEN_ARROW,
-			expectedText:  "->",
+			input:         "...",
+			expectedType:  token.ELIPSES,
+			expectedText:  "...",
 			expectedValue: nil,
 		},
 	}
@@ -425,11 +445,12 @@ func TestScanner(t *testing.T) {
 		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
 			inp := input.NewStringInput("test", tc.input)
 			s := lexer.New(inp)
-			token, err := s.NextToken()
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedType, token.Type)
-			assert.Equal(t, tc.expectedText, string(token.Text))
-			assert.Equal(t, tc.expectedValue, token.Value)
+			scannedToken := s.NextToken()
+
+			assert.NotEqual(t, scannedToken.IsIllegal(), true)
+			assert.Equal(t, tc.expectedType, scannedToken.Type)
+			assert.Equal(t, tc.expectedText, string(scannedToken.Text))
+			assert.Equal(t, tc.expectedValue, scannedToken.LitValue)
 		})
 	}
 }
@@ -437,15 +458,15 @@ func TestScanner(t *testing.T) {
 func TestScannerMultipleTokens(t *testing.T) {
 	testCases := []struct {
 		input    string
-		expected []lexer.TokenType
+		expected []token.Type
 	}{
 		{
 			input:    "",
-			expected: []lexer.TokenType{lexer.TOKEN_EOF},
+			expected: []token.Type{token.EOF},
 		},
 		{
 			input:    "3 + 4",
-			expected: []lexer.TokenType{lexer.TOKEN_INTEGER, lexer.TOKEN_PLUS, lexer.TOKEN_INTEGER, lexer.TOKEN_EOF},
+			expected: []token.Type{token.FIXNUM, token.ADD, token.FIXNUM, token.EOF},
 		},
 	}
 
@@ -453,12 +474,13 @@ func TestScannerMultipleTokens(t *testing.T) {
 		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
 			inp := input.NewStringInput("test", tc.input)
 			s := lexer.New(inp)
-			tokens := []lexer.TokenType{}
+			tokens := []token.Type{}
 			for {
-				token, err := s.NextToken()
-				assert.NoError(t, err)
-				tokens = append(tokens, token.Type)
-				if token.Type == lexer.TOKEN_EOF {
+				scannedToken := s.NextToken()
+				assert.NotEqual(t, scannedToken.IsIllegal(), true)
+				tokens = append(tokens, scannedToken.Type)
+
+				if scannedToken.Type == token.EOF {
 					break
 				}
 			}

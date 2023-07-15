@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-type TokenType uint8
+type Type uint8
 
 // A token is essentially a tuple of the token type, the text that.
 type Token struct {
-	Type TokenType
+	Type Type
 
 	// The text that was used to create the token.
 	Text []rune
@@ -26,7 +26,7 @@ type Token struct {
 }
 
 const (
-	ILLEGAL TokenType = iota
+	ILLEGAL Type = iota
 	EOF
 
 	literal_begin // stolen from the go parser to implement token type checks efficiently
@@ -45,6 +45,7 @@ const (
 	ADD // +
 	SUB // -
 	MUL // *
+	POW // **
 	DIV // /
 	REM // %
 
@@ -79,7 +80,10 @@ const (
 	COMMA     // ,
 	DOT       // .
 	COLON     // :
+	DBLCOLON  // ::
 	SEMICOLON // ;
+	ARROW     // ->
+	PIPE      // |>
 
 	operator_end
 
@@ -129,6 +133,7 @@ var tokenStrings = [...]string{
 	MUL: "*",
 	DIV: "/",
 	REM: "%",
+	POW: "**",
 
 	LAND: "&&",
 	LOR:  "||",
@@ -159,7 +164,10 @@ var tokenStrings = [...]string{
 	COMMA:     ",",
 	DOT:       ".",
 	COLON:     ":",
+	DBLCOLON:  "::",
 	SEMICOLON: ";",
+	ARROW:     "->",
+	PIPE:      "|>",
 
 	PACKAGE: "package",
 	IMPORT:  "import",
@@ -186,10 +194,10 @@ var tokenStrings = [...]string{
 	FALSE: "false",
 }
 
-var keywords map[string]TokenType
+var keywords map[string]Type
 
 func init() {
-	keywords = make(map[string]TokenType, keyword_end-(keyword_begin+1))
+	keywords = make(map[string]Type, keyword_end-(keyword_begin+1))
 	for i := keyword_begin + 1; i < keyword_end; i++ {
 		keywords[tokenStrings[i]] = i
 	}
@@ -197,7 +205,7 @@ func init() {
 
 // Create a token, optionally providing a value
 // If more than one value is given, only the first one is taken and the rest is ignored.
-func Tok(location Location, tokenType TokenType, text []rune, value ...interface{}) Token {
+func New(location Location, tokenType Type, text []rune, value ...interface{}) Token {
 	if len(value) == 1 {
 		return Token{Type: tokenType, Text: text, LitValue: value[0], Location: location}
 	} else {
@@ -207,7 +215,7 @@ func Tok(location Location, tokenType TokenType, text []rune, value ...interface
 
 // Create an illegal token, which can be used during scanning to collect more than one error.
 func Illegal(location Location, text []rune) Token {
-	return Tok(location, ILLEGAL, text)
+	return New(location, ILLEGAL, text)
 }
 
 // Create a keyword token from the given string.
@@ -215,14 +223,14 @@ func Illegal(location Location, text []rune) Token {
 func ByKeyword(location Location, keyword string) Token {
 	for i := keyword_begin + 1; i < keyword_end; i++ {
 		if tokenStrings[i] == keyword {
-			return Tok(location, i, []rune(keyword))
+			return New(location, i, []rune(keyword))
 		}
 	}
 
 	return Illegal(location, []rune(keyword))
 }
 
-func (t TokenType) String() string {
+func (t Type) String() string {
 	return strings.ToUpper(tokenStrings[t])
 }
 

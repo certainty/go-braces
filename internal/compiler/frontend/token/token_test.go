@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func ExampleTok() {
+func ExampleNew() {
 	origin := token.NewStringOrigin("example")
 	loc := token.NewLocation(origin, token.Line(10), token.Column(20), token.From(30), token.To(40))
 
-	tk := token.Tok(loc, token.IDENTIFIER, []rune("exampleIdentifier"))
+	tk := token.New(loc, token.IDENTIFIER, []rune("exampleIdentifier"))
 	fmt.Println(tk.String())
 	// Output: (IDENTIFIER, exampleIdentifier)
 }
@@ -34,7 +34,7 @@ func TestTokenTypeString(t *testing.T) {
 
 // TestTokenIsKeyword tests the IsKeyword method for Token.
 func TestTokenIsKeyword(t *testing.T) {
-	tk := token.Tok(token.Location{}, token.PACKAGE, []rune("package"))
+	tk := token.New(token.Location{}, token.PACKAGE, []rune("package"))
 	if !tk.IsKeyword() {
 		t.Errorf("Expected true, got %v", tk.IsKeyword())
 	}
@@ -42,7 +42,7 @@ func TestTokenIsKeyword(t *testing.T) {
 
 // TestTokenIsLiteral tests the IsLiteral method for Token.
 func TestTokenIsLiteral(t *testing.T) {
-	tl := token.Tok(token.Location{}, token.STRING, []rune("hello"), "hello")
+	tl := token.New(token.Location{}, token.STRING, []rune("hello"), "hello")
 	if !tl.IsLiteral() {
 		t.Errorf("Expected true, got %v", tl.IsLiteral())
 	}
@@ -50,7 +50,7 @@ func TestTokenIsLiteral(t *testing.T) {
 
 // TestTokenIsOperator tests the IsOperator method for Token.
 func TestTokenIsOperator(t *testing.T) {
-	to := token.Tok(token.Location{}, token.ADD, []rune("+"))
+	to := token.New(token.Location{}, token.ADD, []rune("+"))
 	if !to.IsOperator() {
 		t.Errorf("Expected true, got %v", to.IsOperator())
 	}
@@ -58,7 +58,7 @@ func TestTokenIsOperator(t *testing.T) {
 
 // TestTokenIsEOF tests the IsEOF method for Token.
 func TestTokenIsEOF(t *testing.T) {
-	teof := token.Tok(token.Location{}, token.EOF, nil)
+	teof := token.New(token.Location{}, token.EOF, nil)
 	if !teof.IsEOF() {
 		t.Errorf("Expected true, got %v", teof.IsEOF())
 	}
@@ -74,7 +74,7 @@ func TestTokenIsIllegal(t *testing.T) {
 
 // TestTokenString tests the String method for Token.
 func TestTokenString(t *testing.T) {
-	tl := token.Tok(token.Location{}, token.STRING, []rune("hello"), "hello")
+	tl := token.New(token.Location{}, token.STRING, []rune("hello"), "hello")
 	if tl.String() != "(STRING, hello)" {
 		t.Errorf("Expected (STRING, hello), got %s", tl.String())
 	}
