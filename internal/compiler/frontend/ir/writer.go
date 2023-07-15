@@ -48,6 +48,8 @@ func (w *IRWriter) WriteInstruction(i Instruction) string {
 			ops[i] = w.writeOperand(o)
 		}
 		return fmt.Sprintf("%s = %s %s %s", w.writeRegister(i.Register), w.writeOperation(i.Operation), w.writeType(i.tpe), strings.Join(ops, ", "))
+	case AssignmentInstruction:
+		return fmt.Sprintf("%s = %s %s", w.writeRegister(i.Register), w.writeType(i.tpe), w.writeOperand(i.Operand))
 	case ReturnInstruction:
 		return fmt.Sprintf("ret %s %s", w.writeType(i.tpe), w.writeRegister(i.Register))
 	default:
@@ -69,11 +71,11 @@ func (w *IRWriter) writeType(t Type) string {
 	case Bool:
 		return "bool"
 	case Int:
-		return "i64"
+		return "int"
 	case UInt:
-		return "u64"
+		return "uint"
 	case Float:
-		return "f32"
+		return "float"
 	case String:
 		return "string"
 	default:

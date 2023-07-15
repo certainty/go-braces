@@ -13,6 +13,7 @@ type Char rune
 type String string
 type Vector []Value
 type Map map[Value]Value
+
 type Closure struct {
 	Function Function
 	UpValues []*Value

@@ -53,28 +53,43 @@ func CreateReturnInstruction(tpe Type, register Register) ReturnInstruction {
 type BlockBuilder struct {
 	Block             *BasicBlock
 	RegisterAllocator *RegisterAllocator
+	ModuleBuilder     *IrBuilder
 }
 
-func NewBlockBuilder(label Label, registers *RegisterAllocator) *BlockBuilder {
+func NewBlockBuilder(label Label, registers *RegisterAllocator, builder *IrBuilder) *BlockBuilder {
 	return &BlockBuilder{
 		Block:             CreateBasicBlock(label),
 		RegisterAllocator: registers,
+		ModuleBuilder:     builder,
 	}
 }
 
-func (b *BlockBuilder) OpLit(tpe Type, operand Operand) {
-	instruction := CreateAssignmentInstruction(b.RegisterAllocator.Next(""), tpe, operand)
+func (b *BlockBuilder) OpLit(tpe Type, operand Operand) Register {
+	target := b.RegisterAllocator.Next("")
+	instruction := CreateAssignmentInstruction(target, tpe, operand)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
+	return target
 }
 
-func (b *BlockBuilder) OpAdd(tpe Type, lhs Operand, rhs Operand) {
-	instruction := CreateSimpleInstruction(b.RegisterAllocator.Next(""), Add, tpe, lhs, rhs)
+func (b *BlockBuilder) OpAdd(tpe Type, lhs Operand, rhs Operand) Register {
+	target := b.RegisterAllocator.Next("")
+	instruction := CreateSimpleInstruction(target, Add, tpe, lhs, rhs)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
+	return target
 }
 
-func (b *BlockBuilder) OpSub(tpe Type, lhs Operand, rhs Operand) {
-	instruction := CreateSimpleInstruction(b.RegisterAllocator.Next(""), Sub, tpe, lhs, rhs)
+func (b *BlockBuilder) OpMul(tpe Type, lhs Operand, rhs Operand) Register {
+	target := b.RegisterAllocator.Next("")
+	instruction := CreateSimpleInstruction(target, Mul, tpe, lhs, rhs)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
+	return target
+}
+
+func (b *BlockBuilder) OpSub(tpe Type, lhs Operand, rhs Operand) Register {
+	target := b.RegisterAllocator.Next("")
+	instruction := CreateSimpleInstruction(target, Sub, tpe, lhs, rhs)
+	b.Block.Instructions = append(b.Block.Instructions, instruction)
+	return target
 }
 
 func (b *BlockBuilder) OpRet(tpe Type, register Register) {

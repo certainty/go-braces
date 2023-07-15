@@ -19,6 +19,7 @@ type Bool struct{}
 type String struct{}
 type Char struct{}
 type Unknown struct{}
+type Void struct{}
 
 type Struct struct {
 	Name   string
@@ -69,6 +70,7 @@ var (
 	IntType     = Int{}
 	UIntType    = UInt{}
 	FloatType   = Float{}
+	VoidType    = Void{}
 	BoolType    = Bool{}
 	StringType  = String{}
 	CharType    = Char{}

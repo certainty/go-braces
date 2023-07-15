@@ -66,6 +66,10 @@ func InstAdd(target, left, right Register) Instruction {
 	return NewInstruction(OP_ADD, Operand(target), Operand(left), Operand(right))
 }
 
+func InstMul(target, left, right Register) Instruction {
+	return NewInstruction(OP_MUL, Operand(target), Operand(left), Operand(right))
+}
+
 func InstAddI(target Register, left Register, right ImmediateValue) Instruction {
 	return NewInstruction(OP_ADDI, Operand(target), Operand(left), Operand(right))
 }

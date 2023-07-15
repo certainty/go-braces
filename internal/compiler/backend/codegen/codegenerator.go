@@ -2,6 +2,8 @@ package codegen
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
@@ -107,16 +109,21 @@ func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder
 		switch inst := instruction.(type) {
 		case ir.ReturnInstruction:
 			builder.AddInstruction(isa.InstRet(c.findRegister(inst.Register)))
+
 		case ir.SimpleInstruction:
 			if err := c.emitSimpleInstruction(inst, builder); err != nil {
 				return fmt.Errorf("emitSimpleInstruction: %w", err)
 			}
+		case ir.AssignmentInstruction:
+			addr := builder.AddConstant(isa.Value(inst.Operand))
+			reg := c.findRegister(inst.Register)
+			builder.AddInstruction(isa.InstLoad(reg, addr))
 		case ir.Literal:
 			value, err := c.convertValue(inst)
 			if err != nil {
 				return fmt.Errorf("emitBlock: %w", err)
 			}
-			address := builder.AddConstant(&value)
+			address := builder.AddConstant(value)
 			builder.AddInstruction(isa.InstLoad(c.registerAccu, address))
 		default:
 			return fmt.Errorf("unknown instruction type: %T", instruction)
@@ -127,9 +134,10 @@ func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder
 
 func (c *Codegenerator) emitSimpleInstruction(inst ir.SimpleInstruction, builder *CodeUnitBuilder) error {
 	switch inst.Operation {
-	case ir.Add, ir.Sub:
+	case ir.Add, ir.Sub, ir.Mul:
 		return c.emitArithmeticInstruction(inst, builder)
 	default:
+		log.Printf("unknown instruction: %v", inst.Operation)
 		panic("unknown instruction")
 	}
 }
@@ -161,6 +169,8 @@ func (c *Codegenerator) emitArithmeticInstruction(inst ir.SimpleInstruction, bui
 	switch inst.Operation {
 	case ir.Add:
 		builder.AddInstruction(isa.InstAdd(c.findRegister(inst.Register), left, right))
+	case ir.Mul:
+		builder.AddInstruction(isa.InstMul(c.findRegister(inst.Register), left, right))
 	case ir.Sub:
 		builder.AddInstruction(isa.InstSub(c.findRegister(inst.Register), left, right))
 	}

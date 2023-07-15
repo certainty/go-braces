@@ -73,10 +73,16 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		switch instr.Opcode {
 		case isa.OP_RET:
 			return vm.registers[instr.Operands[0]], nil
+		case isa.OP_MUL:
+			target := instr.Operands[0]
+			left := instr.Operands[1]
+			right := instr.Operands[2]
+			vm.registers[target] = isa.Int(vm.registers[left].(int) * vm.registers[right].(int))
 		case isa.OP_ADD:
 			target := instr.Operands[0]
 			left := instr.Operands[1]
 			right := instr.Operands[2]
+			// TODO: make sure correct values are used
 			vm.registers[target] = isa.Int(vm.registers[left].(int) + vm.registers[right].(int))
 		case isa.OP_ADDI:
 			target := instr.Operands[0]

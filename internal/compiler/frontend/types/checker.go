@@ -57,13 +57,38 @@ func (t Checker) typeCheck(node ast.Node) (Type, error) {
 }
 
 func (t Checker) typeCheckCallableDecl(node *ast.CallableDecl) (Type, error) {
+	declaredType, err := t.typeForDecl(node.TpeDecl)
+	if err != nil {
+		return nil, err
+	}
+	var lastExprType Type
 	for _, bodyNode := range node.Body.Code {
-		_, err := t.typeCheck(bodyNode)
+		lastExprType, err = t.typeCheck(bodyNode)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return UnknownType, nil
+
+	if lastExprType != declaredType {
+		return nil, fmt.Errorf("declared type %v does not match body type %v", declaredType, lastExprType)
+	}
+
+	return t.assignType(node, declaredType), nil
+}
+
+func (t Checker) typeForDecl(tpeDecl ast.TypeDecl) (Type, error) {
+	switch tpeDecl.Name.Label {
+	case "int":
+		return IntType, nil
+	case "uint":
+		return UIntType, nil
+	case "float":
+		return FloatType, nil
+	default:
+		return nil, fmt.Errorf("unknown type %v", tpeDecl.Name.Label)
+		// handle other builtin and user-defined types
+	}
+
 }
 
 func (t *Checker) typeCheckLiteral(node *ast.LiteralExpression) (Type, error) {
