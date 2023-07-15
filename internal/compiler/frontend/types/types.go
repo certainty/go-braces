@@ -18,8 +18,8 @@ type Complex complex128
 type Bool struct{}
 type String struct{}
 type Char struct{}
+type Unit struct{}
 type Unknown struct{}
-type Void struct{}
 
 type Struct struct {
 	Name   string
@@ -70,10 +70,11 @@ var (
 	IntType     = Int{}
 	UIntType    = UInt{}
 	FloatType   = Float{}
-	VoidType    = Void{}
+	UnitType    = Unit{}
 	BoolType    = Bool{}
 	StringType  = String{}
 	CharType    = Char{}
+	ByteType    = Byte{}
 	UnknownType = Unknown{}
 )
 
@@ -83,6 +84,10 @@ func (Unknown) String() string {
 
 func (Int) String() string {
 	return "int"
+}
+
+func (Unit) String() string {
+	return "unit"
 }
 
 func (Byte) String() string {

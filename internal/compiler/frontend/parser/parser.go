@@ -208,12 +208,14 @@ func (p *Parser) parseArguments() []ast.Field {
 
 func (p *Parser) parseTypeSpec() ast.TypeSpec {
 	location := p.currentToken.Location
+
 	p.consume(token.COLON, "expected ':'")
 	return p.astBuilder.NewTypeSpec(location, p.parseIdentifier())
 }
 
 func (p *Parser) parseIdentifier() ast.Identifier {
 	p.consume(token.IDENTIFIER, "expected identifier")
+
 	return p.astBuilder.NewIdentifier(
 		p.previousToken.Location,
 		string(p.previousToken.Text),
@@ -254,7 +256,7 @@ func (p *Parser) parseBinaryExpressions(minPrecedence Precedence) ast.Expression
 		if precedence < minPrecedence {
 			break
 		}
-		tok := p.currentToken
+		op := p.currentToken
 		p.advance()
 
 		// now we climb the precedence ladder
@@ -264,52 +266,45 @@ func (p *Parser) parseBinaryExpressions(minPrecedence Precedence) ast.Expression
 			right = p.parseBinaryExpressions(precedence)
 		}
 
-		left = p.astBuilder.NewBinOp(tok.Location, ast.TokenToBinaryOp(*tok), left, right)
+		left = p.astBuilder.NewBinaryExpr(*op, left, right)
 	}
 	return left
 }
 
 func (p *Parser) parseUnaryExpression() ast.Expression {
-	if p.match(lexer.TOKEN_BANG) || p.match(lexer.TOKEN_MINUS) || p.match(lexer.TOKEN_PLUS) {
+	if p.match(token.NOT) || p.match(token.SUB) || p.match(token.ADD) {
 		tok := p.previousToken
 		right := p.parseUnaryExpression()
-		return p.astBuilder.NewUnaryOp(tok.Location, ast.TokenToUnaryOp(*tok), right)
-	} else if p.match(lexer.TOKEN_LPAREN) {
+		return p.astBuilder.NewUnaryExpr(tok.Location, *tok, right)
+	}
+
+	if p.match(token.LPAREN) {
 		expr := p.parseBinaryExpressions(PREC_SET)
-		p.consume(lexer.TOKEN_RPAREN, "expected closing parenthesis")
+		p.consume(token.RPAREN, "expected closing parenthesis")
 		return expr
-	} else if p.match(lexer.TOKEN_IDENTIFIER) {
-		fmt.Printf("Parsing identifier - not yes supported\n")
-		return nil
-	} else if p.matchLiteral() {
-		return p.astBuilder.NewLiteralExpression(*p.previousToken, p.previousToken.Location)
-	} else if p.match(lexer.TOKEN_EOF) {
-		p.errorAtCurrent(ParseErrorIdUnexpectedEOF, "unexpected end of input", nil)
-		return nil
 	}
-	p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected unary expression", nil)
-	return nil
+
+	if p.currentToken.IsIdentifier() {
+		p.advance()
+		p.errorAtCurrent(ParseErrorNotImplemented, "identifier in unary expression")
+		return p.astBuilder.NewBadExpr(p.previousToken.Location)
+	}
+
+	if p.currentToken.IsLiteral() {
+		p.advance()
+		return p.astBuilder.NewBasicLitExpr(p.previousToken.Location, *p.previousToken)
+	}
+
+	if p.match(token.EOF) {
+		p.errorAtCurrent(ParseErrorIdUnexpectedEOF, "unexpected end of input")
+	} else {
+		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected unary expression")
+	}
+
+	return p.astBuilder.NewBadExpr(p.currentToken.Location)
 }
 
-func (p *Parser) matchLiteral() bool {
-	literals := []lexer.TokenType{
-		lexer.TOKEN_INTEGER,
-		lexer.TOKEN_FLOAT,
-		lexer.TOKEN_STRING,
-		lexer.TOKEN_TRUE,
-		lexer.TOKEN_FALSE,
-		lexer.TOKEN_CHARACTER,
-	}
-
-	for _, literal := range literals {
-		if p.match(literal) {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *Parser) match(tokenTypes ...lexer.TokenType) bool {
+func (p *Parser) match(tokenTypes ...token.Type) bool {
 	for _, tokenType := range tokenTypes {
 		if p.check(tokenType) {
 			p.advance()
@@ -319,17 +314,13 @@ func (p *Parser) match(tokenTypes ...lexer.TokenType) bool {
 	return false
 }
 
-func (p *Parser) check(tokenType lexer.TokenType) bool {
+func (p *Parser) check(tokenType token.Type) bool {
 	return p.currentToken.Type == tokenType
 }
 
 func (p *Parser) errorAtCurrent(id ParseErrorId, message string) {
 	p.errorAt(*p.currentToken, id, message)
 }
-
-// func (p *Parser) errorAtPrevious(id ParseErrorId, message string, cause error) {
-// 	p.errorAt(*p.previousToken, id, message, cause)
-// }
 
 func (p *Parser) errorAt(token token.Token, id ParseErrorId, message string) {
 	if p.panicMode {

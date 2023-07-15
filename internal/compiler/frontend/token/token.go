@@ -110,9 +110,6 @@ const (
 	SET
 	MATCH
 
-	TRUE
-	FALSE
-
 	keyword_end
 )
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
 	"github.com/certainty/go-braces/internal/compiler/input"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/stretchr/testify/assert"
@@ -96,12 +96,12 @@ func TestParser_Parse(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			parser := parser.NewParser(compiler_introspection.NewNullInstrumentation())
 			input := input.NewStringInput("test", test.input)
-			ast, err := parser.Parse(input)
+			source, err := parser.Parse(input)
 			assert.NoError(t, err)
-			assert.Equal(t, 1, len(ast.Nodes)) // single expression
+			assert.Equal(t, 1, len(source.Statements)) // single expression
 			if err == nil {
-				fmt.Printf("%v\n", ast.Nodes[0])
-				result := astWriter.WriteNode(ast.Nodes[0])
+				fmt.Printf("%v\n", source.Statements[0])
+				result := astWriter.WriteNode(source.Statements[0])
 				assert.Equal(t, test.expected, result)
 			}
 		})

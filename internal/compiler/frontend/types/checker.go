@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
+	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 )
 
@@ -25,14 +25,14 @@ func (t *Checker) assignType(node ast.Node, tpe Type) Type {
 	return tpe
 }
 
-func (t Checker) Check(ast *ast.AST) (TypeUniverse, error) {
+func (t Checker) Check(ast *ast.Source) (TypeUniverse, error) {
 	t.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer t.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
-	log.Printf("Type checking AST: %v", ast.ASTring())
+	log.Printf("Type checking AST: %v", ast.ASTString())
 	log.Printf("Type universe: %v", t.typeUniverse)
 
-	for _, node := range ast.Nodes {
+	for _, node := range ast.Statements {
 		_, err := t.typeCheck(node)
 		if err != nil {
 			return nil, err
@@ -45,74 +45,35 @@ func (t Checker) Check(ast *ast.AST) (TypeUniverse, error) {
 
 func (t Checker) typeCheck(node ast.Node) (Type, error) {
 	switch node := node.(type) {
-	case ast.LiteralExpression:
+	case ast.BasicLitExpr:
 		return t.typeCheckLiteral(&node)
-	case ast.BinaryExpression:
+	case ast.BinaryExpr:
 		return t.typeCheckBinaryExpression(&node)
-	case ast.CallableDecl:
-		return t.typeCheckCallableDecl(&node)
 	default:
 		return UnknownType, nil
 	}
 }
 
-func (t Checker) typeCheckCallableDecl(node *ast.CallableDecl) (Type, error) {
-	declaredType, err := t.typeForDecl(node.TpeDecl)
-	if err != nil {
-		return nil, err
-	}
-	var lastExprType Type
-	for _, bodyNode := range node.Body.Code {
-		lastExprType, err = t.typeCheck(bodyNode)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if lastExprType != declaredType {
-		return nil, fmt.Errorf("declared type %v does not match body type %v", declaredType, lastExprType)
-	}
-
-	return t.assignType(node, declaredType), nil
-}
-
-func (t Checker) typeForDecl(tpeDecl ast.TypeDecl) (Type, error) {
-	switch tpeDecl.Name.Label {
-	case "int":
-		return IntType, nil
-	case "uint":
-		return UIntType, nil
-	case "float":
-		return FloatType, nil
+func (t *Checker) typeCheckLiteral(node *ast.BasicLitExpr) (Type, error) {
+	switch node.Token.Type {
+	case token.FIXNUM:
+		return t.assignType(node, IntType), nil
+	case token.FLONUM:
+		return t.assignType(node, FloatType), nil
+	case token.STRING:
+		return t.assignType(node, StringType), nil
+	case token.CHAR:
+		return t.assignType(node, CharType), nil
+	case token.BYTE:
+		return t.assignType(node, ByteType), nil
+	case token.BOOLEAN:
+		return t.assignType(node, BoolType), nil
 	default:
-		return nil, fmt.Errorf("unknown type %v", tpeDecl.Name.Label)
-		// handle other builtin and user-defined types
-	}
-
-}
-
-func (t *Checker) typeCheckLiteral(node *ast.LiteralExpression) (Type, error) {
-	if (*node).Value == nil {
-		return nil, fmt.Errorf("literal has no value")
-	} else {
-		switch (*node).Value.(type) {
-		case int:
-			return t.assignType(node, IntType), nil
-		case float64:
-			return t.assignType(node, FloatType), nil
-		case bool:
-			return t.assignType(node, BoolType), nil
-		case string:
-			return t.assignType(node, StringType), nil
-		case lexer.CodePoint:
-			return t.assignType(node, CharType), nil
-		default:
-			return nil, fmt.Errorf("unknown literal type %T", (*node).Value)
-		}
+		return nil, fmt.Errorf("unknown literal type %T", (*node).Value)
 	}
 }
 
-func (t *Checker) typeCheckBinaryExpression(node *ast.BinaryExpression) (Type, error) {
+func (t *Checker) typeCheckBinaryExpression(node *ast.BinaryExpr) (Type, error) {
 	leftType, err := t.typeCheck(node.Left)
 	if err != nil {
 		return nil, err
@@ -122,16 +83,19 @@ func (t *Checker) typeCheckBinaryExpression(node *ast.BinaryExpression) (Type, e
 		return nil, err
 	}
 
-	if node.IsNumeric() {
-		if !(leftType == IntType || leftType == FloatType || leftType == UIntType) {
-			return nil, fmt.Errorf("operand must be numeric")
+	// make sure left operand matches required type
+	switch node.Op.Type {
+	case token.ADD, token.SUB, token.MUL, token.DIV, token.REM, token.POW:
+		if leftType != IntType && leftType != FloatType && leftType != UIntType {
+			return nil, fmt.Errorf("operands must be numeric")
+		}
+	case token.LAND, token.LOR:
+		if leftType != BoolType {
+			return nil, fmt.Errorf("operands must be boolean")
 		}
 	}
 
-	if node.IsBoolean() && leftType != BoolType {
-		return nil, fmt.Errorf("operand must be boolean")
-	}
-
+	// now make sure right operand matches left operand
 	if leftType == rightType {
 		return t.assignType(node, leftType), nil
 	} else {

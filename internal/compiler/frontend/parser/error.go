@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 )
 
 type ParseErrorId int
@@ -13,10 +13,11 @@ const (
 	ParseErrorIdUnexpectedEOF
 	ParseErrorIdUnexpectedToken
 	ParseErrorLexerError
+	ParseErrorNotImplemented
 )
 
 type ParseError struct {
-	Where   location.Location
+	Where   token.Location
 	What    string
 	Cause   error
 	Context string

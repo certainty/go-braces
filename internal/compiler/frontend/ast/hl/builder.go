@@ -24,6 +24,20 @@ func (a *Builder) AddNode(node Node) {
 	a.nodes = append(a.nodes, node)
 }
 
+func (a *Builder) NewBadExpr(location token.Location) BadExpr {
+	return BadExpr{
+		id:       a.nextID(),
+		location: location,
+	}
+}
+
+func (a *Builder) NewBasicLitExpr(location token.Location, token token.Token) BasicLitExpr {
+	return BasicLitExpr{
+		id:    a.nextID(),
+		Token: token,
+	}
+}
+
 func (a *Builder) NewIdentifier(location token.Location, name string) Identifier {
 	return Identifier{
 		location: location,
@@ -67,6 +81,30 @@ func (a *Builder) NewBlockExpr(location token.Location, statements []Statement) 
 		id:         a.nextID(),
 		location:   location,
 		Statements: statements,
+	}
+}
+
+func (a *Builder) NewUnaryExpr(location token.Location, op token.Token, expr Expression) UnaryExpr {
+	return UnaryExpr{
+		id:   a.nextID(),
+		Op:   op,
+		Expr: expr,
+	}
+}
+
+func (a *Builder) NewParenExpr(location token.Location, expr Expression) ParenExpr {
+	return ParenExpr{
+		id:   a.nextID(),
+		Expr: expr,
+	}
+}
+
+func (a *Builder) NewBinaryExpr(op token.Token, left, right Expression) BinaryExpr {
+	return BinaryExpr{
+		id:    a.nextID(),
+		Op:    op,
+		Left:  left,
+		Right: right,
 	}
 }
 

@@ -39,7 +39,8 @@ type (
 // //////////////////////////////////////////////////
 type (
 	BadExpr struct {
-		id NodeId
+		id       NodeId
+		location token.Location
 	}
 
 	BasicLitExpr struct {
@@ -94,13 +95,17 @@ func (e UnaryExpr) ID() NodeId    { return e.id }
 func (e BinaryExpr) ID() NodeId   { return e.id }
 func (e Identifier) ID() NodeId   { return e.id }
 
-func (e BadExpr) Location() token.Location      { return token.Location{} }
+func (e BadExpr) Location() token.Location      { return e.location }
 func (e BasicLitExpr) Location() token.Location { return e.Token.Location }
 func (e ParenExpr) Location() token.Location    { return e.Expr.Location() }
 func (e BlockExpr) Location() token.Location    { return e.location }
 func (e UnaryExpr) Location() token.Location    { return e.Op.Location }
 func (e BinaryExpr) Location() token.Location   { return e.Op.Location }
 func (e Identifier) Location() token.Location   { return e.location }
+
+func (e BasicLitExpr) Value() interface{} {
+	return e.Token.LitValue
+}
 
 // //////////////////////////////////////////////////
 // statements
@@ -180,6 +185,23 @@ type (
 // //////////////////////////////////////////////////
 
 type Source struct {
+	id           NodeId
 	Declarations []Declaration
 	Statements   []Node
+}
+
+func (s Source) ID() NodeId { return s.id }
+func (s Source) Location() token.Location {
+	if len(s.Declarations) > 0 {
+		return s.Declarations[0].Location()
+	}
+	if len(s.Statements) > 0 {
+		return s.Statements[0].Location()
+	}
+	return token.Location{}
+}
+
+func (s Source) ASTString() string {
+	writer := NewASTWriter()
+	return writer.WriteNode(&s)
 }

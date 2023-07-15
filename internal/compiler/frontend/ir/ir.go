@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
+	"github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/compiler/frontend/types"
-	"github.com/certainty/go-braces/internal/compiler/location"
 )
 
 type Label string
@@ -14,7 +14,7 @@ type Register uint
 
 type Module struct {
 	Name      Label
-	Source    location.Origin
+	Source    token.Origin
 	Functions []*Function
 }
 
@@ -124,14 +124,14 @@ type IrBuilder struct {
 	Module       *Module
 }
 
-func NewBuilder(origin location.Origin, tpeUniverse types.TypeUniverse) *IrBuilder {
+func NewBuilder(origin token.Origin, tpeUniverse types.TypeUniverse) *IrBuilder {
 	return &IrBuilder{
 		Module:       CreateModule("", origin),
 		typeUniverse: tpeUniverse,
 	}
 }
 
-func LowerToIR(origin location.Origin, theAst *ast.AST, tpeUniverse types.TypeUniverse) (*Module, error) {
+func LowerToIR(origin token.Origin, theAst *ast.Source, tpeUniverse types.TypeUniverse) (*Module, error) {
 	builder := NewBuilder(origin, tpeUniverse)
 
 	if err := builder.lower(theAst); err != nil {
@@ -144,12 +144,10 @@ func (b *IrBuilder) blockBuilder(label string, registers *RegisterAllocator) *Bl
 	return NewBlockBuilder(Label(label), registers, b)
 }
 
-func (b *IrBuilder) lower(theAst *ast.AST) error {
-	for _, node := range theAst.Nodes {
+func (b *IrBuilder) lower(theAst *ast.Source) error {
+	for _, node := range theAst.Statements {
 		switch node := node.(type) {
-		case ast.PackageDecl:
-			b.Module.Name = Label(node.Name.Label)
-		case ast.CallableDecl:
+		case ast.Bl:
 			fun, err := b.lowerFunction(node)
 			if err != nil {
 				return err
@@ -164,7 +162,7 @@ func (b *IrBuilder) lower(theAst *ast.AST) error {
 
 func (b *IrBuilder) lowerBody(node ast.Node, blockBuilder *BlockBuilder) (Register, Type, error) {
 	switch node := node.(type) {
-	case ast.LiteralExpression:
+	case ast.BasicLitExpr:
 		exprType, err := b.typeOf(node)
 		if err != nil {
 			return 0, nil, err
@@ -174,7 +172,7 @@ func (b *IrBuilder) lowerBody(node ast.Node, blockBuilder *BlockBuilder) (Regist
 			return 0, nil, err
 		}
 		return blockBuilder.OpLit(loweredType, node.Value), loweredType, nil
-	case ast.BinaryExpression:
+	case ast.BinaryExpr:
 		return b.lowerBinaryExpression(blockBuilder, node)
 	default:
 		return 0, nil, fmt.Errorf("unexpected node type: %T", node)

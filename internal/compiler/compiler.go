@@ -5,12 +5,12 @@ import (
 	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
+	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
 	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser/ast"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/compiler/frontend/types"
 	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/compiler/location"
 	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
@@ -38,7 +38,7 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
-	log.Printf("AST: %s", ast.ASTring())
+	log.Printf("AST: %s", ast.ASTString())
 
 	tpeUniverse, err := c.typeCheck(ast)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	return assemblyModule, nil
 }
 
-func (c Compiler) parse(input *input.Input) (*ast.AST, error) {
+func (c Compiler) parse(input *input.Input) (*ast.Source, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
 
@@ -77,7 +77,7 @@ func (c Compiler) parse(input *input.Input) (*ast.AST, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) typeCheck(theAST *ast.AST) (types.TypeUniverse, error) {
+func (c Compiler) typeCheck(theAST *ast.Source) (types.TypeUniverse, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
@@ -90,7 +90,7 @@ func (c Compiler) typeCheck(theAST *ast.AST) (types.TypeUniverse, error) {
 	return typeUniverse, nil
 }
 
-func (c Compiler) lowerToIR(theAST *ast.AST, tpeUniverse types.TypeUniverse, origin location.Origin) (*ir.Module, error) {
+func (c Compiler) lowerToIR(theAST *ast.Source, tpeUniverse types.TypeUniverse, origin token.Origin) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
