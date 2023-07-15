@@ -14,17 +14,17 @@ type Precedence uint8
 type Associativity uint8
 
 const (
-	PREC_NONE     Precedence = iota
-	PREC_SET                 // set x expr
-	PREC_OR                  // ||
-	PREC_AND                 // &&
-	PREC_EQ                  // == !=
-	PREC_COMP                // < > <= >=
-	PREC_TERM                // + -
-	PREC_FACTOR              // * / % /
-	PREC_EXPONENT            // **
-	PREC_UNARY               // ! -
-	PREC_CALL                //  ()
+	PREC_NONE       Precedence = iota
+	PREC_SET                   // set x expr
+	PREC_OR                    // ||
+	PREC_AND                   // &&
+	PREC_EQUALITY              // == !=
+	PREC_COMPARISON            // < > <= >=
+	PREC_TERM                  // + -
+	PREC_FACTOR                // * / % /
+	PREC_EXPONENT              // **
+	PREC_UNARY                 // ! -
+	PREC_CALL                  //  ()
 	PREC_PRIMARY
 )
 
@@ -43,12 +43,12 @@ func precedenceFor(tokenType token.Type) (Precedence, Associativity) {
 	case token.ADD, token.SUB:
 		return PREC_TERM, ASSOC_LEFT
 	case token.EQ, token.NEQ, token.LT, token.LTE, token.GT, token.GTE:
-		return PREC_COMP, ASSOC_LEFT
+		return PREC_COMPARISON, ASSOC_LEFT
 	case token.LAND:
 		return PREC_AND, ASSOC_LEFT
 	case token.LOR:
 		return PREC_OR, ASSOC_LEFT
-	case token.LPAREN:
+	case lexer.TOKEN_LPAREN:
 		return PREC_NONE, ASSOC_LEFT
 	default:
 		return PREC_NONE, ASSOC_NONE
@@ -58,8 +58,8 @@ func precedenceFor(tokenType token.Type) (Precedence, Associativity) {
 type Parser struct {
 	instrumentation compiler_introspection.Instrumentation
 	scanner         *lexer.Scanner
-	previousToken   *token.Token
-	currentToken    *token.Token
+	previousToken   *lexer.Token
+	currentToken    *lexer.Token
 	astBuilder      *ast.Builder
 	errors          []ParseError
 	panicMode       bool
@@ -67,70 +67,72 @@ type Parser struct {
 }
 
 func NewParser(instrumentation compiler_introspection.Instrumentation) *Parser {
-	return &Parser{
+	p := &Parser{
 		instrumentation: instrumentation,
 		scanner:         nil,
 	}
+	return p
 }
 
-func (p *Parser) Reset() {
+// the parser follows "crafting interpreters" and uses a recursive descent parser using pratt's top down operator precedence
+func (p *Parser) Parse(input *input.Input) (*ast.AST, error) {
+	// reset the parser state
 	p.errors = []ParseError{}
 	p.panicMode = false
 	p.hadError = false
 	p.previousToken = nil
 	p.currentToken = nil
-}
-
-func (p *Parser) Parse(input *input.Input) (*ast.Source, error) {
-	p.Reset()
 	p.astBuilder = ast.NewBuilder()
 	p.scanner = lexer.New(input)
 
+	println("parsing input:\n\n", input.Source())
+
+	// now start the parsing process
 	p.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
 	defer p.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
 
 	return p.parseInput()
 }
 
-func (p *Parser) parseInput() (*ast.Source, error) {
+func (p *Parser) parseInput() (*ast.AST, error) {
 	p.advance()
+	p.parsePackageDeclaration()
+	if p.hadError {
+		p.synchronize()
+	}
+
 	for {
 		p.parseDeclaration()
-		if p.currentToken.IsEOF() {
+		if p.currentToken.Type == lexer.TOKEN_EOF {
 			break
 		}
 	}
 
-	source := ast.Source{
-		Statements: p.astBuilder.Result(),
-	}
-
 	if p.hadError {
-		return &source, ParseErrors{Errors: p.errors}
+		return nil, ParseErrors{Errors: p.errors}
 	} else {
-		return &source, nil
+		return p.astBuilder.Result(), nil
 	}
 }
 
 func (p *Parser) advance() {
 	p.previousToken = p.currentToken
 	for {
-		nextToken := p.scanner.NextToken()
+		nextToken, err := p.scanner.NextToken()
 		p.currentToken = &nextToken
-		if !nextToken.IsIllegal() {
+		if err == nil {
 			break
 		}
-
-		p.errorAtCurrent(ParseErrorLexerError, "invalid token")
+		p.errorAtCurrent(ParseErrorLexerError, err.Error(), err)
 	}
 }
 
-func (p *Parser) consume(tokenType token.Type, message string) {
+func (p *Parser) consume(tokenType lexer.TokenType, message string) {
 	if p.currentToken.Type == tokenType {
 		p.advance()
 		return
 	}
-	p.errorAtCurrent(ParseErrorIdUnexpectedToken, message)
+	p.errorAtCurrent(ParseErrorIdUnexpectedToken, message, nil)
 }
 
 // Try to recover to next synchrnization point.
@@ -141,13 +143,13 @@ func (p *Parser) consume(tokenType token.Type, message string) {
 func (p *Parser) synchronize() {
 	p.panicMode = false
 
-	for !p.currentToken.IsEOF() {
-		if p.previousToken.Type == token.SEMICOLON {
+	for p.currentToken.Type != lexer.TOKEN_EOF {
+		if p.previousToken.Type == lexer.TOKEN_SEMICOLON {
 			return
 		}
 
 		switch p.currentToken.Type {
-		case token.RBRACE, token.PROC, token.IF, token.FOR:
+		case lexer.TOKEN_RBRACE, lexer.TOKEN_FUN, lexer.TOKEN_PROC, lexer.TOKEN_IF, lexer.TOKEN_FOR:
 			return
 		default:
 			p.advance()
@@ -157,13 +159,15 @@ func (p *Parser) synchronize() {
 
 func (p *Parser) parseDeclaration() {
 	switch p.currentToken.Type {
-	case token.PROC:
+	case lexer.TOKEN_FUN:
+		p.parseFunctionDeclaration()
+	case lexer.TOKEN_PROC:
 		p.parseProcedureDeclaration()
-	case token.EOF:
+	case lexer.TOKEN_EOF:
 		p.advance()
 		return
 	default:
-		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected declaration")
+		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected declaration", nil)
 	}
 
 	if p.hadError {
@@ -171,73 +175,92 @@ func (p *Parser) parseDeclaration() {
 	}
 }
 
+func (p *Parser) parsePackageDeclaration() {
+	p.consume(lexer.TOKEN_PACKAGE, "expected package")
+	packageLocation := p.previousToken.Location
+
+	packageName := p.parseIdentifier()
+	packageDecl := p.astBuilder.NewPackageDecl(packageName, packageLocation)
+	p.astBuilder.AddNode(packageDecl)
+}
+
+func (p *Parser) parseFunctionDeclaration() {
+	p.consume(lexer.TOKEN_FUN, "expected fun")
+	location := p.currentToken.Location
+	funcName := p.parseIdentifier()
+	args := p.parseArguments()
+	tpe := p.parseTypeDeclaration()
+	body := p.parseBlock()
+	function := p.astBuilder.NewFunctionDecl(tpe, funcName, args, body, location)
+	p.astBuilder.AddNode(function)
+
+}
+
 func (p *Parser) parseProcedureDeclaration() {
-	p.consume(token.PROC, "expected proc")
+	p.consume(lexer.TOKEN_PROC, "expected proc")
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
-	params := p.parseArguments()
-
-	var result *ast.TypeSpec = nil
-	if p.match(token.COLON) {
-		r := p.parseTypeSpec()
-		result = &r
-	}
-
+	args := p.parseArguments()
+	// optional return type
+	tpe := p.parseTypeDeclaration()
 	body := p.parseBlock()
-	procedure := p.astBuilder.NewProcDecl(location, procName, params, result, body)
+	procedure := p.astBuilder.NewProcedureDecl(tpe, procName, args, body, location)
 	p.astBuilder.AddNode(procedure)
 }
 
-func (p *Parser) parseArguments() []ast.Field {
-	args := []ast.Field{}
-	p.consume(token.LPAREN, "expected '('")
+func (p *Parser) parseArguments() []ast.ArgumentDecl {
+	args := []ast.ArgumentDecl{}
+	p.consume(lexer.TOKEN_LPAREN, "expected '('")
 	for {
-		if p.check(token.RPAREN) {
+		if p.check(lexer.TOKEN_RPAREN) {
 			break
 		}
+		location := p.currentToken.Location
 		argName := p.parseIdentifier()
-		argType := p.parseTypeSpec()
-		args = append(args, p.astBuilder.NewField(argName, &argType))
-		if !p.match(token.COMMA) {
+		argType := p.parseTypeDeclaration()
+		args = append(args, p.astBuilder.NewArgumentDecl(argName, argType, location))
+		if !p.match(lexer.TOKEN_COMMA) {
 			break
 		}
 	}
-	p.consume(token.RPAREN, "expected ')'")
+	p.consume(lexer.TOKEN_RPAREN, "expected ')'")
 	return args
 }
 
-func (p *Parser) parseTypeSpec() ast.TypeSpec {
+func (p *Parser) parseTypeDeclaration() ast.TypeDecl {
 	location := p.currentToken.Location
-	p.consume(token.COLON, "expected ':'")
-	return p.astBuilder.NewTypeSpec(location, p.parseIdentifier())
+	if p.check(lexer.TOKEN_COLON) {
+		p.consume(lexer.TOKEN_COLON, "expected ':'")
+		return p.astBuilder.NewTypeDecl(p.parseIdentifier(), location)
+	} else {
+		return p.astBuilder.NewTypeDecl(p.astBuilder.NewIdentifier("void", location), location)
+	}
 }
 
 func (p *Parser) parseIdentifier() ast.Identifier {
-	p.consume(token.IDENTIFIER, "expected identifier")
-	return p.astBuilder.NewIdentifier(
-		p.previousToken.Location,
-		string(p.previousToken.Text),
-	)
+	p.consume(lexer.TOKEN_IDENTIFIER, "expected identifier")
+	return p.astBuilder.NewIdentifier(string(p.previousToken.Text), p.previousToken.Location)
 }
 
-func (p *Parser) parseBlock() ast.BlockExpr {
+func (p *Parser) parseBlock() ast.Block {
 	// TODO: track scope
-	p.consume(token.LBRACE, "expected '{'")
+	p.consume(lexer.TOKEN_LBRACE, "expected '{'")
 	location := p.previousToken.Location
-	statements := []ast.Statement{}
+	block := p.astBuilder.NewBlock([]ast.Node{}, location)
 
-	for !p.match(token.RBRACE) {
-		statements = append(statements, p.parseBlockStatment())
+	for !p.match(lexer.TOKEN_RBRACE) {
+		block.Code = append(block.Code, p.parseBlockStatment())
 	}
-	return p.astBuilder.NewBlockExpr(location, statements)
+
+	return block
 }
 
-func (p *Parser) parseBlockStatment() ast.Statement {
-	if p.match(token.LBRACE) {
-		return p.astBuilder.NewExprStatement(p.parseBlock())
+func (p *Parser) parseBlockStatment() ast.Node {
+	if p.match(lexer.TOKEN_LBRACE) {
+		return p.parseBlock()
 	}
 
-	return p.astBuilder.NewExprStatement(p.parseExpression())
+	return p.parseExpression()
 }
 
 func (p *Parser) parseExpression() ast.Expression {
@@ -248,7 +271,6 @@ func (p *Parser) parseExpression() ast.Expression {
 func (p *Parser) parseBinaryExpressions(minPrecedence Precedence) ast.Expression {
 	left := p.parseUnaryExpression()
 	var right ast.Expression
-
 	for {
 		precedence, assoc := precedenceFor(p.currentToken.Type)
 		if precedence < minPrecedence {
@@ -323,15 +345,15 @@ func (p *Parser) check(tokenType lexer.TokenType) bool {
 	return p.currentToken.Type == tokenType
 }
 
-func (p *Parser) errorAtCurrent(id ParseErrorId, message string) {
-	p.errorAt(*p.currentToken, id, message)
+func (p *Parser) errorAtCurrent(id ParseErrorId, message string, cause error) {
+	p.errorAt(*p.currentToken, id, message, cause)
 }
 
 // func (p *Parser) errorAtPrevious(id ParseErrorId, message string, cause error) {
 // 	p.errorAt(*p.previousToken, id, message, cause)
 // }
 
-func (p *Parser) errorAt(token token.Token, id ParseErrorId, message string) {
+func (p *Parser) errorAt(token lexer.Token, id ParseErrorId, message string, cause error) {
 	if p.panicMode {
 		return
 	}
@@ -346,6 +368,6 @@ func (p *Parser) errorAt(token token.Token, id ParseErrorId, message string) {
 		Where:   token.Location,
 		What:    message,
 		Context: fmt.Sprintf("Token: %s at line %d (%d..%d)", token, token.Location.Line, token.Location.StartOffset, token.Location.EndOffset),
-		Cause:   nil,
+		Cause:   cause,
 	})
 }
