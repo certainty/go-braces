@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
 	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/internal/isa"
 	"github.com/certainty/go-braces/internal/isa/arity"
@@ -73,8 +72,8 @@ func (c *Codegenerator) GenerateModule(irModule *ir.Module) (*isa.AssemblyModule
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
-	for _, fun := range irModule.Functions {
-		if err := c.emitFunction(fun); err != nil {
+	for _, proc := range irModule.Procedures {
+		if err := c.emitProcedure(&proc); err != nil {
 			return nil, err
 		}
 	}
@@ -84,14 +83,14 @@ func (c *Codegenerator) GenerateModule(irModule *ir.Module) (*isa.AssemblyModule
 }
 
 // we should return the function address to fill the jump table
-func (c *Codegenerator) emitFunction(fun *ir.Function) error {
+func (c *Codegenerator) emitProcedure(proc *ir.Procedure) error {
 	codeBuilder := newCodeUnitBuilder(c.instrumentation)
-	for _, block := range fun.Blocks {
+	for _, block := range proc.Blocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
 			return err
 		}
 	}
-	c.addFunction(isa.Label(fun.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
+	c.addFunction(isa.Label(proc.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
 	return nil
 }
 
@@ -196,8 +195,8 @@ func (c *Codegenerator) convertValue(v interface{}) (isa.Value, error) {
 	switch v := v.(type) {
 	case bool:
 		return isa.Bool(v), nil
-	case lexer.CodePoint:
-		return isa.Char(v.Char), nil
+	case rune:
+		return isa.Char(v), nil
 	case int:
 		return isa.Int(v), nil
 	case uint:

@@ -1,8 +1,8 @@
 package compilation_info
 
-import "github.com/certainty/go-braces/internal/compiler/location"
+import "github.com/certainty/go-braces/internal/compiler/frontend/token"
 
 type MsgNewCompilation struct {
 	Options []string
-	Origin  location.Origin
+	Origin  token.Origin
 }

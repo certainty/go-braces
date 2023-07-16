@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -47,7 +47,7 @@ const (
 type CompilerIntrospectionEvent interface{}
 
 type EventBeginCompileModule struct {
-	Origin     location.Origin
+	Origin     token.Origin
 	SourceCode string
 }
 
@@ -112,7 +112,7 @@ type BreakpointContinue struct{} // continue execution
 type Instrumentation interface {
 	EnterPhase(phase CompilationPhase)
 	LeavePhase(phase CompilationPhase)
-	EnterCompilerModule(origin location.Origin, sourceCode string)
+	EnterCompilerModule(origin token.Origin, sourceCode string)
 	LeaveCompilerModule(module isa.AssemblyModule)
 	Breakpoint(id BreakpointID, subject IntrospectionSubject)
 }
@@ -138,7 +138,7 @@ func (s *InstrumentationFromServer) LeavePhase(phase CompilationPhase) {
 	}
 }
 
-func (s *InstrumentationFromServer) EnterCompilerModule(origin location.Origin, sourceCode string) {
+func (s *InstrumentationFromServer) EnterCompilerModule(origin token.Origin, sourceCode string) {
 	if s.server != nil && s.server.IsConnected() {
 		s.server.SendEvents(EventBeginCompileModule{Origin: origin, SourceCode: sourceCode}) //nolint:errcheck
 	}

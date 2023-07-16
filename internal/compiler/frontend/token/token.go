@@ -110,6 +110,10 @@ const (
 	SET
 	MATCH
 
+	// we might be able to turn that later into constants in the universe (outermost scope) of the language
+	TRUE
+	FALSE
+
 	keyword_end
 )
 

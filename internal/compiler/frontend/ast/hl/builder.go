@@ -5,23 +5,13 @@ import (
 )
 
 type Builder struct {
-	nodes   []Node
 	nodeIds NodeId
 }
 
 func NewBuilder() *Builder {
 	return &Builder{
-		nodes:   make([]Node, 0),
 		nodeIds: 0,
 	}
-}
-
-func (a *Builder) Result() []Node {
-	return a.nodes
-}
-
-func (a *Builder) AddNode(node Node) {
-	a.nodes = append(a.nodes, node)
 }
 
 func (a *Builder) NewBadExpr(location token.Location) BadExpr {
@@ -111,6 +101,13 @@ func (a *Builder) NewBinaryExpr(op token.Token, left, right Expression) BinaryEx
 func (a *Builder) NewExprStatement(expr Expression) ExprStmt {
 	return ExprStmt{
 		Expr: expr,
+	}
+}
+
+func (a *Builder) NewBadDecl(location token.Location) BadDecl {
+	return BadDecl{
+		id:       a.nextID(),
+		location: location,
 	}
 }
 

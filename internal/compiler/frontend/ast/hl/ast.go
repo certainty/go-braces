@@ -112,7 +112,8 @@ func (e BasicLitExpr) Value() interface{} {
 // //////////////////////////////////////////////////
 type (
 	BadStmt struct {
-		id NodeId
+		id       NodeId
+		location token.Location
 	}
 
 	ExprStmt struct {
@@ -126,7 +127,7 @@ func (ExprStmt) stmtNode() {}
 func (s BadStmt) ID() NodeId  { return s.id }
 func (s ExprStmt) ID() NodeId { return s.Expr.ID() }
 
-func (s BadStmt) Location() token.Location  { return token.Location{} }
+func (s BadStmt) Location() token.Location  { return s.location }
 func (s ExprStmt) Location() token.Location { return s.Expr.Location() }
 
 // //////////////////////////////////////////////////
@@ -134,7 +135,8 @@ func (s ExprStmt) Location() token.Location { return s.Expr.Location() }
 // //////////////////////////////////////////////////
 type (
 	BadDecl struct {
-		id NodeId
+		id       NodeId
+		location token.Location
 	}
 
 	TypeSpec struct {
@@ -160,7 +162,7 @@ func (d BadDecl) ID() NodeId  { return d.id }
 func (d TypeSpec) ID() NodeId { return d.id }
 func (d ProcDecl) ID() NodeId { return d.id }
 
-func (d BadDecl) Location() token.Location  { return token.Location{} }
+func (d BadDecl) Location() token.Location  { return d.location }
 func (d TypeSpec) Location() token.Location { return d.location }
 func (d ProcDecl) Location() token.Location { return d.location }
 
@@ -187,16 +189,12 @@ type (
 type Source struct {
 	id           NodeId
 	Declarations []Declaration
-	Statements   []Node
 }
 
 func (s Source) ID() NodeId { return s.id }
 func (s Source) Location() token.Location {
 	if len(s.Declarations) > 0 {
 		return s.Declarations[0].Location()
-	}
-	if len(s.Statements) > 0 {
-		return s.Statements[0].Location()
 	}
 	return token.Location{}
 }

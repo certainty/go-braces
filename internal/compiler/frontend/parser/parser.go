@@ -93,16 +93,18 @@ func (p *Parser) Parse(input *input.Input) (*ast.Source, error) {
 }
 
 func (p *Parser) parseInput() (*ast.Source, error) {
+	declarations := []ast.Declaration{}
+
 	p.advance()
 	for {
-		p.parseDeclaration()
+		declarations = append(declarations, p.parseDeclaration())
 		if p.currentToken.IsEOF() {
 			break
 		}
 	}
 
 	source := ast.Source{
-		Statements: p.astBuilder.Result(),
+		Declarations: declarations,
 	}
 
 	if p.hadError {
@@ -155,23 +157,25 @@ func (p *Parser) synchronize() {
 	}
 }
 
-func (p *Parser) parseDeclaration() {
+func (p *Parser) parseDeclaration() ast.Declaration {
 	switch p.currentToken.Type {
 	case token.PROC:
 		p.parseProcedureDeclaration()
 	case token.EOF:
 		p.advance()
-		return
+		return p.astBuilder.NewBadDecl(p.currentToken.Location)
 	default:
 		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected declaration")
 	}
 
+	loc := p.currentToken.Location
 	if p.hadError {
 		p.synchronize()
 	}
+	return p.astBuilder.NewBadDecl(loc)
 }
 
-func (p *Parser) parseProcedureDeclaration() {
+func (p *Parser) parseProcedureDeclaration() ast.Declaration {
 	p.consume(token.PROC, "expected proc")
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
@@ -184,8 +188,7 @@ func (p *Parser) parseProcedureDeclaration() {
 	}
 
 	body := p.parseBlock()
-	procedure := p.astBuilder.NewProcDecl(location, procName, params, result, body)
-	p.astBuilder.AddNode(procedure)
+	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
 
 func (p *Parser) parseArguments() []ast.Field {

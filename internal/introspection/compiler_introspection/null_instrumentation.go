@@ -1,7 +1,7 @@
 package compiler_introspection
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/location"
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/isa"
 )
 
@@ -15,7 +15,7 @@ func (n NullInstrumentation) EnterPhase(phase CompilationPhase) {}
 
 func (n *NullInstrumentation) LeavePhase(phase CompilationPhase) {}
 
-func (s *NullInstrumentation) EnterCompilerModule(origin location.Origin, sourceCode string) {}
+func (s *NullInstrumentation) EnterCompilerModule(origin token.Origin, sourceCode string) {}
 
 func (s *NullInstrumentation) LeaveCompilerModule(module isa.AssemblyModule) {}
 

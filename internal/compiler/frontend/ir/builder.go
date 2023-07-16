@@ -1,17 +1,19 @@
 package ir
 
-import "github.com/certainty/go-braces/internal/compiler/location"
+import (
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
+)
 
-func CreateModule(name Label, source location.Origin) *Module {
+func CreateModule(name Label, source token.Origin) *Module {
 	return &Module{
-		Name:      name,
-		Source:    source,
-		Functions: make([]*Function, 0),
+		Name:       name,
+		Source:     source,
+		Procedures: make([]Procedure, 0),
 	}
 }
 
-func CreateFunction(tpe Type, name Label) *Function {
-	return &Function{
+func CreateProcedure(tpe Type, name Label) Procedure {
+	return Procedure{
 		tpe:    tpe,
 		Name:   name,
 		Args:   make([]Argument, 0),
@@ -62,6 +64,17 @@ func NewBlockBuilder(label Label, registers *RegisterAllocator, builder *IrBuild
 		RegisterAllocator: registers,
 		ModuleBuilder:     builder,
 	}
+}
+
+func (b *BlockBuilder) IsEmpty() bool {
+	return len(b.Block.Instructions) == 0
+}
+
+func (b *BlockBuilder) LastInstruction() Instruction {
+	if b.IsEmpty() {
+		return nil
+	}
+	return b.Block.Instructions[len(b.Block.Instructions)-1]
 }
 
 func (b *BlockBuilder) OpLit(tpe Type, operand Operand) Register {

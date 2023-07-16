@@ -1,16 +1,19 @@
 package input
 
+// TODO: move into token package
+
 import (
 	"bufio"
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/location"
 	"io"
 	"os"
 	"unicode/utf8"
+
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 )
 
 type Input struct {
-	Origin location.Origin
+	Origin token.Origin
 	Buffer *[]rune
 }
 
@@ -21,7 +24,7 @@ func (i Input) Source() string {
 func NewStringInput(label string, s string) *Input {
 	buffer := []rune(s)
 	return &Input{
-		Origin: location.StringOrigin{Label: label},
+		Origin: token.StringOrigin{Label: label},
 		Buffer: &buffer,
 	}
 }
@@ -29,7 +32,7 @@ func NewStringInput(label string, s string) *Input {
 func NewReplInput(inputCount uint64, s string) *Input {
 	buffer := []rune(s)
 	return &Input{
-		Origin: location.ReplOrigin{InputCount: inputCount},
+		Origin: token.ReplOrigin{InputCount: inputCount},
 		Buffer: &buffer,
 	}
 }
@@ -46,7 +49,7 @@ func NewFileInput(path string) (*Input, error) {
 	}
 
 	return &Input{
-		Origin: location.FileOrigin{Path: path},
+		Origin: token.FileOrigin{Path: path},
 		Buffer: &buffer,
 	}, nil
 }

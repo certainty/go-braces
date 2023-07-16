@@ -2,7 +2,8 @@ package compiler_introspection
 
 import (
 	"encoding/gob"
-	"github.com/certainty/go-braces/internal/compiler/location"
+
+	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/introspection"
 	"github.com/certainty/go-braces/internal/isa"
 )
@@ -26,9 +27,9 @@ func RegisterTypes() {
 	gob.Register(CommandError{})
 
 	// data
-	gob.Register(location.StringOrigin{})
-	gob.Register(location.FileOrigin{})
-	gob.Register(location.ReplOrigin{})
+	gob.Register(token.StringOrigin{})
+	gob.Register(token.FileOrigin{})
+	gob.Register(token.ReplOrigin{})
 	gob.Register(isa.AssemblyMeta{})
 	gob.Register(isa.CodeUnit{})
 	gob.Register(isa.Instruction{})

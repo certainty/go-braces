@@ -16,16 +16,16 @@ func NewIRWriter(module *Module) *IRWriter {
 	}
 }
 
-func (w *IRWriter) WriteFunction(f *Function) string {
+func (w *IRWriter) WriteProcedure(proc *Procedure) string {
 	var result strings.Builder
-	result.WriteString(fmt.Sprintf("define %s @%s(", w.writeType(f.tpe), f.Name))
-	args := make([]string, len(f.Args))
-	for i, a := range f.Args {
+	result.WriteString(fmt.Sprintf("define %s @%s(", w.writeType(proc.tpe), proc.Name))
+	args := make([]string, len(proc.Args))
+	for i, a := range proc.Args {
 		args[i] = fmt.Sprintf("%s %s", w.writeType(a.tpe), w.writeRegister(a.Register))
 	}
 	result.WriteString(strings.Join(args, ", "))
 	result.WriteString(") {\n")
-	for _, b := range f.Blocks {
+	for _, b := range proc.Blocks {
 		result.WriteString(w.WriteBlock(b))
 	}
 	result.WriteString("}\n")
@@ -121,8 +121,8 @@ func (w *IRWriter) Write() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("__module: %s\n", w.module.Name))
 
-	for _, f := range w.module.Functions {
-		sb.WriteString(w.WriteFunction(f))
+	for _, proc := range w.module.Procedures {
+		sb.WriteString(w.WriteProcedure(&proc))
 	}
 
 	return sb.String()

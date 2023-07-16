@@ -18,6 +18,7 @@ type Rational struct{}
 type Complex struct{}
 type String struct{}
 type Char struct{}
+type Unit struct{}
 
 type Vector struct {
 	elementType Type
@@ -53,6 +54,7 @@ var (
 	FloatType  = Float{}
 	CharType   = Char{}
 	StringType = String{}
+	UnitType   = Unit{}
 )
 
 func (Int) Name() string      { return "int" }
@@ -64,6 +66,7 @@ func (Bool) Name() string     { return "bool" }
 func (Char) Name() string     { return "char" }
 func (String) Name() string   { return "string" }
 func (Byte) Name() string     { return "byte" }
+func (Unit) Name() string     { return "unit" }
 
 func (p Place) Name() string {
 	return fmt.Sprintf("*%s", p.BaseType.Name())

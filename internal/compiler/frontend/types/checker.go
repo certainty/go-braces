@@ -32,7 +32,7 @@ func (t Checker) Check(ast *ast.Source) (TypeUniverse, error) {
 	log.Printf("Type checking AST: %v", ast.ASTString())
 	log.Printf("Type universe: %v", t.typeUniverse)
 
-	for _, node := range ast.Statements {
+	for _, node := range ast.Declarations {
 		_, err := t.typeCheck(node)
 		if err != nil {
 			return nil, err

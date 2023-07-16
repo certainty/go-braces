@@ -1,21 +1,28 @@
 package ir
 
+//TODO: this does too much as we're already lowering into something resembling SSA
+// We will introduce an IR that uses the orginal order of operations
+// Later we'll turn it into SSA (CFG)
+
 import (
 	"fmt"
-	"log"
-
 	"github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
 	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 	"github.com/certainty/go-braces/internal/compiler/frontend/types"
+	"log"
 )
 
 type Label string
 type Register uint
 
+type Callable interface {
+	aCallable()
+}
+
 type Module struct {
-	Name      Label
-	Source    token.Origin
-	Functions []*Function
+	Name       Label
+	Source     token.Origin
+	Procedures []Procedure
 }
 
 func (m Module) String() string {
@@ -23,12 +30,14 @@ func (m Module) String() string {
 	return writer.Write()
 }
 
-type Function struct {
+type Procedure struct {
 	tpe    Type
 	Name   Label
 	Args   []Argument
 	Blocks []*BasicBlock
 }
+
+func (Procedure) aCallable() {}
 
 type Argument struct {
 	tpe      Type
@@ -38,6 +47,18 @@ type Argument struct {
 type BasicBlock struct {
 	Label        Label
 	Instructions []Instruction
+}
+
+func (b BasicBlock) IsEmpty() bool {
+	return len(b.Instructions) == 0
+}
+
+func (b BasicBlock) LastInstruction() Instruction {
+	if b.IsEmpty() {
+		return nil
+	}
+
+	return b.Instructions[len(b.Instructions)-1]
 }
 
 type Instruction interface {
@@ -111,6 +132,10 @@ func NewRegisterAllocator() *RegisterAllocator {
 	}
 }
 
+func (r RegisterAllocator) Last() Register {
+	return Register(r.count)
+}
+
 func (r *RegisterAllocator) Next(variableName string) Register {
 	r.count++
 	if variableName != "" {
@@ -145,14 +170,14 @@ func (b *IrBuilder) blockBuilder(label string, registers *RegisterAllocator) *Bl
 }
 
 func (b *IrBuilder) lower(theAst *ast.Source) error {
-	for _, node := range theAst.Statements {
+	for _, node := range theAst.Declarations {
 		switch node := node.(type) {
-		case ast.Bl:
-			fun, err := b.lowerFunction(node)
+		case ast.ProcDecl:
+			proc, err := b.lowerProcedure(node)
 			if err != nil {
 				return err
 			}
-			b.Module.Functions = append(b.Module.Functions, fun)
+			b.Module.Procedures = append(b.Module.Procedures, proc)
 		default:
 			return fmt.Errorf("unexpected node type: %T", node)
 		}
@@ -160,7 +185,20 @@ func (b *IrBuilder) lower(theAst *ast.Source) error {
 	return nil
 }
 
-func (b *IrBuilder) lowerBody(node ast.Node, blockBuilder *BlockBuilder) (Register, Type, error) {
+func (b *IrBuilder) lowerStatement(node ast.Statement, blockBuilder *BlockBuilder) (Register, error) {
+	switch node := node.(type) {
+	case ast.ExprStmt:
+		reg, _, err := b.lowerExpression(node.Expr, blockBuilder)
+		if err != nil {
+			return 0, err
+		}
+		return reg, nil
+	default:
+		return 0, fmt.Errorf("unexpected node type: %T", node)
+	}
+}
+
+func (b *IrBuilder) lowerExpression(node ast.Expression, blockBuilder *BlockBuilder) (Register, Type, error) {
 	switch node := node.(type) {
 	case ast.BasicLitExpr:
 		exprType, err := b.typeOf(node)
@@ -177,48 +215,37 @@ func (b *IrBuilder) lowerBody(node ast.Node, blockBuilder *BlockBuilder) (Regist
 	default:
 		return 0, nil, fmt.Errorf("unexpected node type: %T", node)
 	}
+
 }
 
-func (b *IrBuilder) lowerFunction(decl ast.CallableDecl) (*Function, error) {
+func (b *IrBuilder) lowerProcedure(decl ast.ProcDecl) (Procedure, error) {
 	var err error
 	funType, err := b.typeOf(decl)
 	if err != nil {
-		return nil, err
+		return Procedure{}, err
 	}
 	loweredType, err := b.lowerType(funType)
-	fun := CreateFunction(loweredType, Label(decl.Name.Label))
-	funRegisters := NewRegisterAllocator()
+	proc := CreateProcedure(loweredType, Label(decl.Name.Name))
+	procRegisters := NewRegisterAllocator()
 
-	for _, arg := range decl.Arguments {
-		declType, err := b.typeOf(decl)
-		tpe, err := b.lowerType(declType)
-		if err != nil {
-			return nil, err
-		}
-
-		register := funRegisters.Next(arg.Name.Label)
-		fun.Args = append(fun.Args, Argument{tpe: tpe, Register: register})
+	blockBuilder := b.blockBuilder("entry", procRegisters)
+	for _, stmt := range decl.Body.Statements {
+		b.lowerStatement(stmt, blockBuilder)
 	}
 
-	blockBuilder := b.blockBuilder("entry", funRegisters)
-
-	var returnRegister Register
-	var tpe Type
-
-	for _, stmt := range decl.Body.Code {
-		returnRegister, tpe, err = b.lowerBody(stmt, blockBuilder)
-		if err != nil {
-			return nil, err
-		}
+	if blockBuilder.IsEmpty() {
+		reg := blockBuilder.OpLit(UnitType, Literal(nil))
+		blockBuilder.OpRet(UnitType, reg)
+	} else {
+		lastInst := blockBuilder.LastInstruction()
+		blockBuilder.OpRet(lastInst.Type(), procRegisters.Last())
 	}
 
-	blockBuilder.OpRet(tpe, returnRegister)
-
-	fun.Blocks = append(fun.Blocks, blockBuilder.Block)
-	return fun, nil
+	proc.Blocks = append(proc.Blocks, blockBuilder.Block)
+	return proc, nil
 }
 
-func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr ast.BinaryExpression) (Register, Type, error) {
+func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr ast.BinaryExpr) (Register, Type, error) {
 	exprType, err := b.typeOf(expr)
 	if err != nil {
 		return 0, nil, err
@@ -228,22 +255,22 @@ func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr ast.Binary
 		return 0, nil, err
 	}
 
-	leftReg, leftTpe, err := b.lowerBody(expr.Left, builder)
+	leftReg, leftTpe, err := b.lowerExpression(expr.Left, builder)
 	if err != nil {
 		return 0, nil, err
 	}
-	rightReg, _, err := b.lowerBody(expr.Right, builder)
+	rightReg, _, err := b.lowerExpression(expr.Right, builder)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	switch expr.Operator {
-	case ast.BinOpAdd:
+	switch expr.Op.Type {
+	case token.ADD:
 		return builder.OpAdd(loweredType, leftReg, rightReg), leftTpe, nil
-	case ast.BinOpMul:
+	case token.MUL:
 		return builder.OpMul(loweredType, leftReg, rightReg), leftTpe, nil
 	default:
-		return 0, nil, fmt.Errorf("unexpected binary operator: %v", expr.Operator)
+		return 0, nil, fmt.Errorf("unexpected binary operator: %v", expr.Op)
 	}
 }
 
