@@ -2,11 +2,10 @@ package disassembler
 
 import (
 	"fmt"
+	"github.com/certainty/go-braces/pkg/shared/isa"
 	"io"
 	"log"
 	"strings"
-
-	"github.com/certainty/go-braces/internal/isa"
 )
 
 type Disassembler struct {

@@ -1,8 +1,8 @@
 package optimization
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
 type Optimizer struct {

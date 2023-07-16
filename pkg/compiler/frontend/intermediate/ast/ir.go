@@ -6,9 +6,10 @@ package ir
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/frontend/types"
+	hlast "github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	hltypes "github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/types"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/types"
 	"log"
 )
 
@@ -31,7 +32,7 @@ func (m Module) String() string {
 }
 
 type Procedure struct {
-	tpe    Type
+	tpe    types.Type
 	Name   Label
 	Args   []Argument
 	Blocks []*BasicBlock
@@ -40,7 +41,7 @@ type Procedure struct {
 func (Procedure) aCallable() {}
 
 type Argument struct {
-	tpe      Type
+	tpe      types.Type
 	Register Register
 }
 
@@ -62,41 +63,41 @@ func (b BasicBlock) LastInstruction() Instruction {
 }
 
 type Instruction interface {
-	Type() Type
+	Type() types.Type
 }
 
 // %register = op tpe operand1, operand2, ...
 type SimpleInstruction struct {
-	tpe       Type
+	tpe       types.Type
 	Register  Register
 	Operation Operation
 	Operands  []Operand
 }
 
-func (i SimpleInstruction) Type() Type {
+func (i SimpleInstruction) Type() types.Type {
 	return i.tpe
 }
 
 var _ Instruction = (*SimpleInstruction)(nil)
 
 type ReturnInstruction struct {
-	tpe      Type
+	tpe      types.Type
 	Register Register
 }
 
-func (i ReturnInstruction) Type() Type {
+func (i ReturnInstruction) Type() types.Type {
 	return i.tpe
 }
 
 var _ Instruction = (*ReturnInstruction)(nil)
 
 type AssignmentInstruction struct {
-	tpe      Type
+	tpe      types.Type
 	Register Register
 	Operand  Operand
 }
 
-func (i AssignmentInstruction) Type() Type {
+func (i AssignmentInstruction) Type() types.Type {
 	return i.tpe
 }
 
@@ -145,18 +146,18 @@ func (r *RegisterAllocator) Next(variableName string) Register {
 }
 
 type IrBuilder struct {
-	typeUniverse types.TypeUniverse
+	typeUniverse hltypes.TypeUniverse
 	Module       *Module
 }
 
-func NewBuilder(origin token.Origin, tpeUniverse types.TypeUniverse) *IrBuilder {
+func NewBuilder(origin token.Origin, tpeUniverse hltypes.TypeUniverse) *IrBuilder {
 	return &IrBuilder{
 		Module:       CreateModule("", origin),
 		typeUniverse: tpeUniverse,
 	}
 }
 
-func LowerToIR(origin token.Origin, theAst *ast.Source, tpeUniverse types.TypeUniverse) (*Module, error) {
+func LowerToIR(origin token.Origin, theAst *hlast.Source, tpeUniverse hltypes.TypeUniverse) (*Module, error) {
 	builder := NewBuilder(origin, tpeUniverse)
 
 	if err := builder.lower(theAst); err != nil {
@@ -169,10 +170,10 @@ func (b *IrBuilder) blockBuilder(label string, registers *RegisterAllocator) *Bl
 	return NewBlockBuilder(Label(label), registers, b)
 }
 
-func (b *IrBuilder) lower(theAst *ast.Source) error {
+func (b *IrBuilder) lower(theAst *hlast.Source) error {
 	for _, node := range theAst.Declarations {
 		switch node := node.(type) {
-		case ast.ProcDecl:
+		case hlast.ProcDecl:
 			proc, err := b.lowerProcedure(node)
 			if err != nil {
 				return err
@@ -185,9 +186,9 @@ func (b *IrBuilder) lower(theAst *ast.Source) error {
 	return nil
 }
 
-func (b *IrBuilder) lowerStatement(node ast.Statement, blockBuilder *BlockBuilder) (Register, error) {
+func (b *IrBuilder) lowerStatement(node hlast.Statement, blockBuilder *BlockBuilder) (Register, error) {
 	switch node := node.(type) {
-	case ast.ExprStmt:
+	case hlast.ExprStmt:
 		reg, _, err := b.lowerExpression(node.Expr, blockBuilder)
 		if err != nil {
 			return 0, err
@@ -198,9 +199,9 @@ func (b *IrBuilder) lowerStatement(node ast.Statement, blockBuilder *BlockBuilde
 	}
 }
 
-func (b *IrBuilder) lowerExpression(node ast.Expression, blockBuilder *BlockBuilder) (Register, Type, error) {
+func (b *IrBuilder) lowerExpression(node hlast.Expression, blockBuilder *BlockBuilder) (Register, types.Type, error) {
 	switch node := node.(type) {
-	case ast.BasicLitExpr:
+	case hlast.BasicLitExpr:
 		exprType, err := b.typeOf(node)
 		if err != nil {
 			return 0, nil, err
@@ -210,7 +211,7 @@ func (b *IrBuilder) lowerExpression(node ast.Expression, blockBuilder *BlockBuil
 			return 0, nil, err
 		}
 		return blockBuilder.OpLit(loweredType, node.Value), loweredType, nil
-	case ast.BinaryExpr:
+	case hlast.BinaryExpr:
 		return b.lowerBinaryExpression(blockBuilder, node)
 	default:
 		return 0, nil, fmt.Errorf("unexpected node type: %T", node)
@@ -218,7 +219,7 @@ func (b *IrBuilder) lowerExpression(node ast.Expression, blockBuilder *BlockBuil
 
 }
 
-func (b *IrBuilder) lowerProcedure(decl ast.ProcDecl) (Procedure, error) {
+func (b *IrBuilder) lowerProcedure(decl hlast.ProcDecl) (Procedure, error) {
 	var err error
 	funType, err := b.typeOf(decl)
 	if err != nil {
@@ -234,8 +235,8 @@ func (b *IrBuilder) lowerProcedure(decl ast.ProcDecl) (Procedure, error) {
 	}
 
 	if blockBuilder.IsEmpty() {
-		reg := blockBuilder.OpLit(UnitType, Literal(nil))
-		blockBuilder.OpRet(UnitType, reg)
+		reg := blockBuilder.OpLit(types.UnitType, Literal(nil))
+		blockBuilder.OpRet(types.UnitType, reg)
 	} else {
 		lastInst := blockBuilder.LastInstruction()
 		blockBuilder.OpRet(lastInst.Type(), procRegisters.Last())
@@ -245,7 +246,7 @@ func (b *IrBuilder) lowerProcedure(decl ast.ProcDecl) (Procedure, error) {
 	return proc, nil
 }
 
-func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr ast.BinaryExpr) (Register, Type, error) {
+func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr hlast.BinaryExpr) (Register, types.Type, error) {
 	exprType, err := b.typeOf(expr)
 	if err != nil {
 		return 0, nil, err
@@ -274,7 +275,7 @@ func (b *IrBuilder) lowerBinaryExpression(builder *BlockBuilder, expr ast.Binary
 	}
 }
 
-func (b *IrBuilder) typeOf(node ast.Node) (types.Type, error) {
+func (b *IrBuilder) typeOf(node hlast.Node) (hltypes.Type, error) {
 	log.Printf("typeuniverse: %v", b.typeUniverse)
 	tpe, ok := b.typeUniverse[node.ID()]
 	if !ok {
@@ -283,18 +284,18 @@ func (b *IrBuilder) typeOf(node ast.Node) (types.Type, error) {
 	return tpe, nil
 }
 
-func (b *IrBuilder) lowerType(t types.Type) (Type, error) {
+func (b *IrBuilder) lowerType(t hltypes.Type) (types.Type, error) {
 	switch t.(type) {
-	case types.Byte:
-		return ByteType, nil
-	case types.Int:
-		return IntType, nil
-	case types.Float:
-		return FloatType, nil
-	case types.Bool:
-		return BoolType, nil
-	case types.String:
-		return StringType, nil
+	case hltypes.Byte:
+		return types.ByteType, nil
+	case hltypes.Int:
+		return types.IntType, nil
+	case hltypes.Float:
+		return types.FloatType, nil
+	case hltypes.Bool:
+		return types.BoolType, nil
+	case hltypes.String:
+		return types.StringType, nil
 	default:
 		return nil, fmt.Errorf("unexpected type: %s", t)
 	}

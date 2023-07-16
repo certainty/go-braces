@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/frame"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/frame"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

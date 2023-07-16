@@ -1,9 +1,9 @@
 package compilation_info
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 )
 
 type Model struct {
@@ -14,7 +14,7 @@ type Model struct {
 	CompilerOptions []string
 }
 
-func New(theme theme.Theme, input *input.Input, options []string) Model {
+func New(theme theme.Theme, input *lexer.Input, options []string) Model {
 	return Model{
 		theme:           theme,
 		CompilerOptions: options,

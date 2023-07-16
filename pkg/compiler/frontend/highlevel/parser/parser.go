@@ -3,11 +3,10 @@ package parser
 import (
 	"fmt"
 
-	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
 type Precedence uint8
@@ -81,7 +80,7 @@ func (p *Parser) Reset() {
 	p.currentToken = nil
 }
 
-func (p *Parser) Parse(input *input.Input) (*ast.Source, error) {
+func (p *Parser) Parse(input *lexer.Input) (*ast.Source, error) {
 	p.Reset()
 	p.astBuilder = ast.NewBuilder()
 	p.scanner = lexer.New(input)

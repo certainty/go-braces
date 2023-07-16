@@ -1,7 +1,7 @@
 package source_code
 
 import (
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/theme"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 )

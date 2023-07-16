@@ -3,9 +3,9 @@ package compiler_introspection
 import (
 	"encoding/gob"
 
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/introspection"
-	"github.com/certainty/go-braces/internal/isa"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/introspection"
+	"github.com/certainty/go-braces/pkg/shared/isa"
 )
 
 func RegisterTypes() {

@@ -2,7 +2,7 @@ package compiler_introspection
 
 import (
 	"errors"
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/pkg/introspection"
 )
 
 const INTROSPECTION_TOOL_NAME = "compiler-introspection-server"

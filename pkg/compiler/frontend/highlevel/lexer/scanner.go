@@ -2,8 +2,7 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/input"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"math"
 	"strconv"
 	"strings"
@@ -13,7 +12,7 @@ import (
 type (
 	Scanner struct {
 		// the source code producer
-		*input.Input
+		*Input
 
 		// temporary start of a given scan attempt
 		start uint64
@@ -29,14 +28,14 @@ type (
 	}
 )
 
-func New(input *input.Input) *Scanner {
+func New(input *Input) *Scanner {
 	scanner := &Scanner{}
 	scanner.Reset(input)
 
 	return scanner
 }
 
-func (s *Scanner) Reset(input *input.Input) {
+func (s *Scanner) Reset(input *Input) {
 	s.Input = input
 	s.start = 0
 	s.cursor = 0

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/types"
 )
 
 type IRWriter struct {
@@ -66,17 +68,17 @@ func (w *IRWriter) writeRegister(r Register) string {
 	return fmt.Sprintf("%%%d", r)
 }
 
-func (w *IRWriter) writeType(t Type) string {
+func (w *IRWriter) writeType(t types.Type) string {
 	switch t.(type) {
-	case Bool:
+	case types.Bool:
 		return "bool"
-	case Int:
+	case types.Int:
 		return "int"
-	case UInt:
+	case types.UInt:
 		return "uint"
-	case Float:
+	case types.Float:
 		return "float"
-	case String:
+	case types.String:
 		return "string"
 	default:
 		panic("unknown type")

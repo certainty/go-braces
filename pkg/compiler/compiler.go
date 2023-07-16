@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/backend/codegen"
-	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/frontend/types"
-	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/compiler/middleend/optimization"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/isa"
+	"github.com/certainty/go-braces/pkg/compiler/backend/codegen"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/parser"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/types"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/compiler/middleend/optimization"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/shared/isa"
 )
 
 type Compiler struct {
@@ -27,11 +27,11 @@ func NewCompiler(options CompilerOptions) *Compiler {
 }
 
 func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule, error) {
-	input := input.NewStringInput(label, code)
+	input := lexer.NewStringInput(label, code)
 	return c.CompileModule(input)
 }
 
-func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error) {
+func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
 	ast, err := c.parse(input)
@@ -69,7 +69,7 @@ func (c Compiler) CompileModule(input *input.Input) (*isa.AssemblyModule, error)
 	return assemblyModule, nil
 }
 
-func (c Compiler) parse(input *input.Input) (*ast.Source, error) {
+func (c Compiler) parse(input *lexer.Input) (*ast.Source, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseParse)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseParse)
 

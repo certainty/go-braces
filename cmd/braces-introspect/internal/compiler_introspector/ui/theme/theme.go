@@ -1,7 +1,7 @@
 package theme
 
 import (
-	"github.com/certainty/go-braces/internal/introspector/tui_shared/colorpalette"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/tui_shared/colorpalette"
 	"github.com/charmbracelet/lipgloss"
 )
 

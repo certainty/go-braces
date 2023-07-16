@@ -2,9 +2,8 @@ package lexer_test
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/frontend/lexer"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/compiler/input"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -443,7 +442,7 @@ func TestScanner(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
-			inp := input.NewStringInput("test", tc.input)
+			inp := lexer.NewStringInput("test", tc.input)
 			s := lexer.New(inp)
 			scannedToken := s.NextToken()
 
@@ -472,7 +471,7 @@ func TestScannerMultipleTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Scanning %s", tc.input), func(t *testing.T) {
-			inp := input.NewStringInput("test", tc.input)
+			inp := lexer.NewStringInput("test", tc.input)
 			s := lexer.New(inp)
 			tokens := []token.Type{}
 			for {

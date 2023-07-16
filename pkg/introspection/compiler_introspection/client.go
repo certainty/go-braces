@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/certainty/go-braces/internal/introspection"
+	"github.com/certainty/go-braces/pkg/introspection"
 )
 
 type Client struct {

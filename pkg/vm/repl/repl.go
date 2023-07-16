@@ -3,11 +3,11 @@ package repl
 import (
 	"fmt"
 
-	"github.com/certainty/go-braces/internal/compiler"
-	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/isa"
-	"github.com/certainty/go-braces/internal/vm"
+	"github.com/certainty/go-braces/pkg/compiler"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/shared/isa"
+	"github.com/certainty/go-braces/pkg/vm"
 	"github.com/chzyer/readline"
 )
 
@@ -95,7 +95,7 @@ func (r *Repl) doRun() {
 		} else {
 			result, err := r.compileAndRun(input)
 			if err != nil {
-				compiler.PrintCompilerError(err)
+				println(err.Error())
 			} else {
 				fmt.Printf("%s\n", r.vmInstance.WriteValue(result))
 			}
@@ -158,7 +158,7 @@ func (r *Repl) getInput() (string, error) {
 func (r *Repl) compileAndRun(source string) (isa.Value, error) {
 	//FIXME: dirty hack for now to make the repl work :D
 	hackedSource := fmt.Sprintf("package main\n proc main(){\n %s \n}", source)
-	replInput := input.NewReplInput(uint64(r.inputCount), hackedSource)
+	replInput := lexer.NewReplInput(uint64(r.inputCount), hackedSource)
 	assemblyModule, err := r.compiler.CompileModule(replInput)
 
 	if err != nil {

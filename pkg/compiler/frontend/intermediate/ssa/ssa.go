@@ -1,8 +1,7 @@
 package ir
 
 import (
-	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
 type SSA struct {
@@ -14,8 +13,4 @@ type SSATransformer struct {
 
 func NewSSATransformer(instrumentation compiler_introspection.Instrumentation) *SSATransformer {
 	return &SSATransformer{instrumentation: instrumentation}
-}
-
-func (c *SSATransformer) Transform(theAST *ast.Source) (*SSA, error) {
-	return nil, nil
 }

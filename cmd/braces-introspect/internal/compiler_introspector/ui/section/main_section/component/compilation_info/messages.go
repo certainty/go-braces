@@ -1,6 +1,6 @@
 package compilation_info
 
-import "github.com/certainty/go-braces/internal/compiler/frontend/token"
+import "github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 
 type MsgNewCompilation struct {
 	Options []string

@@ -3,8 +3,8 @@ package vm_test
 import (
 	"testing"
 
-	"github.com/certainty/go-braces/internal/isa"
-	"github.com/certainty/go-braces/internal/vm"
+	"github.com/certainty/go-braces/pkg/shared/isa"
+	"github.com/certainty/go-braces/pkg/vm"
 	"github.com/stretchr/testify/assert"
 )
 

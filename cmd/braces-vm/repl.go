@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/repl"
+	"github.com/certainty/go-braces/pkg/vm/repl"
 	"github.com/spf13/cobra"
 	"os"
 )

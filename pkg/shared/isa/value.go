@@ -1,6 +1,6 @@
 package isa
 
-import "github.com/certainty/go-braces/internal/isa/arity"
+import "github.com/certainty/go-braces/pkg/shared/isa/arity"
 
 type Value interface{}
 

@@ -2,9 +2,9 @@ package vm
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/backend/disassembler"
-	"github.com/certainty/go-braces/internal/introspection/vm_introspection"
-	"github.com/certainty/go-braces/internal/isa"
+	"github.com/certainty/go-braces/pkg/compiler/backend/disassembler"
+	"github.com/certainty/go-braces/pkg/introspection/vm_introspection"
+	"github.com/certainty/go-braces/pkg/shared/isa"
 )
 
 type VmOptions struct {

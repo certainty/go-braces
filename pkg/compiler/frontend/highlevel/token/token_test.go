@@ -2,7 +2,7 @@ package token_test
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"testing"
 )
 

@@ -1,7 +1,7 @@
 package frame
 
 import (
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/eventlog"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/eventlog"
 	"github.com/charmbracelet/lipgloss"
 )
 

@@ -2,7 +2,7 @@ package vm
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/internal/isa"
+	"github.com/certainty/go-braces/pkg/shared/isa"
 	"log"
 )
 

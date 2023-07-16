@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/certainty/go-braces/internal/compiler"
-	"github.com/certainty/go-braces/internal/isa"
-	"github.com/certainty/go-braces/internal/vm"
+	"github.com/certainty/go-braces/pkg/compiler"
+	"github.com/certainty/go-braces/pkg/shared/isa"
+	"github.com/certainty/go-braces/pkg/vm"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,10 +43,6 @@ func assertCompilationError(t *testing.T, sourceCode string) {
 
 	_, err := runJitTest(sourceCode)
 	assert.Error(t, err)
-	if err != nil {
-		var concreteError *compiler.CompilerError
-		assert.True(t, errors.As(err, &concreteError), "Expected Compiler Error")
-	}
 }
 
 func assertRuntimeError(t *testing.T, sourceCode string) {

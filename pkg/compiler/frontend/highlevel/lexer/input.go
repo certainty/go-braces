@@ -1,15 +1,12 @@
-package input
-
-// TODO: move into token package
+package lexer
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"io"
 	"os"
 	"unicode/utf8"
-
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
 )
 
 type Input struct {

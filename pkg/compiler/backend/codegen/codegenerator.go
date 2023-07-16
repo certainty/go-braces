@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/certainty/go-braces/internal/compiler/frontend/ir"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/isa"
-	"github.com/certainty/go-braces/internal/isa/arity"
+	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/shared/isa"
+	"github.com/certainty/go-braces/pkg/shared/isa/arity"
 )
 
 type CodeUnitBuilder struct {

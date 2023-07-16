@@ -1,8 +1,8 @@
 package read
 
 import (
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section/phase/read/component/source_code"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/main_section/phase/read/component/source_code"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/theme"
 )
 
 type Model struct {

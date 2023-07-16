@@ -1,7 +1,8 @@
 package ir
 
 import (
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/types"
 )
 
 func CreateModule(name Label, source token.Origin) *Module {
@@ -12,7 +13,7 @@ func CreateModule(name Label, source token.Origin) *Module {
 	}
 }
 
-func CreateProcedure(tpe Type, name Label) Procedure {
+func CreateProcedure(tpe types.Type, name Label) Procedure {
 	return Procedure{
 		tpe:    tpe,
 		Name:   name,
@@ -28,7 +29,7 @@ func CreateBasicBlock(label Label) *BasicBlock {
 	}
 }
 
-func CreateSimpleInstruction(register Register, operation Operation, tpe Type, operands ...Operand) SimpleInstruction {
+func CreateSimpleInstruction(register Register, operation Operation, tpe types.Type, operands ...Operand) SimpleInstruction {
 	return SimpleInstruction{
 		tpe:       tpe,
 		Register:  register,
@@ -37,7 +38,7 @@ func CreateSimpleInstruction(register Register, operation Operation, tpe Type, o
 	}
 }
 
-func CreateAssignmentInstruction(register Register, tpe Type, operand Operand) AssignmentInstruction {
+func CreateAssignmentInstruction(register Register, tpe types.Type, operand Operand) AssignmentInstruction {
 	return AssignmentInstruction{
 		Register: register,
 		tpe:      tpe,
@@ -45,7 +46,7 @@ func CreateAssignmentInstruction(register Register, tpe Type, operand Operand) A
 	}
 }
 
-func CreateReturnInstruction(tpe Type, register Register) ReturnInstruction {
+func CreateReturnInstruction(tpe types.Type, register Register) ReturnInstruction {
 	return ReturnInstruction{
 		tpe:      tpe,
 		Register: register,
@@ -77,35 +78,35 @@ func (b *BlockBuilder) LastInstruction() Instruction {
 	return b.Block.Instructions[len(b.Block.Instructions)-1]
 }
 
-func (b *BlockBuilder) OpLit(tpe Type, operand Operand) Register {
+func (b *BlockBuilder) OpLit(tpe types.Type, operand Operand) Register {
 	target := b.RegisterAllocator.Next("")
 	instruction := CreateAssignmentInstruction(target, tpe, operand)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
 	return target
 }
 
-func (b *BlockBuilder) OpAdd(tpe Type, lhs Operand, rhs Operand) Register {
+func (b *BlockBuilder) OpAdd(tpe types.Type, lhs Operand, rhs Operand) Register {
 	target := b.RegisterAllocator.Next("")
 	instruction := CreateSimpleInstruction(target, Add, tpe, lhs, rhs)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
 	return target
 }
 
-func (b *BlockBuilder) OpMul(tpe Type, lhs Operand, rhs Operand) Register {
+func (b *BlockBuilder) OpMul(tpe types.Type, lhs Operand, rhs Operand) Register {
 	target := b.RegisterAllocator.Next("")
 	instruction := CreateSimpleInstruction(target, Mul, tpe, lhs, rhs)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
 	return target
 }
 
-func (b *BlockBuilder) OpSub(tpe Type, lhs Operand, rhs Operand) Register {
+func (b *BlockBuilder) OpSub(tpe types.Type, lhs Operand, rhs Operand) Register {
 	target := b.RegisterAllocator.Next("")
 	instruction := CreateSimpleInstruction(target, Sub, tpe, lhs, rhs)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
 	return target
 }
 
-func (b *BlockBuilder) OpRet(tpe Type, register Register) {
+func (b *BlockBuilder) OpRet(tpe types.Type, register Register) {
 	instruction := CreateReturnInstruction(tpe, register)
 	b.Block.Instructions = append(b.Block.Instructions, instruction)
 }

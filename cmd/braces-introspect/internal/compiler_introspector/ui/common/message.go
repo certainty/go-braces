@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
 	"time"
+
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
 type MsgTick time.Time

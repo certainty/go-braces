@@ -1,7 +1,6 @@
 package statusbar
 
 import (
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 )

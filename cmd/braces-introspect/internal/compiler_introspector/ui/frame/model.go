@@ -1,13 +1,13 @@
 package frame
 
 import (
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/eventlog"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/main_section"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/statusbar"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/topbar"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/common"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/eventlog"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/main_section"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/statusbar"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/topbar"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

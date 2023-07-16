@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/common"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/philistino/teacup/code"
 )

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/compiler/frontend/parser"
-	"github.com/certainty/go-braces/internal/compiler/input"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/parser"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,13 +95,13 @@ func TestParser_Parse(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			parser := parser.NewParser(compiler_introspection.NewNullInstrumentation())
-			input := input.NewStringInput("test", test.input)
+			input := lexer.NewStringInput("test", test.input)
 			source, err := parser.Parse(input)
 			assert.NoError(t, err)
-			assert.Equal(t, 1, len(source.Statements)) // single expression
+			assert.Equal(t, 1, len(source.Declarations)) // single expression
 			if err == nil {
-				fmt.Printf("%v\n", source.Statements[0])
-				result := astWriter.WriteNode(source.Statements[0])
+				fmt.Printf("%v\n", source.Declarations[0])
+				result := astWriter.WriteNode(source.Declarations[0])
 				assert.Equal(t, test.expected, result)
 			}
 		})
@@ -125,7 +125,7 @@ func TestParser_Parse_Errors(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := parser.NewParser(compiler_introspection.NewNullInstrumentation())
-			input := input.NewStringInput("test", test.input)
+			input := lexer.NewStringInput("test", test.input)
 			_, err := p.Parse(input)
 			assert.Error(t, err)
 

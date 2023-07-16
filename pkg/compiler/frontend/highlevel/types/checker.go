@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	ast "github.com/certainty/go-braces/internal/compiler/frontend/ast/hl"
-	"github.com/certainty/go-braces/internal/compiler/frontend/token"
-	"github.com/certainty/go-braces/internal/introspection/compiler_introspection"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
 type TypeUniverse map[ast.NodeId]Type

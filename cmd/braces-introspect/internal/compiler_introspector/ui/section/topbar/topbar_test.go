@@ -3,9 +3,9 @@ package topbar_test
 import (
 	"testing"
 
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/common"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/section/topbar"
-	"github.com/certainty/go-braces/internal/introspector/compiler_introspector/ui/theme"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/common"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/topbar"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/theme"
 	"github.com/gkampitakis/go-snaps/snaps"
 )
 
