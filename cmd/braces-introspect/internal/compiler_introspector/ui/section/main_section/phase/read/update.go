@@ -2,6 +2,7 @@ package read
 
 import (
 	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/common"
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/section/main_section/phase/read/component/source_code"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -1,6 +1,7 @@
 package main_section
 
 import (
+	"github.com/certainty/go-braces/cmd/braces-introspect/internal/compiler_introspector/ui/common"
 	"github.com/charmbracelet/bubbles/key"
 )
 
