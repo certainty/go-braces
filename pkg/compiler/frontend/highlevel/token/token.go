@@ -180,6 +180,7 @@ var tokenStrings = [...]string{
 	PROC: "proc",
 
 	IF:     "if",
+	COND:   "cond",
 	FOR:    "for",
 	BREAK:  "break",
 	RETURN: "return",

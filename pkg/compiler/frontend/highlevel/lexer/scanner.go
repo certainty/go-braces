@@ -95,10 +95,18 @@ func (s *Scanner) NextToken() token.Token {
 		return s.makeToken(token.XOR)
 	case ',':
 		return s.makeToken(token.COMMA)
+	case ';':
+		return s.makeToken(token.SEMICOLON)
 
 	case '#':
 		if s.match('\\') {
 			return s.scanChar()
+		}
+	case '.':
+		if s.matchString("..") {
+			return s.makeToken(token.ELLIPSES)
+		} else {
+			return s.makeToken(token.DOT)
 		}
 	case ':':
 		if s.match(':') {
@@ -506,7 +514,7 @@ func (s *Scanner) peekN(offset uint64) rune {
 }
 
 func (s *Scanner) makeToken(tokenType token.Type, value ...interface{}) token.Token {
-	return token.New(s.location(), tokenType, s.tokenText(), value)
+	return token.New(s.location(), tokenType, s.tokenText(), value...)
 }
 
 func (s *Scanner) location() token.Location {
