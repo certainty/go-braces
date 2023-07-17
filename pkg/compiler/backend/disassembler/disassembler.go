@@ -119,10 +119,6 @@ func asRegister(operand isa.Operand) string {
 	return fmt.Sprintf("$%-4d", operand)
 }
 
-func asInstructionAddress(operand isa.Operand) string {
-	return fmt.Sprintf("@%08x ", operand)
-}
-
 func asConstAddress(operand isa.Operand) string {
 	return fmt.Sprintf("%%%08x ", operand)
 }

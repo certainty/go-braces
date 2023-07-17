@@ -38,7 +38,7 @@ func (w *ASTWriter) WriteNode(node Node) string {
 	case BadDecl:
 		return fmt.Sprintf("(badDecl)#%d", n.ID())
 	case TypeSpec:
-		return fmt.Sprintf("(typeSpec %s %s)#%d", w.WriteNode(n.Name), n.ID())
+		return fmt.Sprintf("(typeSpec %s)#%d", w.WriteNode(n.Name), n.ID())
 	case ProcDecl:
 		return fmt.Sprintf("(defn %s () %s)#%d", n.Name.Name, w.WriteNode(n.Body), n.ID())
 	default:

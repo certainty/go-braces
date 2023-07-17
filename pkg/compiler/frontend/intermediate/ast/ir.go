@@ -1,7 +1,7 @@
 package ir
 
 //TODO: this does too much as we're already lowering into something resembling SSA
-// We will introduce an IR that uses the orginal order of operations
+// We will introduce an IR that uses the original order of operations
 // Later we'll turn it into SSA (CFG)
 
 import (
@@ -226,6 +226,9 @@ func (b *IrBuilder) lowerProcedure(decl hlast.ProcDecl) (Procedure, error) {
 		return Procedure{}, err
 	}
 	loweredType, err := b.lowerType(funType)
+	if err != nil {
+		return Procedure{}, err
+	}
 	proc := CreateProcedure(loweredType, Label(decl.Name.Name))
 	procRegisters := NewRegisterAllocator()
 

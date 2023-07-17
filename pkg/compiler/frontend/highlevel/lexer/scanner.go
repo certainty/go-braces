@@ -487,10 +487,12 @@ func (s *Scanner) skipWhitespace() {
 			s.line++
 			s.column = 1
 		case '/':
+			// comment till end of line
 			if s.peekN(1) == '/' {
 				for !s.isEof() && s.peek() != '\n' {
 					s.advance()
 				}
+				s.column = 1
 			} else {
 				return
 			}
