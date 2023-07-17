@@ -143,7 +143,7 @@ func (p *Parser) synchronize() {
 	p.panicMode = false
 
 	for !p.currentToken.IsEOF() {
-		if p.previousToken.Type == token.SEMICOLON {
+		if p.previousToken != nil && p.previousToken.Type == token.SEMICOLON {
 			return
 		}
 

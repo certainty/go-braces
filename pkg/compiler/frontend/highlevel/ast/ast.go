@@ -7,6 +7,8 @@
 package ast
 
 import (
+	"fmt"
+
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 )
 
@@ -33,6 +35,10 @@ type (
 		stmtNode()
 	}
 )
+
+func (n NodeId) String() string {
+	return fmt.Sprintf("%d", n)
+}
 
 // //////////////////////////////////////////////////
 // Expressions

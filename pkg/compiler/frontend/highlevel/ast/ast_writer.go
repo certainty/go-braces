@@ -22,7 +22,7 @@ func (w *ASTWriter) WriteNode(node Node) string {
 	case ParenExpr:
 		return fmt.Sprintf("(paren %s)#%d", w.WriteNode(n.Expr), n.ID())
 	case UnaryExpr:
-		return fmt.Sprintf("(unExp %s %s)#%d", n.Op.Text, w.WriteNode(n.Expr), n.ID())
+		return fmt.Sprintf("(unExp %s %s)#%d", string(n.Op.Text), w.WriteNode(n.Expr), n.ID())
 	case BinaryExpr:
 		return fmt.Sprintf("(binExp %s %s %s)#%d", n.Op, w.WriteNode(n.Left), w.WriteNode(n.Right), n.ID())
 	case BlockExpr:

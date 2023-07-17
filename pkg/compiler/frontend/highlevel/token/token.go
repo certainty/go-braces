@@ -69,7 +69,7 @@ const (
 	NOT // !
 	NEQ // !=
 
-	ELIPSES // ...
+	ELLIPSES // ...
 
 	LPAREN    // (
 	RPAREN    // )
@@ -100,7 +100,7 @@ const (
 	PROC
 
 	IF
-	ELSE
+	COND
 	FOR
 	BREAK
 	RETURN
@@ -108,7 +108,6 @@ const (
 
 	LET
 	SET
-	MATCH
 
 	// we might be able to turn that later into constants in the universe (outermost scope) of the language
 	TRUE
@@ -154,7 +153,7 @@ var tokenStrings = [...]string{
 	NOT: "!",
 	NEQ: "!=",
 
-	ELIPSES: "...",
+	ELLIPSES: "...",
 
 	LPAREN:    "(",
 	RPAREN:    ")",
@@ -181,15 +180,13 @@ var tokenStrings = [...]string{
 	PROC: "proc",
 
 	IF:     "if",
-	ELSE:   "else",
 	FOR:    "for",
 	BREAK:  "break",
 	RETURN: "return",
 	ENSURE: "ensure",
 
-	LET:   "let",
-	SET:   "set",
-	MATCH: "match",
+	LET: "let",
+	SET: "set",
 
 	TRUE:  "true",
 	FALSE: "false",
@@ -231,14 +228,6 @@ func ByKeyword(location Location, keyword string) Token {
 	return Illegal(location, []rune(keyword))
 }
 
-func (t Type) String() string {
-	return strings.ToUpper(tokenStrings[t])
-}
-
-func (t Token) String() string {
-	return fmt.Sprintf("(%s, %s)", t.Type.String(), string(t.Text))
-}
-
 func (t Token) IsLiteral() bool {
 	return literal_begin < t.Type && t.Type < literal_end
 }
@@ -261,4 +250,97 @@ func (t Token) IsEOF() bool {
 
 func (t Token) IsIllegal() bool {
 	return t.Type == ILLEGAL
+}
+
+func (t Type) String() string {
+	return strings.ToUpper(tokenStrings[t])
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("(%s, %s)", t.Type.String(), string(t.Text))
+}
+
+func (t Token) Sexp() string {
+	return fmt.Sprintf("(tok %s \"%s\" %s)", t.Type.Sexp(), string(t.Text), t.Location.Sexp())
+}
+
+var tokenSexp = [...]string{
+	ILLEGAL:    "ILLEGAL",
+	EOF:        "EOF",
+	IDENTIFIER: "IDENTIFIER",
+	FIXNUM:     "FIXNUM",
+	FLONUM:     "FLONUM",
+	BYTE:       "BYTE",
+	BOOLEAN:    "BOOLEAN",
+	UNIT:       "UNIT",
+	CHAR:       "CHAR",
+	STRING:     "STRING",
+
+	ADD: "ADD",
+	SUB: "SUB",
+	MUL: "MUL",
+	DIV: "DIV",
+	REM: "REM",
+	POW: "POW",
+
+	LAND: "LAND",
+	LOR:  "LOR",
+
+	AND:     "AND",
+	OR:      "OR",
+	XOR:     "XOR",
+	SHL:     "SHL",
+	SHR:     "SHR",
+	AND_NOT: "AND_NOT",
+
+	EQ:  "EQ",
+	LT:  "LT",
+	LTE: "LTE",
+	GT:  "GT",
+	GTE: "GTE",
+	NOT: "NOT",
+	NEQ: "NEQ",
+
+	ELLIPSES: "ELLIPSES",
+
+	LPAREN:    "LPAREN",
+	RPAREN:    "RPAREN",
+	LBRACK:    "LBRACK",
+	RBRACK:    "RBRACK",
+	LBRACE:    "LBRACE",
+	RBRACE:    "RBRACE",
+	COMMA:     "COMMMA",
+	DOT:       "DOT",
+	COLON:     "COLON",
+	DBLCOLON:  "DBLCOLON",
+	SEMICOLON: "SEMICOLON",
+	ARROW:     "ARROW",
+	PIPE:      "PIPE",
+
+	PACKAGE: "PACKAGE",
+	IMPORT:  "IMPORT",
+	API:     "API",
+
+	DATA:  "DATA",
+	ALIAS: "ALIAS",
+
+	FUN:  "FUN",
+	PROC: "PROC",
+
+	IF:     "IF",
+	COND:   "COND",
+	FOR:    "FOR",
+	BREAK:  "BREAK",
+	RETURN: "RETURN",
+	ENSURE: "ENSURE",
+
+	LET: "LET",
+	SET: "SET",
+
+	TRUE:  "TRUE",
+	FALSE: "TRUE",
+}
+
+func (t Type) Sexp() string {
+	return tokenSexp[t]
 }

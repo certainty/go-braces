@@ -354,12 +354,6 @@ func TestScanner(t *testing.T) {
 			expectedValue: nil,
 		},
 		{
-			input:         "else",
-			expectedType:  token.ELSE,
-			expectedText:  "else",
-			expectedValue: nil,
-		},
-		{
 			input:         "break",
 			expectedType:  token.BREAK,
 			expectedText:  "break",
@@ -371,6 +365,13 @@ func TestScanner(t *testing.T) {
 			expectedText:  "let",
 			expectedValue: nil,
 		},
+		{
+			input:         "cond",
+			expectedType:  token.COND,
+			expectedText:  "cond",
+			expectedValue: nil,
+		},
+
 		{
 			input:         "set",
 			expectedType:  token.SET,
@@ -434,7 +435,7 @@ func TestScanner(t *testing.T) {
 		},
 		{
 			input:         "...",
-			expectedType:  token.ELIPSES,
+			expectedType:  token.ELLIPSES,
 			expectedText:  "...",
 			expectedValue: nil,
 		},

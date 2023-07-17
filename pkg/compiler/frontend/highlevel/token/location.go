@@ -85,3 +85,7 @@ func (r ReplOrigin) Description() string   { return fmt.Sprintf("repl://%d", r.I
 func (l Location) String() string {
 	return fmt.Sprintf("%s:%d:%d", l.Origin.Description(), l.Line, l.Colunm)
 }
+
+func (l Location) Sexp() string {
+	return fmt.Sprintf("(loc %d (%d %d))", l.Line, l.StartOffset, l.EndOffset)
+}
