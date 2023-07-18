@@ -34,19 +34,19 @@ func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule,
 func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
-	ast, err := c.parse(input)
+	theAST, err := c.parse(input)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
-	log.Printf("AST: %s", ast.ASTString())
+	log.Printf("AST: %s", ast.Print(theAST, ast.PrintTruthfully()))
 
-	tpeUniverse, err := c.typeCheck(ast)
+	tpeUniverse, err := c.typeCheck(theAST)
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(ast, tpeUniverse, input.Origin)
+	ir, err := c.lowerToIR(theAST, tpeUniverse, input.Origin)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}

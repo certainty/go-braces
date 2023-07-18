@@ -91,6 +91,19 @@ func (p *Parser) Parse(input *lexer.Input) (*ast.Source, error) {
 	return p.parseInput()
 }
 
+func (p *Parser) ParseExpression(input *lexer.Input) ast.Expression {
+	p.Reset()
+	p.astBuilder = ast.NewBuilder()
+	p.scanner = lexer.New(input)
+
+	p.advance()
+	return p.parseExpression()
+}
+
+func (p *Parser) Errors() []ParseError {
+	return p.errors
+}
+
 func (p *Parser) parseInput() (*ast.Source, error) {
 	declarations := []ast.Declaration{}
 

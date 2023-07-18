@@ -8,7 +8,6 @@ package ast
 
 import (
 	"fmt"
-
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 )
 
@@ -177,16 +176,23 @@ func (d ProcDecl) Location() token.Location { return d.location }
 // //////////////////////////////////////////////////
 type (
 	Field struct {
-		Id   Identifier
+		id   NodeId
 		Name Identifier
 		Type *TypeSpec
 	}
 
 	ProcType struct {
+		id     NodeId
 		Params []Field
 		Result *TypeSpec
 	}
 )
+
+func (f Field) ID() NodeId    { return f.id }
+func (t ProcType) ID() NodeId { return t.id }
+
+func (f Field) Location() token.Location    { return f.Name.Location() }
+func (t ProcType) Location() token.Location { return t.Result.Location() }
 
 // //////////////////////////////////////////////////
 // Source & Package
@@ -203,9 +209,4 @@ func (s Source) Location() token.Location {
 		return s.Declarations[0].Location()
 	}
 	return token.Location{}
-}
-
-func (s Source) ASTString() string {
-	writer := NewASTWriter()
-	return writer.WriteNode(&s)
 }

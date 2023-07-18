@@ -29,7 +29,6 @@ func (t Checker) Check(ast *ast.Source) (TypeUniverse, error) {
 	t.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer t.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
-	log.Printf("Type checking AST: %v", ast.ASTString())
 	log.Printf("Type universe: %v", t.typeUniverse)
 
 	for _, node := range ast.Declarations {

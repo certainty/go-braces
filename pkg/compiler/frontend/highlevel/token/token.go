@@ -262,7 +262,7 @@ func (t Token) String() string {
 }
 
 func (t Token) Sexp() string {
-	return fmt.Sprintf("(tok %s \"%s\" %s)", t.Type.Sexp(), string(t.Text), t.Location.Sexp())
+	return fmt.Sprintf("(tok %s %s \"%s\")", t.Location.Sexp(), t.Type.Sexp(), string(t.Text))
 }
 
 var tokenSexp = [...]string{
