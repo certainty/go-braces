@@ -3,7 +3,7 @@
 (tok (loc 3 (14 18)) PROC "proc")
 (tok (loc 3 (19 23)) IDENTIFIER "main")
 (tok (loc 3 (23 24)) LPAREN "(")
-(tok (loc 3 (24 25)) RBRACE ")")
+(tok (loc 3 (24 25)) RPAREN ")")
 (tok (loc 3 (26 27)) LBRACE "{")
 (tok (loc 4 (30 31)) FIXNUM "3")
 (tok (loc 4 (32 33)) ADD "+")

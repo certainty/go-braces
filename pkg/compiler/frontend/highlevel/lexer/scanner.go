@@ -84,7 +84,7 @@ func (s *Scanner) NextToken() token.Token {
 	case '(':
 		return s.makeToken(token.LPAREN)
 	case ')':
-		return s.makeToken(token.RBRACE)
+		return s.makeToken(token.RPAREN)
 	case '+':
 		return s.makeToken(token.ADD)
 	case '/':

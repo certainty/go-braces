@@ -19,74 +19,80 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name:     "simple addition",
 			input:    "1 + 2",
-			expected: "(binary-expr (tok  ADD \"+\") (basic-lit-expr (tok  FIXNUM \"1\")) (basic-lit-expr (tok  FIXNUM \"2\")))",
+			expected: "(binary-expr + 1 2)",
 		},
-		// {
-		// 	name:     "simple subtraction",
-		// 	input:    "3 - 2",
-		// 	expected: "(- 3 2)",
-		// },
-		// {
-		// 	name:     "simple multiplication",
-		// 	input:    "2 * 3",
-		// 	expected: "(* 2 3)",
-		// },
-		// {
-		// 	name:     "simple division",
-		// 	input:    "6 / 2",
-		// 	expected: "(/ 6 2)",
-		// },
-		// {
-		// 	name:     "exponentiation",
-		// 	input:    "2 ** 3",
-		// 	expected: "(** 2 3)",
-		// },
-		// {
-		// 	name:     "unary plus",
-		// 	input:    "+2",
-		// 	expected: "(+ 2)",
-		// },
-		// {
-		// 	name:     "unary minus",
-		// 	input:    "-2",
-		// 	expected: "(- 2)",
-		// },
-		// {
-		// 	name:     "parentheses",
-		// 	input:    "(1 + 2) * 3",
-		// 	expected: "(* (+ 1 2) 3)",
-		// },
-		// {
-		// 	name:     "precedence",
-		// 	input:    "1 + 2 * 3 ** 4 ",
-		// 	expected: "(+ 1 (* 2 (** 3 4)))",
-		// },
-		// {
-		// 	name:     "more precedence",
-		// 	input:    "3 ** 4 * 3 + 4",
-		// 	expected: "(+ (* (** 3 4) 3) 4)",
-		// },
-		// {
-		// 	name:     "even more precedence",
-		// 	input:    "3 ** 4 * 3 - 4",
-		// 	expected: "(- (* (** 3 4) 3) 4)",
-		// },
-		// {
-		// 	name:     "right associativity",
-		// 	input:    "1 ** 4 ** 2",
-		// 	expected: "(** 1 (** 4 2))",
-		// },
-		// {
-		// 	name:     "grouping",
-		// 	input:    "(2 ** 3) ** 2",
-		// 	expected: "(** (** 2 3) 2)",
-		// },
+		{
+			name:     "simple subtraction",
+			input:    "3 - 2",
+			expected: "(binary-expr - 3 2)",
+		},
+		{
+			name:     "simple multiplication",
+			input:    "2 * 3",
+			expected: "(binary-expr * 2 3)",
+		},
+		{
+			name:     "simple division",
+			input:    "6 / 2",
+			expected: "(binary-expr / 6 2)",
+		},
+		{
+			name:     "exponentiation",
+			input:    "2 ** 3",
+			expected: "(binary-expr ** 2 3)",
+		},
+		{
+			name:     "unary plus",
+			input:    "+2",
+			expected: "(unary-expr + 2)",
+		},
+		{
+			name:     "unary minus",
+			input:    "-2",
+			expected: "(unary-expr - 2)",
+		},
+		{
+			name:     "parentheses",
+			input:    "(1 + 2) * 3",
+			expected: "(binary-expr * (binary-expr + 1 2) 3)",
+		},
+		{
+			name:     "mixed expressions",
+			input:    "3 ** 4 * 3 + (-4)",
+			expected: "(binary-expr + (binary-expr * (binary-expr ** 3 4) 3) (unary-expr - 4))",
+		},
 
-		// {
-		// 	name:     "left associativity",
-		// 	input:    "2 + 3 + 2",
-		// 	expected: "(+ (+ 2 3) 2)",
-		// },
+		{
+			name:     "precedence",
+			input:    "1 + 2 * 3 ** 4 ",
+			expected: "(binary-expr + 1 (binary-expr * 2 (binary-expr ** 3 4)))",
+		},
+		{
+			name:     "more precedence",
+			input:    "3 ** 4 * 3 + 4",
+			expected: "(binary-expr + (binary-expr * (binary-expr ** 3 4) 3) 4)",
+		},
+		{
+			name:     "even more precedence",
+			input:    "3 ** 4 * 3 - 4",
+			expected: "(binary-expr - (binary-expr * (binary-expr ** 3 4) 3) 4)",
+		},
+		{
+			name:     "right associativity",
+			input:    "1 ** 4 ** 2",
+			expected: "(binary-expr ** 1 (binary-expr ** 4 2))",
+		},
+		{
+			name:     "grouping",
+			input:    "(2 ** 3) ** 2",
+			expected: "(binary-expr ** (binary-expr ** 2 3) 2)",
+		},
+
+		{
+			name:     "left associativity",
+			input:    "2 + 3 + 2",
+			expected: "(binary-expr + (binary-expr + 2 3) 2)",
+		},
 	}
 
 	printOptions := ast.PrintCanonical()
