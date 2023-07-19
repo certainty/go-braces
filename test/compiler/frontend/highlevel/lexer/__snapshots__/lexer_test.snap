@@ -1,15 +1,149 @@
 
 [TestMinimal - 1]
-(tok (loc 3 (14 18)) PROC "proc")
-(tok (loc 3 (19 23)) IDENTIFIER "main")
-(tok (loc 3 (23 24)) LPAREN "(")
-(tok (loc 3 (24 25)) RPAREN ")")
-(tok (loc 3 (26 27)) LBRACE "{")
-(tok (loc 4 (30 31)) FIXNUM "3")
-(tok (loc 4 (32 33)) ADD "+")
-(tok (loc 4 (34 35)) FIXNUM "5")
-(tok (loc 4 (36 37)) MUL "*")
-(tok (loc 4 (38 39)) FIXNUM "4")
-(tok (loc 5 (40 41)) RBRACE "}")
-(tok (loc 6 (42 42)) EOF "")
+[]token.Token{
+    {
+        Type:     0x38,
+        Text:     {112, 114, 111, 99},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x3,
+            Colunm:      0x5,
+            StartOffset: 0xe,
+            EndOffset:   0x12,
+        },
+    },
+    {
+        Type:     0x3,
+        Text:     {109, 97, 105, 110},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x3,
+            Colunm:      0xa,
+            StartOffset: 0x13,
+            EndOffset:   0x17,
+        },
+    },
+    {
+        Type:     0x23,
+        Text:     {40},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x3,
+            Colunm:      0xb,
+            StartOffset: 0x17,
+            EndOffset:   0x18,
+        },
+    },
+    {
+        Type:     0x24,
+        Text:     {41},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x3,
+            Colunm:      0xc,
+            StartOffset: 0x18,
+            EndOffset:   0x19,
+        },
+    },
+    {
+        Type:     0x27,
+        Text:     {123},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x3,
+            Colunm:      0xe,
+            StartOffset: 0x1a,
+            EndOffset:   0x1b,
+        },
+    },
+    {
+        Type:     0x4,
+        Text:     {51},
+        LitValue: int(3),
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x4,
+            Colunm:      0x4,
+            StartOffset: 0x1e,
+            EndOffset:   0x1f,
+        },
+    },
+    {
+        Type:     0xd,
+        Text:     {43},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x4,
+            Colunm:      0x6,
+            StartOffset: 0x20,
+            EndOffset:   0x21,
+        },
+    },
+    {
+        Type:     0x4,
+        Text:     {53},
+        LitValue: int(5),
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x4,
+            Colunm:      0x8,
+            StartOffset: 0x22,
+            EndOffset:   0x23,
+        },
+    },
+    {
+        Type:     0xf,
+        Text:     {42},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x4,
+            Colunm:      0xa,
+            StartOffset: 0x24,
+            EndOffset:   0x25,
+        },
+    },
+    {
+        Type:     0x4,
+        Text:     {52},
+        LitValue: int(4),
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x4,
+            Colunm:      0xc,
+            StartOffset: 0x26,
+            EndOffset:   0x27,
+        },
+    },
+    {
+        Type:     0x28,
+        Text:     {125},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x5,
+            Colunm:      0x2,
+            StartOffset: 0x28,
+            EndOffset:   0x29,
+        },
+    },
+    {
+        Type:     0x1,
+        Text:     {},
+        LitValue: nil,
+        Location: token.Location{
+            Origin:      token.FileOrigin{Path:"../../../../testdata/compiler/minimal.brace"},
+            Line:        0x6,
+            Colunm:      0x1,
+            StartOffset: 0x2a,
+            EndOffset:   0x2a,
+        },
+    },
+}
 ---

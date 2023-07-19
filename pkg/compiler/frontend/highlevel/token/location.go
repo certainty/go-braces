@@ -2,8 +2,6 @@ package token
 
 import (
 	"fmt"
-
-	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel"
 )
 
 // Origin is an interface that represents the origin of the source code.
@@ -88,12 +86,4 @@ func (r ReplOrigin) Description() string   { return fmt.Sprintf("repl://%d", r.I
 
 func (l Location) String() string {
 	return fmt.Sprintf("%s:%d:%d", l.Origin.Description(), l.Line, l.Colunm)
-}
-
-func (l Location) Sexp() string {
-	if highlevel.PrintLocation() {
-		return fmt.Sprintf("(loc %d (%d %d))", l.Line, l.StartOffset, l.EndOffset)
-	} else {
-		return ""
-	}
 }

@@ -41,7 +41,7 @@ func Walk(v Visitor, node Node) {
 	case ExprStmt:
 		Walk(v, n.Expr)
 	case BadExpr, BasicLitExpr:
-	//nothing
+		//nothing
 	case BlockExpr:
 		walkStatements(v, n.Statements)
 	case ParenExpr:

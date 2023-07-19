@@ -2,7 +2,6 @@ package lexer_test
 
 import (
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
@@ -21,15 +20,15 @@ func TestMinimal(t *testing.T) {
 	tokens := readTokens(scanner)
 	assert.Empty(t, scanner.Errors)
 
-	snaps.MatchSnapshot(t, strings.Join(tokens, "\n"))
+	snaps.MatchSnapshot(t, tokens)
 }
 
-func readTokens(scanner *lexer.Scanner) []string {
-	tokens := []string{}
+func readTokens(scanner *lexer.Scanner) []token.Token {
+	tokens := []token.Token{}
 
 	for {
 		tok := scanner.NextToken()
-		tokens = append(tokens, tok.Sexp())
+		tokens = append(tokens, tok)
 		if tok.Type == token.EOF {
 			break
 		}
