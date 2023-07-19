@@ -109,33 +109,33 @@ func TestParser_Parse(t *testing.T) {
 	}
 }
 
-// // let's test errors
-// func TestParser_Parse_Errors(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		input    string
-// 		expected parser.ParseErrorId
-// 	}{
-// 		{
-// 			name:     "unexpected EOF",
-// 			input:    "1 + ",
-// 			expected: parser.ParseErrorIdUnexpectedEOF,
-// 		},
-// 	}
+// let's test errors
+func TestParser_Parse_Errors(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected parser.ParseErrorId
+	}{
+		{
+			name:     "unexpected EOF",
+			input:    "1 + ",
+			expected: parser.ParseErrorIdUnexpectedToken,
+		},
+	}
 
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-// 			p := parser.NewParser(compiler_introspection.NewNullInstrumentation())
-// 			input := lexer.NewStringInput("test", test.input)
-// 			_, err := p.Parse(input)
-// 			assert.Error(t, err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := parser.NewParser(compiler_introspection.NewNullInstrumentation())
+			input := lexer.NewStringInput("test", test.input)
+			_, err := p.Parse(input)
+			assert.Error(t, err)
 
-// 			if err != nil {
-// 				allErrors := err.(parser.ParseErrors)
-// 				parseError := allErrors.Errors[0]
-// 				assert.Equal(t, test.expected, parseError.Id)
-// 			}
-// 		})
-// 	}
+			if err != nil {
+				allErrors := err.(parser.ParseErrors)
+				parseError := allErrors.Errors[0]
+				assert.Equal(t, test.expected, parseError.Id)
+			}
+		})
+	}
 
-// }
+}
