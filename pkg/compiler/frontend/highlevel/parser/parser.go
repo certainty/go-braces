@@ -109,7 +109,7 @@ func (p *Parser) parseInput() (*ast.Source, error) {
 
 	p.advance()
 	for {
-		declarations = append(declarations, p.parseDeclaration())
+		declarations = append(declarations, p.ParseDeclaration())
 		if p.currentToken.IsEOF() {
 			break
 		}
@@ -169,7 +169,7 @@ func (p *Parser) synchronize() {
 	}
 }
 
-func (p *Parser) parseDeclaration() ast.Declaration {
+func (p *Parser) ParseDeclaration() ast.Declaration {
 	switch p.currentToken.Type {
 	case token.PROC:
 		p.parseProcedureDeclaration()

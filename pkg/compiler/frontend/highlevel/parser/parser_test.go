@@ -109,6 +109,34 @@ func TestParser_Parse(t *testing.T) {
 	}
 }
 
+func TestParseProcedure(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "simple procedure",
+			input:    "proc main() { 3+3 }",
+			expected: "(source (proc main () (block (binary-expr + 3 3))))",
+		},
+	}
+
+	printOptions := ast.PrintCanonical()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			parser := parser.NewParser(compiler_introspection.NewNullInstrumentation())
+			input := lexer.NewStringInput("test", test.input)
+			decl, _ := parser.Parse(input)
+			assert.Empty(t, parser.Errors())
+			result := ast.Print(*decl, printOptions)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+
+}
+
 // let's test errors
 func TestParser_Parse_Errors(t *testing.T) {
 	tests := []struct {

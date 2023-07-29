@@ -157,7 +157,7 @@ func (r *Repl) getInput() (string, error) {
 // TODO: actually assemble the main function from all previous (valid) repl inputs
 func (r *Repl) compileAndRun(source string) (isa.Value, error) {
 	//FIXME: dirty hack for now to make the repl work :D
-	hackedSource := fmt.Sprintf("package main\n proc main(){\n %s \n}", source)
+	hackedSource := fmt.Sprintf("proc main(){\n %s \n}", source)
 	replInput := lexer.NewReplInput(uint64(r.inputCount), hackedSource)
 	assemblyModule, err := r.compiler.CompileModule(replInput)
 

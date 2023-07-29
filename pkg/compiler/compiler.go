@@ -40,7 +40,8 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
-	log.Printf("AST: %s", ast.Print(theAST, ast.PrintTruthfully()))
+	log.Printf("AST: %v", theAST)
+	log.Printf("AST: %s", ast.Print(*theAST, ast.PrintTruthfully()))
 
 	tpeUniverse, err := c.typeCheck(theAST)
 	if err != nil {
