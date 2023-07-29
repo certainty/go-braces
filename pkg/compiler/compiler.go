@@ -10,7 +10,9 @@ import (
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/parser"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/types"
-	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate"
+	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
 	"github.com/certainty/go-braces/pkg/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
@@ -52,14 +54,14 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	}
 	log.Printf("IR %v", ir)
 
-	optimizedIr, err := c.optimize(ir)
+	ssa, err := c.optimize(ir)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
-	log.Printf("Optimized IR %v", optimizedIr)
+	log.Printf("Optimized IR %v", ssa)
 
 	// backend
-	assemblyModule, err := c.generateCode(optimizedIr)
+	assemblyModule, err := c.generateCode(ssa)
 	if err != nil {
 		return nil, fmt.Errorf("CodeGenError: %w", err)
 	}
@@ -94,10 +96,10 @@ func (c Compiler) lowerToIR(theAST *ast.Source, tpeUniverse types.TypeUniverse, 
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 
-	return ir.LowerToIR(origin, theAST, tpeUniverse)
+	return intermediate.Lower(origin, theAST, tpeUniverse)
 }
 
-func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {
+func (c Compiler) optimize(ir *ir.Module) (*ssa.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
 
@@ -109,10 +111,10 @@ func (c Compiler) optimize(ir *ir.Module) (*ir.Module, error) {
 	return optimized, nil
 }
 
-func (c Compiler) generateCode(ir *ir.Module) (*isa.AssemblyModule, error) {
+func (c Compiler) generateCode(ssa *ssa.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
 	codegen := codegen.NewCodegenerator(c.instrumentation)
-	return codegen.GenerateModule(ir)
+	return codegen.GenerateModule(ssa)
 }

@@ -6,7 +6,8 @@ import (
 )
 
 type Type interface {
-	Name() string
+	String() string
+	tpe()
 }
 
 type Bool struct{}
@@ -15,26 +16,19 @@ type Int struct{}
 type UInt struct{}
 type Float struct{}
 type Rational struct{}
-type Complex struct{}
+type Complex complex128
 type String struct{}
 type Char struct{}
-type Unit struct{}
+type Void struct{}
 
-type Vector struct {
-	elementType Type
+type U8Vec struct{}
+
+type Struct struct {
+	Name   string
+	Fields map[string]Type
 }
 
-type ByteVector struct{}
-
-type Tuple struct {
-	elementTypes []Type
-}
-
-type Place struct {
-	BaseType Type
-}
-
-type SetablePlace struct {
+type Ref struct {
 	BaseType Type
 }
 
@@ -42,7 +36,7 @@ type Chan struct {
 	ElementType Type
 }
 
-type Func struct {
+type Procedure struct {
 	Params  []Type
 	Results []Type
 }
@@ -54,52 +48,63 @@ var (
 	FloatType  = Float{}
 	CharType   = Char{}
 	StringType = String{}
-	UnitType   = Unit{}
+	VoidType   = Void{}
 )
 
-func (Int) Name() string      { return "int" }
-func (UInt) Name() string     { return "uint" }
-func (Float) Name() string    { return "float" }
-func (Rational) Name() string { return "rational" }
-func (Complex) Name() string  { return "complex" }
-func (Bool) Name() string     { return "bool" }
-func (Char) Name() string     { return "char" }
-func (String) Name() string   { return "string" }
-func (Byte) Name() string     { return "byte" }
-func (Unit) Name() string     { return "unit" }
+func (Struct) tpe()    {}
+func (Ref) tpe()       {}
+func (Chan) tpe()      {}
+func (Procedure) tpe() {}
+func (Bool) tpe()      {}
+func (Byte) tpe()      {}
+func (Int) tpe()       {}
+func (UInt) tpe()      {}
+func (Float) tpe()     {}
+func (Rational) tpe()  {}
+func (Complex) tpe()   {}
+func (String) tpe()    {}
+func (Char) tpe()      {}
+func (Void) tpe()      {}
+func (U8Vec) tpe()     {}
 
-func (p Place) Name() string {
-	return fmt.Sprintf("*%s", p.BaseType.Name())
+func (Int) String() string      { return "int" }
+func (UInt) String() string     { return "uint" }
+func (Float) String() string    { return "float" }
+func (Rational) String() string { return "rational" }
+func (Complex) String() string  { return "complex" }
+func (Bool) String() string     { return "bool" }
+func (Char) String() string     { return "char" }
+func (String) String() string   { return "string" }
+func (Byte) String() string     { return "byte" }
+func (Void) String() string     { return "void" }
+func (U8Vec) String() string    { return "u8vec" }
+
+func (p Ref) String() string {
+	return fmt.Sprintf("*%s", p.BaseType.String())
 }
 
-func (p SetablePlace) Name() string {
-	return fmt.Sprintf("mut *%s", p.BaseType.Name())
+func (c Chan) String() string {
+	return fmt.Sprintf("chan[%s]", c.ElementType.String())
 }
 
-func (c Chan) Name() string {
-	return fmt.Sprintf("chan[%s]", c.ElementType.Name())
-}
+func (p Procedure) String() string {
+	params := make([]string, len(p.Params))
 
-func (f Func) Name() string {
-	params := make([]string, len(f.Params))
-	for _, p := range f.Params {
-		params = append(params, p.Name())
+	for idx, p := range p.Params {
+		params[idx] = p.String()
 	}
-	results := make([]string, len(f.Results))
-	for _, r := range f.Results {
-		results = append(results, r.Name())
+
+	results := make([]string, len(p.Results))
+	for idx, r := range p.Results {
+		results[idx] = r.String()
 	}
-	return fmt.Sprintf("func(%s) -> (%s)", strings.Join(params, ", "), strings.Join(results, ", "))
+	return fmt.Sprintf("proc(%s) -> (%s)", strings.Join(params, ", "), strings.Join(results, ", "))
 }
 
-func (v Vector) Name() string {
-	return fmt.Sprintf("vector[%s]", v.elementType.Name())
-}
-
-func (t Tuple) Name() string {
-	elements := make([]string, len(t.elementTypes))
-	for _, e := range t.elementTypes {
-		elements = append(elements, e.Name())
+func (s Struct) String() string {
+	var fields []string
+	for name, t := range s.Fields {
+		fields = append(fields, fmt.Sprintf("%s: %s", name, t.String()))
 	}
-	return fmt.Sprintf("(%s)", strings.Join(elements, ", "))
+	return fmt.Sprintf("struct{%s}", fields)
 }

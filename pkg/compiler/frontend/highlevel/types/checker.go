@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
-type TypeUniverse map[ast.NodeId]Type
+type TypeUniverse map[astutils.NodeId]Type
 
 type Checker struct {
 	instrumentation compiler_introspection.Instrumentation
-	typeUniverse    map[ast.NodeId]Type
+	typeUniverse    map[astutils.NodeId]Type
 }
 
 func NewChecker(Instrumentation compiler_introspection.Instrumentation) Checker {
-	return Checker{instrumentation: Instrumentation, typeUniverse: make(map[ast.NodeId]Type)}
+	return Checker{instrumentation: Instrumentation, typeUniverse: make(map[astutils.NodeId]Type)}
 }
 
 func (t *Checker) assignType(node ast.Node, tpe Type) Type {

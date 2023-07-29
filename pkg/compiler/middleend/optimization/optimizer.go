@@ -2,6 +2,7 @@ package optimization
 
 import (
 	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 )
 
@@ -15,8 +16,15 @@ func NewOptimizer(instrumentation compiler_introspection.Instrumentation) *Optim
 	}
 }
 
-func (o *Optimizer) Optimize(intermediate *ir.Module) (*ir.Module, error) {
+func (o *Optimizer) Optimize(intermediate *ir.Module) (*ssa.Module, error) {
 	o.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer o.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
-	return intermediate, nil
+
+	ssaTransformer := ssa.NewTransformer(o.instrumentation)
+	ssaModule, err := ssaTransformer.Transform(*intermediate)
+	if err != nil {
+		return nil, err
+	}
+
+	return ssaModule, nil
 }

@@ -2,9 +2,9 @@ package codegen
 
 import (
 	"fmt"
-	"log"
 
-	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
 	"github.com/certainty/go-braces/pkg/shared/isa/arity"
@@ -15,6 +15,7 @@ type CodeUnitBuilder struct {
 	constants       []isa.Value
 	instructions    []isa.Instruction
 	instrumentation compiler_introspection.Instrumentation
+	registers       uint32
 }
 
 func newCodeUnitBuilder(instrumentation compiler_introspection.Instrumentation) *CodeUnitBuilder {
@@ -22,6 +23,7 @@ func newCodeUnitBuilder(instrumentation compiler_introspection.Instrumentation) 
 		instrumentation: instrumentation,
 		instructions:    make([]isa.Instruction, 0),
 		constants:       make([]isa.Value, 0),
+		registers:       0,
 	}
 }
 
@@ -39,6 +41,11 @@ func (c *CodeUnitBuilder) AddConstant(constant isa.Value) isa.ConstantAddress {
 
 func (c *CodeUnitBuilder) AddInstruction(instruction isa.Instruction) {
 	c.instructions = append(c.instructions, instruction)
+}
+
+func (c *CodeUnitBuilder) NextRegister() isa.Register {
+	c.registers++
+	return isa.Register(c.registers)
 }
 
 type Codegenerator struct {
@@ -63,17 +70,13 @@ func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *C
 	}
 }
 
-func (c *Codegenerator) NextRegister() isa.Register {
-	c.currentGeneralPurposeRegister += 1
-	return isa.Register(c.currentGeneralPurposeRegister)
-}
-
-func (c *Codegenerator) GenerateModule(irModule *ir.Module) (*isa.AssemblyModule, error) {
+func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
-	for _, proc := range irModule.Procedures {
-		if err := c.emitProcedure(&proc); err != nil {
+	for _, decl := range ssaModule.Declarations {
+
+		if err := c.emitDeclaration(decl); err != nil {
 			return nil, err
 		}
 	}
@@ -82,15 +85,24 @@ func (c *Codegenerator) GenerateModule(irModule *ir.Module) (*isa.AssemblyModule
 	return c.module, nil
 }
 
+func (c *Codegenerator) emitDeclaration(decl ssa.Declaration) error {
+	switch decl := decl.(type) {
+	case ssa.ProcDecl:
+		return c.emitProcedure(&decl)
+	default:
+		return fmt.Errorf("unknown declaration type %T", decl)
+	}
+}
+
 // we should return the function address to fill the jump table
-func (c *Codegenerator) emitProcedure(proc *ir.Procedure) error {
+func (c *Codegenerator) emitProcedure(procDecl *ssa.ProcDecl) error {
 	codeBuilder := newCodeUnitBuilder(c.instrumentation)
-	for _, block := range proc.Blocks {
+	for _, block := range procDecl.Blocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
 			return err
 		}
 	}
-	c.addFunction(isa.Label(proc.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
+	c.addFunction(isa.Label(procDecl.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
 	return nil
 }
 
@@ -103,92 +115,91 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 	c.functionAddresses[label] = isa.Address(len(c.module.Functions) - 1)
 }
 
-func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder) error {
-	for _, instruction := range block.Instructions {
-		switch inst := instruction.(type) {
-		case ir.ReturnInstruction:
-			builder.AddInstruction(isa.InstRet(c.findRegister(inst.Register)))
-
-		case ir.SimpleInstruction:
-			if err := c.emitSimpleInstruction(inst, builder); err != nil {
-				return fmt.Errorf("emitSimpleInstruction: %w", err)
-			}
-		case ir.AssignmentInstruction:
-			addr := builder.AddConstant(isa.Value(inst.Operand))
-			reg := c.findRegister(inst.Register)
-			builder.AddInstruction(isa.InstLoad(reg, addr))
-		case ir.Literal:
-			value, err := c.convertValue(inst)
-			if err != nil {
-				return fmt.Errorf("emitBlock: %w", err)
-			}
-			address := builder.AddConstant(value)
-			builder.AddInstruction(isa.InstLoad(c.registerAccu, address))
+func (c *Codegenerator) emitBlock(block *ssa.BasicBlock, builder *CodeUnitBuilder) error {
+	for _, statement := range block.Statements {
+		switch stmt := statement.(type) {
+		case ssa.ReturnStmt:
+			c.emitReturn(stmt, builder)
+		case ssa.SetStmt:
+			c.emitAssignment(stmt, builder)
 		default:
-			return fmt.Errorf("unknown instruction type: %T", instruction)
+			return fmt.Errorf("unknown instruction type: %T", statement)
 		}
 	}
 	return nil
 }
 
-func (c *Codegenerator) emitSimpleInstruction(inst ir.SimpleInstruction, builder *CodeUnitBuilder) error {
-	switch inst.Operation {
-	case ir.Add, ir.Sub, ir.Mul:
-		return c.emitArithmeticInstruction(inst, builder)
+func (c *Codegenerator) emitReturn(stmt ssa.ReturnStmt, builder *CodeUnitBuilder) error {
+	switch v := stmt.Value.(type) {
+	case ssa.AtomicLitExpr:
+		reg, error := c.emitLiteral(v, builder)
+		if error != nil {
+			return error
+		}
+		builder.AddInstruction(isa.InstRet(*reg))
+		return nil
+	case ssa.Variable:
+		builder.AddInstruction(isa.InstRet(c.findRegister(v)))
+		return nil
 	default:
-		log.Printf("unknown instruction: %v", inst.Operation)
-		panic("unknown instruction")
+		return fmt.Errorf("unknown return type: %T", stmt.Value)
 	}
 }
 
-// TODO: add support for immediate values
-func (c *Codegenerator) emitArithmeticInstruction(inst ir.SimpleInstruction, builder *CodeUnitBuilder) error {
-	if len(inst.Operands) != 2 {
-		return fmt.Errorf("expected 2 operands, got %d", len(inst.Operands))
-	}
-
-	var left, right isa.Register
-
-	if c.isImmediate(inst.Operands[0]) {
-		addr := builder.AddConstant(isa.Value(inst.Operands[0].(ir.Literal)))
-		left = c.NextRegister()
-		builder.AddInstruction(isa.InstLoad(left, addr))
-	} else {
-		left = c.findRegister(inst.Operands[0].(ir.Register))
-	}
-
-	if c.isImmediate(inst.Operands[1]) {
-		addr := builder.AddConstant(isa.Value(inst.Operands[1].(ir.Literal)))
-		right = c.NextRegister()
-		builder.AddInstruction(isa.InstLoad(right, addr))
-	} else {
-		right = c.findRegister(inst.Operands[1].(ir.Register))
-	}
-
-	switch inst.Operation {
-	case ir.Add:
-		builder.AddInstruction(isa.InstAdd(c.findRegister(inst.Register), left, right))
-	case ir.Mul:
-		builder.AddInstruction(isa.InstMul(c.findRegister(inst.Register), left, right))
-	case ir.Sub:
-		builder.AddInstruction(isa.InstSub(c.findRegister(inst.Register), left, right))
-	}
-	return nil
+func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilder) {
+	addr := builder.AddConstant(isa.Value(stmt.Value))
+	reg := c.findRegister(stmt.Variable)
+	builder.AddInstruction(isa.InstLoad(reg, addr))
 }
 
-func (c *Codegenerator) isImmediate(op ir.Operand) bool {
-	if op, ok := op.(ir.Literal); ok {
-		if v, ok := op.(int); ok {
-			if v <= 255 {
-				return true
-			}
-		}
+func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (*isa.Register, error) {
+	switch expr := expr.(type) {
+	case ssa.AtomicLitExpr:
+		return c.emitLiteral(expr, builder)
+	case ssa.BinaryExpr:
+		return c.emitBinaryExpression(expr, builder)
+	default:
+		return nil, fmt.Errorf("unknown expression type: %T", expr)
 	}
-	return false
 }
 
-func (c *Codegenerator) findRegister(reg ir.Register) isa.Register {
-	return isa.Register(reg)
+func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
+	value := expr.IrExpr.HlExpr.Token.LitValue
+	if value == nil {
+		return nil, fmt.Errorf("nil return value")
+	}
+
+	convertedValue, err := c.convertValue(value)
+	if err != nil {
+		return nil, err
+	}
+	addr := builder.AddConstant(convertedValue)
+	reg := builder.NextRegister()
+	builder.AddInstruction(isa.InstLoad(reg, addr))
+	return &reg, nil
+}
+
+func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
+	left := c.findRegister(expr.Left)
+	right := c.findRegister(expr.Right)
+	reg := builder.NextRegister()
+
+	switch expr.IrExpr.Op.Type {
+	case token.ADD:
+		builder.AddInstruction(isa.InstAdd(reg, left, right))
+	case token.SUB:
+		builder.AddInstruction(isa.InstSub(reg, left, right))
+	case token.MUL:
+		builder.AddInstruction(isa.InstMul(reg, left, right))
+	default:
+		return nil, fmt.Errorf("unknown binary expression type: %T", expr)
+	}
+
+	return &reg, nil
+}
+
+func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
+	return isa.Register(v.Version)
 }
 
 func (c *Codegenerator) convertValue(v interface{}) (isa.Value, error) {

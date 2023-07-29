@@ -18,6 +18,7 @@ const (
 	CompilationPhaseTypeCheck   CompilationPhase = "typecheck"
 	CompilationPhaseLowerToCore CompilationPhase = "lowertocore"
 	CompilationPhaseLowerToIR   CompilationPhase = "lowertoir"
+	CompilationPhaseSSA         CompilationPhase = "ssa"
 	CompilationPhaseOptimize    CompilationPhase = "optimize"
 	CompilationPhaseCodegen     CompilationPhase = "codegen"
 )

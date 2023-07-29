@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 )
 
@@ -155,7 +156,7 @@ func (p *ASTPrinter) printToken(tok token.Token) {
 	}
 }
 
-func (p *ASTPrinter) printId(id NodeId) {
+func (p *ASTPrinter) printId(id astutils.NodeId) {
 	if p.options.IncludeIDs {
 		p.output.WriteString(fmt.Sprintf(" (id %d)", id))
 	}

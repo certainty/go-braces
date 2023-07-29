@@ -7,15 +7,13 @@
 package ast
 
 import (
-	"fmt"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 )
 
 type (
-	NodeId uint64
-
 	Node interface {
-		ID() NodeId
+		astutils.NodeIded
 		Location() token.Location
 	}
 
@@ -35,50 +33,46 @@ type (
 	}
 )
 
-func (n NodeId) String() string {
-	return fmt.Sprintf("%d", n)
-}
-
 // //////////////////////////////////////////////////
 // Expressions
 // //////////////////////////////////////////////////
 type (
 	BadExpr struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 	}
 
 	BasicLitExpr struct {
-		id    NodeId
+		id    astutils.NodeId
 		Token token.Token
 	}
 
 	ParenExpr struct {
-		id   NodeId
+		id   astutils.NodeId
 		Expr Expression
 	}
 
 	BlockExpr struct {
-		id         NodeId
+		id         astutils.NodeId
 		location   token.Location
 		Statements []Statement
 	}
 
 	UnaryExpr struct {
-		id   NodeId
+		id   astutils.NodeId
 		Op   token.Token
 		Expr Expression
 	}
 
 	BinaryExpr struct {
-		id    NodeId
+		id    astutils.NodeId
 		Op    token.Token
 		Left  Expression
 		Right Expression
 	}
 
 	Identifier struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 		Name     string
 	}
@@ -92,13 +86,13 @@ func (UnaryExpr) exprNode()    {}
 func (BinaryExpr) exprNode()   {}
 func (Identifier) exprNode()   {}
 
-func (e BadExpr) ID() NodeId      { return e.id }
-func (e BasicLitExpr) ID() NodeId { return e.id }
-func (e ParenExpr) ID() NodeId    { return e.id }
-func (e BlockExpr) ID() NodeId    { return e.id }
-func (e UnaryExpr) ID() NodeId    { return e.id }
-func (e BinaryExpr) ID() NodeId   { return e.id }
-func (e Identifier) ID() NodeId   { return e.id }
+func (e BadExpr) ID() astutils.NodeId      { return e.id }
+func (e BasicLitExpr) ID() astutils.NodeId { return e.id }
+func (e ParenExpr) ID() astutils.NodeId    { return e.id }
+func (e BlockExpr) ID() astutils.NodeId    { return e.id }
+func (e UnaryExpr) ID() astutils.NodeId    { return e.id }
+func (e BinaryExpr) ID() astutils.NodeId   { return e.id }
+func (e Identifier) ID() astutils.NodeId   { return e.id }
 
 func (e BadExpr) Location() token.Location      { return e.location }
 func (e BasicLitExpr) Location() token.Location { return e.Token.Location }
@@ -117,7 +111,7 @@ func (e BasicLitExpr) Value() interface{} {
 // //////////////////////////////////////////////////
 type (
 	BadStmt struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 	}
 
@@ -129,8 +123,8 @@ type (
 func (BadStmt) stmtNode()  {}
 func (ExprStmt) stmtNode() {}
 
-func (s BadStmt) ID() NodeId  { return s.id }
-func (s ExprStmt) ID() NodeId { return s.Expr.ID() }
+func (s BadStmt) ID() astutils.NodeId  { return s.id }
+func (s ExprStmt) ID() astutils.NodeId { return s.Expr.ID() }
 
 func (s BadStmt) Location() token.Location  { return s.location }
 func (s ExprStmt) Location() token.Location { return s.Expr.Location() }
@@ -140,18 +134,18 @@ func (s ExprStmt) Location() token.Location { return s.Expr.Location() }
 // //////////////////////////////////////////////////
 type (
 	BadDecl struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 	}
 
 	TypeSpec struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 		Name     Identifier
 	}
 
 	ProcDecl struct {
-		id       NodeId
+		id       astutils.NodeId
 		location token.Location
 		Name     Identifier
 		Type     ProcType
@@ -163,9 +157,9 @@ func (BadDecl) declNode()  {}
 func (TypeSpec) declNode() {}
 func (ProcDecl) declNode() {}
 
-func (d BadDecl) ID() NodeId  { return d.id }
-func (d TypeSpec) ID() NodeId { return d.id }
-func (d ProcDecl) ID() NodeId { return d.id }
+func (d BadDecl) ID() astutils.NodeId  { return d.id }
+func (d TypeSpec) ID() astutils.NodeId { return d.id }
+func (d ProcDecl) ID() astutils.NodeId { return d.id }
 
 func (d BadDecl) Location() token.Location  { return d.location }
 func (d TypeSpec) Location() token.Location { return d.location }
@@ -176,20 +170,20 @@ func (d ProcDecl) Location() token.Location { return d.location }
 // //////////////////////////////////////////////////
 type (
 	Field struct {
-		id   NodeId
+		id   astutils.NodeId
 		Name Identifier
 		Type *TypeSpec
 	}
 
 	ProcType struct {
-		id     NodeId
+		id     astutils.NodeId
 		Params []Field
 		Result *TypeSpec
 	}
 )
 
-func (f Field) ID() NodeId    { return f.id }
-func (t ProcType) ID() NodeId { return t.id }
+func (f Field) ID() astutils.NodeId    { return f.id }
+func (t ProcType) ID() astutils.NodeId { return t.id }
 
 func (f Field) Location() token.Location    { return f.Name.Location() }
 func (t ProcType) Location() token.Location { return t.Result.Location() }
@@ -199,11 +193,11 @@ func (t ProcType) Location() token.Location { return t.Result.Location() }
 // //////////////////////////////////////////////////
 
 type Source struct {
-	id           NodeId
+	id           astutils.NodeId
 	Declarations []Declaration
 }
 
-func (s Source) ID() NodeId { return s.id }
+func (s Source) ID() astutils.NodeId { return s.id }
 func (s Source) Location() token.Location {
 	if len(s.Declarations) > 0 {
 		return s.Declarations[0].Location()
