@@ -95,12 +95,25 @@ type (
 	ExprStatement struct {
 		Expr Expression
 	}
+
+	ReturnStmt struct {
+		id    astutils.NodeId
+		Value Expression
+	}
 )
 
-func (ExprStatement) stmtNode()             {}
+func (ExprStatement) stmtNode() {}
+func (ReturnStmt) stmtNode()    {}
+
 func (e ExprStatement) ID() astutils.NodeId { return e.Expr.ID() }
+func (e ReturnStmt) ID() astutils.NodeId    { return e.id }
+
 func (e ExprStatement) HighlevelNodeIds() []astutils.NodeId {
 	return e.Expr.HighlevelNodeIds()
+}
+
+func (e ReturnStmt) HighlevelNodeIds() []astutils.NodeId {
+	return e.Value.HighlevelNodeIds()
 }
 
 type (

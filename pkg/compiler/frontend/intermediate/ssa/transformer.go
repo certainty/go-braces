@@ -83,6 +83,13 @@ func (t *Transformer) TransformStatement(stmt ir.Statement, block *BasicBlockBui
 	switch stmt := stmt.(type) {
 	case ir.ExprStatement:
 		return t.TransformExpr(stmt.Expr, block)
+	case ir.ReturnStmt:
+		expr, err := t.TransformExpr(stmt.Value, block)
+		if err != nil {
+			return nil, err
+		}
+		block.AddReturn(expr)
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("unknown statement type: %T", stmt)
 	}

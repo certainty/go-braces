@@ -59,14 +59,24 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 	proc := ctx.builder.ProcDecl(procName, loweredType.(types.Procedure), decl)
 
 	entryBlock := ctx.builder.BlockBuilder("entry", decl.ID())
+	var loweredStmt ast.Statement
 
 	for _, stmt := range decl.Body.Statements {
-		loweredStmt, err := ctx.lowerStatement(stmt)
+		loweredStmt, err = ctx.lowerStatement(stmt)
 		if err != nil {
 			return ast.ProcDecl{}, err
 		}
 		entryBlock.AddStatement(loweredStmt)
 	}
+
+	if loweredStmt != nil {
+		switch stmt := loweredStmt.(type) {
+
+		case ast.ExprStatement:
+			entryBlock.ReplaceLastStatement(entryBlock.ReturnStmt(stmt.Expr))
+		}
+	}
+
 	proc.Blocks = append(proc.Blocks, entryBlock.Close())
 	return proc, nil
 }

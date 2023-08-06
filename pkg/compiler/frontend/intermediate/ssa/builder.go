@@ -80,6 +80,13 @@ func (b *BasicBlockBuilder) AddExpr(expr Expression) {
 	})
 }
 
+func (b *BasicBlockBuilder) AddReturn(expr Expression) {
+	b.block.Statements = append(b.block.Statements, ReturnStmt{
+		id:    b.nodeIds.Next(),
+		Value: expr,
+	})
+}
+
 func (b *BasicBlockBuilder) Variable(prefix string) Variable {
 	return Variable{
 		Prefix:  prefix,

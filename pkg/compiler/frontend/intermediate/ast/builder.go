@@ -77,6 +77,17 @@ func (b *BlockBuilder) AddStatement(statement Statement) {
 	b.expr.Statements = append(b.expr.Statements, statement)
 }
 
+func (b *BlockBuilder) ReplaceLastStatement(statement Statement) {
+	b.expr.Statements[len(b.expr.Statements)-1] = statement
+}
+
+func (b *Builder) ReturnStmt(expr Expression) Statement {
+	return ReturnStmt{
+		id:    b.nodeIds.Next(),
+		Value: expr,
+	}
+}
+
 func (b *BlockBuilder) Close() BlockExpr {
 	// todo add terminating return if it's missing
 	return *b.expr
