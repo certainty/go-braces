@@ -1,0 +1,19 @@
+package main
+
+
+proc main() {
+  set mySet {1,2,3}: Vec[Float]
+  set myVec [1,2,3]
+  set myMap 1 -> 2, 3 -> 4
+  set myTuple (1, 2, 3)
+
+  myTuple(3) // return third element
+  mySet(2)   // member test
+  myVec(3)  // return element at index 3
+  myMap(1)  // check mapping with key 1
+
+  set myMap(1) 3 //set the value
+  set myVec(3) 4
+  set myTuple(2) 3
+  set mySet(5)   // hmmm
+}

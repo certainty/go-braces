@@ -1,18 +1,16 @@
 BINARY_COMPILE=braces-compile
 BINARY_VM=braces-vm
 BINARY_INTROSPECT=braces-introspect
-BINARY_DEBUG_SERVER=debug-server
-BINARY_DEBUG_CLIENT=debug-client
 TEST?='./...'
 GOFMT_FILES?=$$(find . -name '*.go')
 GOLANGCI_LINT_VERSION?='v1.52.2'
 IN_CI ?= false
 
-.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools install-proto-tools repl build-proto build-introspect
+.PHONY: build build-compile build-vm test lint format check-format vet clean tidy install-tools repl build-introspect
 
-build: tidy build-compile build-vm build-introspect build-debug-server build-debug-client
+build: tidy build-compile build-vm build-introspect 
 
-build-compile: build-proto
+build-compile:
 	@echo "Building $(BINARY_COMPILE)..."
 	@go build -o target/$(BINARY_COMPILE) ./cmd/$(BINARY_COMPILE)
 
@@ -23,15 +21,6 @@ build-vm:
 build-introspect:
 	@echo "Building $(BINARY_INTROSPECT)..."
 	@go build -o target/$(BINARY_INTROSPECT) ./cmd/$(BINARY_INTROSPECT)
-
-build-debug-server:
-	@echo "Building $(BINARY_DEBUG_SERVER)..."
-	@go build -o target/$(BINARY_DEBUG_SERVER) ./cmd/$(BINARY_DEBUG_SERVER)
-
-build-debug-client:
-	@echo "Building $(BINARY_DEBUG_CLIENT)..."
-	@go build -o target/$(BINARY_DEBUG_CLIENT) ./cmd/$(BINARY_DEBUG_CLIENT)
-
 
 test:
 	@echo "Running tests..."
@@ -44,6 +33,10 @@ test:
 lint:
 	@echo "Running linters..."
 	@golangci-lint run --tests=false --timeout=5m
+
+staticcheck:
+	@echo "Running staticcheck..."
+	@staticcheck ./...
 
 format:
 	@echo "Formatting code..."
@@ -65,23 +58,35 @@ tidy:
 	@echo "Tidying up..."
 	@go mod tidy
 
-install-tools: install-linter install-gotestsum
+doc:
+	@echo "Starting godoc server at localhost:6060"
+	@godoc -http=:6060
+
+install-tools: install-linter install-gotestsum  install-staticcheck
 
 install-linter:
 	@if ! command -v golangci-lint &> /dev/null; then \
 	  echo "Installing linter..."; \
-	  go get -u github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
+	  go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi 
 
 install-gotestsum:
 	@if [ $(IN_CI) = false ]; then \
     if ! command -v gotestsum &> /dev/null; then \
 		  echo "Installing gotestsum..."; \
-		  go get gotest.tools/gotestsum; \
 		  go install gotest.tools/gotestsum; \
 		fi \
 	fi
 
+install-staticcheck:
+	@if ! command -v staticcheck &> /dev/null; then \
+		echo "Installing staticcheck..."; \
+		go install honnef.co/go/tools/cmd/staticcheck@latest; \
+	fi
+
 repl: build
 	./target/braces-vm repl
+
+introspect: build 
+	./target/braces-introspect compiler
 

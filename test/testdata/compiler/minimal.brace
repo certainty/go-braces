@@ -1,0 +1,5 @@
+// a comment
+
+proc main() {
+  3 + 5 * 4
+}

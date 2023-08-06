@@ -1,0 +1,8 @@
+package main
+
+proc main() {
+  set! x (3 + 3 * 4)
+  trace(x)
+  set! y x
+  trace(x)
+}
