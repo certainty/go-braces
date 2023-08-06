@@ -3,7 +3,6 @@ package codegen
 import (
 	"fmt"
 
-	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
@@ -152,16 +151,16 @@ func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilde
 	builder.AddInstruction(isa.InstLoad(reg, addr))
 }
 
-func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (*isa.Register, error) {
-	switch expr := expr.(type) {
-	case ssa.AtomicLitExpr:
-		return c.emitLiteral(expr, builder)
-	case ssa.BinaryExpr:
-		return c.emitBinaryExpression(expr, builder)
-	default:
-		return nil, fmt.Errorf("unknown expression type: %T", expr)
-	}
-}
+// func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (*isa.Register, error) {
+// 	switch expr := expr.(type) {
+// 	case ssa.AtomicLitExpr:
+// 		return c.emitLiteral(expr, builder)
+// 	// case ssa.BinaryExpr:
+// 	// 	return c.emitBinaryExpression(expr, builder)
+// 	default:
+// 		return nil, fmt.Errorf("unknown expression type: %T", expr)
+// 	}
+// }
 
 func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
 	value := expr.IrExpr.HlExpr.Token.LitValue
@@ -179,24 +178,24 @@ func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBui
 	return &reg, nil
 }
 
-func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
-	left := c.findRegister(expr.Left)
-	right := c.findRegister(expr.Right)
-	reg := builder.NextRegister()
+// func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
+// 	left := c.findRegister(expr.Left)
+// 	right := c.findRegister(expr.Right)
+// 	reg := builder.NextRegister()
 
-	switch expr.IrExpr.Op.Type {
-	case token.ADD:
-		builder.AddInstruction(isa.InstAdd(reg, left, right))
-	case token.SUB:
-		builder.AddInstruction(isa.InstSub(reg, left, right))
-	case token.MUL:
-		builder.AddInstruction(isa.InstMul(reg, left, right))
-	default:
-		return nil, fmt.Errorf("unknown binary expression type: %T", expr)
-	}
+// 	switch expr.IrExpr.Op.Type {
+// 	case token.ADD:
+// 		builder.AddInstruction(isa.InstAdd(reg, left, right))
+// 	case token.SUB:
+// 		builder.AddInstruction(isa.InstSub(reg, left, right))
+// 	case token.MUL:
+// 		builder.AddInstruction(isa.InstMul(reg, left, right))
+// 	default:
+// 		return nil, fmt.Errorf("unknown binary expression type: %T", expr)
+// 	}
 
-	return &reg, nil
-}
+// 	return &reg, nil
+// }
 
 func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
 	return isa.Register(v.Version)

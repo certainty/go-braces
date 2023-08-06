@@ -48,9 +48,9 @@ type (
 	}
 
 	BinaryExpr struct {
-		id     astutils.NodeId
-		Op     token.Token
-		tpe    types.Type
+		id astutils.NodeId
+		Op token.Token
+		//tpe    types.Type
 		Left   Expression
 		Right  Expression
 		hlExpr hlast.BinaryExpr

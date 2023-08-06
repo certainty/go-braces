@@ -52,6 +52,9 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 	}
 
 	loweredType, err := ctx.lowerType(procType)
+	if err != nil {
+		return ast.ProcDecl{}, err
+	}
 	proc := ctx.builder.ProcDecl(ir.Label(decl.Name.Name), loweredType.(types.Procedure), decl)
 
 	entryBlock := ctx.builder.BlockBuilder("entry")

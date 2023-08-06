@@ -93,7 +93,8 @@ func (BasicBlock) ssaStmtNode() {}
 func (SetStmt) ssaStmtNode()    {}
 func (ReturnStmt) ssaStmtNode() {}
 
-func (p ProcDecl) ID() astutils.NodeId { return p.id }
+func (p ProcDecl) ID() astutils.NodeId   { return p.id }
+func (r ReturnStmt) ID() astutils.NodeId { return r.id }
 
 func (b *BasicBlock) AddPredecessor(block *BasicBlock) {
 	if b.Predecessors == nil {
