@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
@@ -110,6 +111,7 @@ func (p *Parser) parseInput() (*ast.Source, error) {
 	p.advance()
 	for {
 		declarations = append(declarations, p.ParseDeclaration())
+
 		if p.currentToken.IsEOF() {
 			break
 		}
@@ -170,6 +172,7 @@ func (p *Parser) synchronize() {
 }
 
 func (p *Parser) ParseDeclaration() ast.Declaration {
+	log.Printf("ParseDeclaration: %s", p.currentToken)
 	switch p.currentToken.Type {
 	case token.PROC:
 		p.parseProcedureDeclaration()
@@ -188,17 +191,19 @@ func (p *Parser) ParseDeclaration() ast.Declaration {
 }
 
 func (p *Parser) parseProcedureDeclaration() ast.Declaration {
+	log.Printf("ParseProcedure: %s", p.currentToken)
+
 	p.consume(token.PROC, "expected proc")
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
 	params := p.parseArguments()
-
 	var result *ast.TypeSpec = nil
 	if p.match(token.COLON) {
 		r := p.parseTypeSpec()
 		result = &r
 	}
 
+	log.Printf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
 	body := p.parseBlock()
 	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
@@ -222,6 +227,7 @@ func (p *Parser) parseArguments() []ast.Field {
 }
 
 func (p *Parser) parseTypeSpec() ast.TypeSpec {
+	log.Printf("ParseTypeSpec: %s", p.currentToken)
 	location := p.currentToken.Location
 
 	p.consume(token.COLON, "expected ':'")
@@ -238,6 +244,7 @@ func (p *Parser) parseIdentifier() ast.Identifier {
 }
 
 func (p *Parser) parseBlock() ast.BlockExpr {
+	log.Printf("ParseBlock: %s", p.currentToken)
 	// TODO: track scope
 	p.consume(token.LBRACE, "expected '{'")
 	location := p.previousToken.Location
@@ -250,6 +257,8 @@ func (p *Parser) parseBlock() ast.BlockExpr {
 }
 
 func (p *Parser) parseBlockStatment() ast.Statement {
+	log.Printf("parseBlockStatment: %s", p.currentToken)
+
 	if p.match(token.LBRACE) {
 		return p.astBuilder.NewExprStatement(p.parseBlock())
 	}

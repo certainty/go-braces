@@ -11,7 +11,7 @@ type Builder struct {
 
 func NewBuilder() *Builder {
 	return &Builder{
-		nodeIds: astutils.NewNodeIdManager(),
+		nodeIds: astutils.NewNodeIdManager("hl-"),
 	}
 }
 

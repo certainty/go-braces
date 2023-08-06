@@ -3,7 +3,7 @@ package astutils
 import "fmt"
 
 type (
-	NodeId  uint64
+	NodeId  string
 	Version uint64
 
 	NodeIded interface {
@@ -15,7 +15,8 @@ type (
 	}
 
 	NodeIdManager struct {
-		nodeId NodeId
+		counter uint64
+		prefix  string
 	}
 
 	VersionManager struct {
@@ -23,13 +24,13 @@ type (
 	}
 )
 
-func NewNodeIdManager() NodeIdManager {
-	return NodeIdManager{0}
+func NewNodeIdManager(prefix string) NodeIdManager {
+	return NodeIdManager{prefix: prefix}
 }
 
 func (m *NodeIdManager) Next() NodeId {
-	m.nodeId++
-	return m.nodeId
+	m.counter++
+	return NodeId(fmt.Sprintf("%s%d", m.prefix, m.counter))
 }
 
 func NewVersionManager() VersionManager {

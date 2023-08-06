@@ -134,7 +134,6 @@ func TestParseProcedure(t *testing.T) {
 			assert.Equal(t, test.expected, result)
 		})
 	}
-
 }
 
 // let's test errors

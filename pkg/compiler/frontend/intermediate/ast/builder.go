@@ -17,7 +17,7 @@ type BlockBuilder struct {
 
 func NewBuilder() *Builder {
 	return &Builder{
-		nodeIds: astutils.NewNodeIdManager(),
+		nodeIds: astutils.NewNodeIdManager("ir-"),
 	}
 }
 
