@@ -160,7 +160,7 @@ func (p *ASTPrinter) printToken(tok token.Token) {
 
 func (p *ASTPrinter) printId(id astutils.NodeId) {
 	if p.options.IncludeIDs {
-		p.output.WriteString(fmt.Sprintf(" (id %d)", id))
+		p.output.WriteString(fmt.Sprintf(" (id %s)", id))
 	}
 }
 

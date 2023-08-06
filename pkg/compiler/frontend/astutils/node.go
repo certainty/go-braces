@@ -42,10 +42,6 @@ func (m *VersionManager) Next() Version {
 	return m.version
 }
 
-func (n NodeId) String() string {
-	return fmt.Sprintf("%d", n)
-}
-
 func (v Version) String() string {
 	return fmt.Sprintf("%d", v)
 }
