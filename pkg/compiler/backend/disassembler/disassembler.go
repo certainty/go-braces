@@ -2,10 +2,11 @@ package disassembler
 
 import (
 	"fmt"
-	"github.com/certainty/go-braces/pkg/shared/isa"
 	"io"
 	"log"
 	"strings"
+
+	"github.com/certainty/go-braces/pkg/shared/isa"
 )
 
 type Disassembler struct {
@@ -81,7 +82,7 @@ func (disass *Disassembler) DisassInstruction(code *isa.CodeUnit, addr isa.Instr
 	instr := code.Instructions[addr]
 
 	switch instr.Opcode {
-	case isa.OP_RET, isa.OP_HALT, isa.OP_ADD, isa.OP_ADDI, isa.OP_SUB, isa.OP_SUBI, isa.OP_MUL, isa.OP_DIV:
+	case isa.OP_RET, isa.OP_STORE, isa.OP_HALT, isa.OP_ADD, isa.OP_ADDI, isa.OP_SUB, isa.OP_SUBI, isa.OP_MUL, isa.OP_DIV:
 		return disass.disassSimpleInstruction(instr, addr), nil
 	case isa.OP_LOAD:
 		return disass.disassConstant(code, addr), nil

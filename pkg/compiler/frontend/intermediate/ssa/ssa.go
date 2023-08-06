@@ -43,14 +43,19 @@ type (
 		id       astutils.NodeId
 		IrExprId astutils.NodeId
 		Op       token.Token
-		Left     Variable
-		Right    Variable
+		Left     Expression
+		Right    Expression
 	}
 
 	AtomicLitExpr struct {
 		id       astutils.NodeId
 		Value    token.Token
 		IrExprId astutils.NodeId
+	}
+
+	VariableExpr struct {
+		id       astutils.NodeId
+		Variable Variable
 	}
 
 	Phi struct {
@@ -69,8 +74,12 @@ type (
 		Value Expression
 	}
 
+	ExprStatement struct {
+		id   astutils.NodeId
+		Expr Expression
+	}
+
 	Variable struct {
-		id      astutils.NodeId
 		Prefix  string
 		Version astutils.Version
 	}
@@ -84,20 +93,22 @@ type (
 func (BinaryExpr) ssaExprNode()    {}
 func (AtomicLitExpr) ssaExprNode() {}
 func (Phi) ssaExprNode()           {}
-func (Variable) ssaExprNode()      {}
+func (VariableExpr) ssaExprNode()  {}
 
 func (e AtomicLitExpr) ID() astutils.NodeId { return e.id }
 func (e BinaryExpr) ID() astutils.NodeId    { return e.id }
 func (e Phi) ID() astutils.NodeId           { return e.id }
-func (e Variable) ID() astutils.NodeId      { return e.id }
+func (e VariableExpr) ID() astutils.NodeId  { return e.id }
 
-func (ProcDecl) ssaDeclNode()   {}
-func (BasicBlock) ssaStmtNode() {}
-func (SetStmt) ssaStmtNode()    {}
-func (ReturnStmt) ssaStmtNode() {}
+func (ProcDecl) ssaDeclNode()      {}
+func (BasicBlock) ssaStmtNode()    {}
+func (SetStmt) ssaStmtNode()       {}
+func (ReturnStmt) ssaStmtNode()    {}
+func (ExprStatement) ssaStmtNode() {}
 
 func (p ProcDecl) ID() astutils.NodeId   { return p.id }
 func (r ReturnStmt) ID() astutils.NodeId { return r.id }
+func (s SetStmt) ID() astutils.NodeId    { return s.id }
 
 func (b *BasicBlock) AddPredecessor(block *BasicBlock) {
 	if b.Predecessors == nil {

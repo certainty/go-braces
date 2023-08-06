@@ -6,12 +6,14 @@ import (
 )
 
 type Builder struct {
-	nodeIds astutils.NodeIdManager
+	nodeIds  astutils.NodeIdManager
+	versions astutils.VersionManager
 }
 
 func NewBuilder() Builder {
 	return Builder{
-		nodeIds: astutils.NewNodeIdManager("ssa-"),
+		nodeIds:  astutils.NewNodeIdManager("ssa-"),
+		versions: astutils.NewVersionManager(),
 	}
 }
 
@@ -23,7 +25,7 @@ func (b *Builder) AtomicLitExpr(expr ir.AtomicLitExpr) AtomicLitExpr {
 	}
 }
 
-func (b *Builder) BinaryExpr(expr ir.BinaryExpr, leftVar Variable, rightVar Variable) BinaryExpr {
+func (b *Builder) BinaryExpr(expr ir.BinaryExpr, leftVar Expression, rightVar Expression) BinaryExpr {
 	return BinaryExpr{
 		id:       b.nodeIds.Next(),
 		IrExprId: expr.ID(),
@@ -33,14 +35,23 @@ func (b *Builder) BinaryExpr(expr ir.BinaryExpr, leftVar Variable, rightVar Vari
 	}
 }
 
+func (b *Builder) VariableExpr(variable Variable) VariableExpr {
+	return VariableExpr{
+		id:       b.nodeIds.Next(),
+		Variable: variable,
+	}
+}
+
 type BasicBlockBuilder struct {
-	nodeIds *astutils.NodeIdManager
-	block   *BasicBlock
+	nodeIds  *astutils.NodeIdManager
+	versions *astutils.VersionManager
+	block    *BasicBlock
 }
 
 func (b *Builder) BlockBuilder(name ir.Label) *BasicBlockBuilder {
 	return &BasicBlockBuilder{
-		nodeIds: &b.nodeIds,
+		nodeIds:  &b.nodeIds,
+		versions: &b.versions,
 		block: &BasicBlock{
 			id:         b.nodeIds.Next(),
 			label:      name,
@@ -62,10 +73,17 @@ func (b *BasicBlockBuilder) AddAssignment(expr Expression) Variable {
 	return variable
 }
 
+func (b *BasicBlockBuilder) AddExpr(expr Expression) {
+	b.block.Statements = append(b.block.Statements, ExprStatement{
+		id:   b.nodeIds.Next(),
+		Expr: expr,
+	})
+}
+
 func (b *BasicBlockBuilder) Variable(prefix string) Variable {
 	return Variable{
-		Prefix: prefix,
-		id:     b.nodeIds.Next(),
+		Prefix:  prefix,
+		Version: b.versions.Next(),
 	}
 }
 

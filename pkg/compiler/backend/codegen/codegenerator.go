@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
@@ -19,12 +18,12 @@ type CodeUnitBuilder struct {
 	registers       uint32
 }
 
-func newCodeUnitBuilder(instrumentation compiler_introspection.Instrumentation) *CodeUnitBuilder {
+func newCodeUnitBuilder(instrumentation compiler_introspection.Instrumentation, registers uint32) *CodeUnitBuilder {
 	return &CodeUnitBuilder{
 		instrumentation: instrumentation,
 		instructions:    make([]isa.Instruction, 0),
 		constants:       make([]isa.Value, 0),
-		registers:       0,
+		registers:       registers,
 	}
 }
 
@@ -56,6 +55,7 @@ type Codegenerator struct {
 	functionAddresses             map[isa.Label]isa.Address
 	generalPurposeRegisterOffset  uint8
 	currentGeneralPurposeRegister uint32
+	registers                     map[string]isa.Register
 }
 
 func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *Codegenerator {
@@ -68,6 +68,7 @@ func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *C
 		currentGeneralPurposeRegister: 16,
 		functionAddresses:             make(map[isa.Label]isa.Address, 0),
 		module:                        mod,
+		registers:                     make(map[string]isa.Register, 0),
 	}
 }
 
@@ -79,12 +80,6 @@ func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModu
 		if err := c.emitDeclaration(decl); err != nil {
 			return nil, err
 		}
-	}
-
-	log.Printf("Generated module with %d functions", len(c.module.Functions))
-
-	if len(c.module.Functions) != 0 {
-		log.Printf("Generated module with %d instructions", len(c.module.Functions[0].Code.Instructions))
 	}
 
 	c.module.EntryPoint = 0 // FIXME: set to main
@@ -102,7 +97,7 @@ func (c *Codegenerator) emitDeclaration(decl ssa.Declaration) error {
 
 // we should return the function address to fill the jump table
 func (c *Codegenerator) emitProcedure(procDecl *ssa.ProcDecl) error {
-	codeBuilder := newCodeUnitBuilder(c.instrumentation)
+	codeBuilder := newCodeUnitBuilder(c.instrumentation, c.currentGeneralPurposeRegister)
 
 	for _, block := range procDecl.Blocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
@@ -124,10 +119,7 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 }
 
 func (c *Codegenerator) emitBlock(block *ssa.BasicBlock, builder *CodeUnitBuilder) error {
-	log.Printf("Emitting block %v", block)
 	for _, statement := range block.Statements {
-		log.Printf("Emitting statement %v", statement)
-
 		switch stmt := statement.(type) {
 		case ssa.ReturnStmt:
 			err := c.emitReturn(stmt, builder)
@@ -155,8 +147,8 @@ func (c *Codegenerator) emitReturn(stmt ssa.ReturnStmt, builder *CodeUnitBuilder
 		}
 		builder.AddInstruction(isa.InstRet(reg))
 		return nil
-	case ssa.Variable:
-		builder.AddInstruction(isa.InstRet(c.findRegister(v)))
+	case ssa.VariableExpr:
+		builder.AddInstruction(isa.InstRet(c.findRegister(v.Variable)))
 		return nil
 	default:
 		return fmt.Errorf("unknown return type: %T", stmt.Value)
@@ -203,8 +195,14 @@ func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBui
 }
 
 func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (isa.Register, error) {
-	left := c.findRegister(expr.Left)
-	right := c.findRegister(expr.Right)
+	left, err := c.emitBinaryExprOperand(expr.Left, builder)
+	if err != nil {
+		return 0, err
+	}
+	right, err := c.emitBinaryExprOperand(expr.Right, builder)
+	if err != nil {
+		return 0, err
+	}
 	reg := builder.NextRegister()
 
 	switch expr.Op.Type {
@@ -221,8 +219,37 @@ func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeU
 	return reg, nil
 }
 
+func (c *Codegenerator) emitBinaryExprOperand(expr ssa.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
+	switch expr := expr.(type) {
+	case ssa.AtomicLitExpr:
+		return c.emitLiteral(expr, builder)
+	case ssa.VariableExpr:
+		return c.findRegister(expr.Variable), nil
+	default:
+		return 0, fmt.Errorf("unknown binary expression operand type: %T", expr)
+	}
+}
+
 func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
-	return isa.Register(v.Version)
+	varKey := variableKey(v)
+	reg, ok := c.registers[varKey]
+
+	if !ok {
+		reg = c.NextRegister()
+		c.registers[varKey] = reg
+		return reg
+	} else {
+		return reg
+	}
+}
+
+func variableKey(v ssa.Variable) string {
+	return fmt.Sprintf("%s%d", v.Prefix, v.Version)
+}
+
+func (c *Codegenerator) NextRegister() isa.Register {
+	c.currentGeneralPurposeRegister++
+	return isa.Register(c.currentGeneralPurposeRegister)
 }
 
 func (c *Codegenerator) convertValue(v interface{}) (isa.Value, error) {

@@ -66,7 +66,7 @@ func (t *Transformer) TransformBlock(block *ir.BlockExpr) (*BasicBlock, error) {
 	blockBuilder := t.BlockBuilder(block.Label)
 
 	for _, stmt := range block.Statements {
-		_, _, err := t.TransformStatement(stmt, blockBuilder)
+		_, err := t.TransformStatement(stmt, blockBuilder)
 		if err != nil {
 			return nil, err
 		}
@@ -77,44 +77,35 @@ func (t *Transformer) TransformBlock(block *ir.BlockExpr) (*BasicBlock, error) {
 	return blockBuilder.Close(), nil
 }
 
-func (t *Transformer) TransformStatement(stmt ir.Statement, block *BasicBlockBuilder) (Variable, bool, error) {
+func (t *Transformer) TransformStatement(stmt ir.Statement, block *BasicBlockBuilder) (Expression, error) {
 	log.Printf("Transforming statement %v", stmt)
 
 	switch stmt := stmt.(type) {
 	case ir.ExprStatement:
 		return t.TransformExpr(stmt.Expr, block)
 	default:
-		return Variable{}, false, fmt.Errorf("unknown statement type: %T", stmt)
+		return nil, fmt.Errorf("unknown statement type: %T", stmt)
 	}
 }
 
-func (t *Transformer) TransformExpr(expr ir.Expression, block *BasicBlockBuilder) (Variable, bool, error) {
-	log.Printf("Transforming expression %v", expr)
+func (t *Transformer) TransformExpr(expr ir.Expression, block *BasicBlockBuilder) (Expression, error) {
 	switch expr := expr.(type) {
 	case ir.AtomicLitExpr:
-		variable := block.AddAssignment(t.AtomicLitExpr(expr))
-		return variable, true, nil
+		return t.AtomicLitExpr(expr), nil
 
 	case ir.BinaryExpr:
-		left, hasVar, err := t.TransformExpr(expr.Left, block)
+		leftExpr, err := t.TransformExpr(expr.Left, block)
 		if err != nil {
-			return Variable{}, false, err
+			return nil, err
 		}
-		if !hasVar {
-			return Variable{}, false, fmt.Errorf("expected variable in left-hand side of binary expression")
+		rightExpr, err := t.TransformExpr(expr.Right, block)
+		if err != nil {
+			return nil, err
 		}
 
-		right, hasVar, err := t.TransformExpr(expr.Right, block)
-		if err != nil {
-			return Variable{}, false, err
-		}
-		if !hasVar {
-			return Variable{}, false, fmt.Errorf("expected variable in right-hand side of binary expression")
-		}
-
-		variable := block.AddAssignment(t.BinaryExpr(expr, left, right))
-		return variable, true, nil
+		variable := block.AddAssignment(t.BinaryExpr(expr, leftExpr, rightExpr))
+		return t.VariableExpr(variable), nil
 	default:
-		return Variable{}, false, fmt.Errorf("unknown expression type: %T", expr)
+		return nil, fmt.Errorf("unknown expression type: %T", expr)
 	}
 }
