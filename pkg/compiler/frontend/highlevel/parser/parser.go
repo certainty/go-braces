@@ -175,7 +175,7 @@ func (p *Parser) ParseDeclaration() ast.Declaration {
 	log.Printf("ParseDeclaration: %s", p.currentToken)
 	switch p.currentToken.Type {
 	case token.PROC:
-		p.parseProcedureDeclaration()
+		return p.parseProcedureDeclaration()
 	case token.EOF:
 		p.advance()
 		return p.astBuilder.NewBadDecl(p.currentToken.Location)
@@ -205,6 +205,7 @@ func (p *Parser) parseProcedureDeclaration() ast.Declaration {
 
 	log.Printf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
 	body := p.parseBlock()
+	log.Printf("ParseArgs: done %v", p.hadError)
 	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
 

@@ -118,7 +118,7 @@ func TestParseProcedure(t *testing.T) {
 		{
 			name:     "simple procedure",
 			input:    "proc main() { 3+3 }",
-			expected: "(source (proc main () (block (binary-expr + 3 3))))",
+			expected: "(source (proc-decl main (block-expr (expr-stmt (binary-expr + 3 3)))))",
 		},
 	}
 
