@@ -2,6 +2,7 @@ package ssa
 
 import (
 	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
 )
 
@@ -39,15 +40,17 @@ type (
 	}
 
 	BinaryExpr struct {
-		id     astutils.NodeId
-		IrExpr ir.BinaryExpr
-		Left   Variable
-		Right  Variable
+		id       astutils.NodeId
+		IrExprId astutils.NodeId
+		Op       token.Token
+		Left     Variable
+		Right    Variable
 	}
 
 	AtomicLitExpr struct {
-		id     astutils.NodeId
-		IrExpr ir.AtomicLitExpr
+		id       astutils.NodeId
+		Value    token.Token
+		IrExprId astutils.NodeId
 	}
 
 	Phi struct {
@@ -68,7 +71,7 @@ type (
 
 	Variable struct {
 		id      astutils.NodeId
-		Prefix  ir.Label
+		Prefix  string
 		Version astutils.Version
 	}
 

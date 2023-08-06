@@ -2,6 +2,7 @@ package ssa
 
 import (
 	"fmt"
+	"log"
 
 	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
@@ -26,7 +27,7 @@ func (t *Transformer) Transform(module ir.Module) (*Module, error) {
 	ssaModule := &Module{Name: module.Name, Declarations: make([]Declaration, 0)}
 
 	for _, decl := range module.Declarations {
-		ssaDecl, err := t.TransformDeclaration(&decl)
+		ssaDecl, err := t.TransformDeclaration(decl)
 		if err != nil {
 			return nil, err
 		}
@@ -35,8 +36,9 @@ func (t *Transformer) Transform(module ir.Module) (*Module, error) {
 	return ssaModule, nil
 }
 
-func (t *Transformer) TransformDeclaration(decl *ir.Declaration) (Declaration, error) {
-	switch decl := (*decl).(type) {
+func (t *Transformer) TransformDeclaration(decl ir.Declaration) (Declaration, error) {
+	log.Printf("Transforming declaration %v", decl)
+	switch decl := decl.(type) {
 	case ir.ProcDecl:
 		return t.TransformProc(&decl)
 	default:
@@ -45,7 +47,9 @@ func (t *Transformer) TransformDeclaration(decl *ir.Declaration) (Declaration, e
 }
 
 func (t *Transformer) TransformProc(proc *ir.ProcDecl) (ProcDecl, error) {
+	log.Printf("Transforming proc %v", proc)
 	ssaProc := ProcDecl{irDecl: *proc, Blocks: make([]*BasicBlock, 0)}
+
 	for _, block := range proc.Blocks {
 		ssaBlock, err := t.TransformBlock(&block)
 		if err != nil {
@@ -57,46 +61,60 @@ func (t *Transformer) TransformProc(proc *ir.ProcDecl) (ProcDecl, error) {
 }
 
 func (t *Transformer) TransformBlock(block *ir.BlockExpr) (*BasicBlock, error) {
+	log.Printf("Transforming block %v", block)
+
 	blockBuilder := t.BlockBuilder(block.Label)
 
 	for _, stmt := range block.Statements {
-		_, err := t.TransformStatement(&stmt, &blockBuilder)
+		_, _, err := t.TransformStatement(stmt, blockBuilder)
 		if err != nil {
 			return nil, err
 		}
+
+		log.Printf("Statements: %v", blockBuilder.block)
 	}
 
 	return blockBuilder.Close(), nil
 }
 
-func (t *Transformer) TransformStatement(stmt *ir.Statement, block *BasicBlockBuilder) (*Variable, error) {
-	switch stmt := (*stmt).(type) {
+func (t *Transformer) TransformStatement(stmt ir.Statement, block *BasicBlockBuilder) (Variable, bool, error) {
+	log.Printf("Transforming statement %v", stmt)
+
+	switch stmt := stmt.(type) {
 	case ir.ExprStatement:
 		return t.TransformExpr(stmt.Expr, block)
 	default:
-		return nil, fmt.Errorf("unknown statement type: %T", stmt)
+		return Variable{}, false, fmt.Errorf("unknown statement type: %T", stmt)
 	}
 }
 
-func (t *Transformer) TransformExpr(expr ir.Expression, block *BasicBlockBuilder) (*Variable, error) {
+func (t *Transformer) TransformExpr(expr ir.Expression, block *BasicBlockBuilder) (Variable, bool, error) {
+	log.Printf("Transforming expression %v", expr)
 	switch expr := expr.(type) {
 	case ir.AtomicLitExpr:
-		variable := block.AddAssingment(t.AtomicLitExpr(expr))
-		return &variable, nil
+		variable := block.AddAssignment(t.AtomicLitExpr(expr))
+		return variable, true, nil
+
 	case ir.BinaryExpr:
-		left, err := t.TransformExpr(expr.Left, block)
+		left, hasVar, err := t.TransformExpr(expr.Left, block)
 		if err != nil {
-			return nil, err
+			return Variable{}, false, err
+		}
+		if !hasVar {
+			return Variable{}, false, fmt.Errorf("expected variable in left-hand side of binary expression")
 		}
 
-		right, err := t.TransformExpr(expr.Right, block)
+		right, hasVar, err := t.TransformExpr(expr.Right, block)
 		if err != nil {
-			return nil, err
+			return Variable{}, false, err
+		}
+		if !hasVar {
+			return Variable{}, false, fmt.Errorf("expected variable in right-hand side of binary expression")
 		}
 
-		variable := block.AddAssingment(t.BinaryExpr(expr, *left, *right))
-		return &variable, nil
+		variable := block.AddAssignment(t.BinaryExpr(expr, left, right))
+		return variable, true, nil
 	default:
-		return nil, fmt.Errorf("unknown expression type: %T", expr)
+		return Variable{}, false, fmt.Errorf("unknown expression type: %T", expr)
 	}
 }

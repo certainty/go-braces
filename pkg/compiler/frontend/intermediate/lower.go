@@ -40,7 +40,7 @@ func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 			ctx.Module.Declarations = append(ctx.Module.Declarations, proc)
 		}
 	}
-	return &ir.Module{}, nil
+	return ctx.Module, nil
 }
 
 func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
@@ -55,9 +55,10 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 	if err != nil {
 		return ast.ProcDecl{}, err
 	}
-	proc := ctx.builder.ProcDecl(ir.Label(decl.Name.Name), loweredType.(types.Procedure), decl)
+	procName := ctx.builder.Label(decl.Name.Name, decl.ID())
+	proc := ctx.builder.ProcDecl(procName, loweredType.(types.Procedure), decl)
 
-	entryBlock := ctx.builder.BlockBuilder("entry")
+	entryBlock := ctx.builder.BlockBuilder("entry", decl.ID())
 
 	for _, stmt := range decl.Body.Statements {
 		loweredStmt, err := ctx.lowerStatement(stmt)
@@ -94,7 +95,7 @@ func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ctx.builder.AtomicLit(loweredType, expr.ID()), nil
+		return ctx.builder.AtomicLit(loweredType, expr.Token, expr.ID()), nil
 	case hl.BinaryExpr:
 		exprType, err := ctx.typeOf(expr)
 		if err != nil {

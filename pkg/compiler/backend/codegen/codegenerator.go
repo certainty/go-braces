@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
@@ -80,6 +81,12 @@ func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModu
 		}
 	}
 
+	log.Printf("Generated module with %d functions", len(c.module.Functions))
+
+	if len(c.module.Functions) != 0 {
+		log.Printf("Generated module with %d instructions", len(c.module.Functions[0].Code.Instructions))
+	}
+
 	c.module.EntryPoint = 0 // FIXME: set to main
 	return c.module, nil
 }
@@ -96,12 +103,14 @@ func (c *Codegenerator) emitDeclaration(decl ssa.Declaration) error {
 // we should return the function address to fill the jump table
 func (c *Codegenerator) emitProcedure(procDecl *ssa.ProcDecl) error {
 	codeBuilder := newCodeUnitBuilder(c.instrumentation)
+
 	for _, block := range procDecl.Blocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
 			return err
 		}
 	}
-	c.addFunction(isa.Label(procDecl.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
+
+	c.addFunction(isa.Label(procDecl.Name.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
 	return nil
 }
 
@@ -115,12 +124,21 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 }
 
 func (c *Codegenerator) emitBlock(block *ssa.BasicBlock, builder *CodeUnitBuilder) error {
+	log.Printf("Emitting block %v", block)
 	for _, statement := range block.Statements {
+		log.Printf("Emitting statement %v", statement)
+
 		switch stmt := statement.(type) {
 		case ssa.ReturnStmt:
-			c.emitReturn(stmt, builder)
+			err := c.emitReturn(stmt, builder)
+			if err != nil {
+				return nil
+			}
 		case ssa.SetStmt:
-			c.emitAssignment(stmt, builder)
+			err := c.emitAssignment(stmt, builder)
+			if err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unknown instruction type: %T", statement)
 		}
@@ -152,6 +170,7 @@ func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilde
 	}
 	target := c.findRegister(stmt.Variable)
 	builder.AddInstruction(isa.InstStore(target, reg))
+
 	return nil
 }
 
@@ -167,7 +186,8 @@ func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBui
 }
 
 func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (isa.Register, error) {
-	value := expr.IrExpr.Value.LitValue
+	value := expr.Value.LitValue
+
 	if value == nil {
 		return 0, fmt.Errorf("nil return value")
 	}
@@ -187,7 +207,7 @@ func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeU
 	right := c.findRegister(expr.Right)
 	reg := builder.NextRegister()
 
-	switch expr.IrExpr.Op.Type {
+	switch expr.Op.Type {
 	case token.ADD:
 		builder.AddInstruction(isa.InstAdd(reg, left, right))
 	case token.SUB:

@@ -17,17 +17,19 @@ func NewBuilder() Builder {
 
 func (b *Builder) AtomicLitExpr(expr ir.AtomicLitExpr) AtomicLitExpr {
 	return AtomicLitExpr{
-		id:     b.nodeIds.Next(),
-		IrExpr: expr,
+		id:       b.nodeIds.Next(),
+		Value:    expr.Value,
+		IrExprId: expr.ID(),
 	}
 }
 
 func (b *Builder) BinaryExpr(expr ir.BinaryExpr, leftVar Variable, rightVar Variable) BinaryExpr {
 	return BinaryExpr{
-		id:     b.nodeIds.Next(),
-		IrExpr: expr,
-		Left:   leftVar,
-		Right:  rightVar,
+		id:       b.nodeIds.Next(),
+		IrExprId: expr.ID(),
+		Op:       expr.Op,
+		Left:     leftVar,
+		Right:    rightVar,
 	}
 }
 
@@ -36,8 +38,8 @@ type BasicBlockBuilder struct {
 	block   *BasicBlock
 }
 
-func (b *Builder) BlockBuilder(name ir.Label) BasicBlockBuilder {
-	return BasicBlockBuilder{
+func (b *Builder) BlockBuilder(name ir.Label) *BasicBlockBuilder {
+	return &BasicBlockBuilder{
 		nodeIds: &b.nodeIds,
 		block: &BasicBlock{
 			id:         b.nodeIds.Next(),
@@ -47,18 +49,20 @@ func (b *Builder) BlockBuilder(name ir.Label) BasicBlockBuilder {
 	}
 }
 
-func (b *BasicBlockBuilder) AddAssingment(expr Expression) Variable {
-	variable := b.Variable("t")
+func (b *BasicBlockBuilder) AddAssignment(expr Expression) Variable {
+	variable := b.Variable("tmp")
+
 	assignment := SetStmt{
 		id:       b.nodeIds.Next(),
 		Variable: variable,
+		Value:    expr,
 	}
 
 	b.block.Statements = append(b.block.Statements, assignment)
 	return variable
 }
 
-func (b *BasicBlockBuilder) Variable(prefix ir.Label) Variable {
+func (b *BasicBlockBuilder) Variable(prefix string) Variable {
 	return Variable{
 		Prefix: prefix,
 		id:     b.nodeIds.Next(),

@@ -30,10 +30,11 @@ func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl hl.ProcDecl) 
 	}
 }
 
-func (b *Builder) AtomicLit(tpe types.Type, hlExpr astutils.NodeId) AtomicLitExpr {
+func (b *Builder) AtomicLit(tpe types.Type, value token.Token, hlExpr astutils.NodeId) AtomicLitExpr {
 	return AtomicLitExpr{
 		id:           b.nodeIds.Next(),
 		tpe:          tpe,
+		Value:        value,
 		hlExprNodeId: hlExpr,
 	}
 }
@@ -42,6 +43,7 @@ func (b *Builder) BinaryExpr(tpe types.Type, op token.Token, left Expression, ri
 	return BinaryExpr{
 		id:           b.nodeIds.Next(),
 		tpe:          tpe,
+		Op:           op,
 		Left:         left,
 		Right:        right,
 		hlExprNodeId: hlExpr,
@@ -54,10 +56,20 @@ func (b *Builder) ExprStatement(expr Expression) Statement {
 	}
 }
 
-func (b *Builder) BlockBuilder(blockLabel string) *BlockBuilder {
+func (b *Builder) BlockBuilder(blockLabel string, blockId astutils.NodeId) *BlockBuilder {
+	synthLabel := b.Label(blockLabel, blockId)
+
 	return &BlockBuilder{
 		Builder: *b,
-		expr:    &BlockExpr{Label: Label(blockLabel), Statements: make([]Statement, 0)},
+		expr:    &BlockExpr{Label: synthLabel, Statements: make([]Statement, 0)},
+	}
+}
+
+func (b *Builder) Label(name string, hlIdentifier astutils.NodeId) Label {
+	return Label{
+		id:           b.nodeIds.Next(),
+		hlIdentifier: hlIdentifier,
+		Name:         name,
 	}
 }
 

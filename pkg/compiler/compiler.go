@@ -41,7 +41,7 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
 	log.Printf("AST: %v", theAST)
-	log.Printf("AST: %s", ast.Print(*theAST, ast.PrintTruthfully()))
+	log.Printf("AST: %s", ast.Print(theAST, ast.PrintTruthfully()))
 
 	tpeUniverse, err := c.typeCheck(theAST)
 	if err != nil {
@@ -49,13 +49,14 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	}
 
 	// middleend
-	ir, err := c.lowerToIR(theAST, tpeUniverse, input.Origin)
+	irModule, err := c.lowerToIR(theAST, tpeUniverse, input.Origin)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
-	log.Printf("IR %v", ir)
+	log.Printf("IR %v", irModule)
+	log.Printf("IR %s", ir.Print(*irModule, ir.PrintTruthfully()))
 
-	ssa, err := c.optimize(ir)
+	ssa, err := c.optimize(irModule)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}

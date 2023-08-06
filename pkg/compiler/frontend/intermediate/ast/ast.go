@@ -62,16 +62,22 @@ type (
 		hlExprNodeId astutils.NodeId
 	}
 
-	Label string
+	Label struct {
+		id           astutils.NodeId
+		hlIdentifier astutils.NodeId
+		Name         string
+	}
 )
 
 func (BlockExpr) exprNode()     {}
 func (BinaryExpr) exprNode()    {}
 func (AtomicLitExpr) exprNode() {}
+func (Label) exprNode()         {}
 
 func (e BlockExpr) ID() astutils.NodeId     { return e.id }
 func (e BinaryExpr) ID() astutils.NodeId    { return e.id }
 func (e AtomicLitExpr) ID() astutils.NodeId { return e.id }
+func (e Label) ID() astutils.NodeId         { return e.id }
 
 func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
 	hnodes := make([]astutils.NodeId, len(e.Statements))
@@ -83,6 +89,7 @@ func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
 }
 func (e BinaryExpr) HighlevelNodeIds() []astutils.NodeId    { return []astutils.NodeId{e.hlExprNodeId} }
 func (e AtomicLitExpr) HighlevelNodeIds() []astutils.NodeId { return []astutils.NodeId{e.hlExprNodeId} }
+func (e Label) HighlevelNodeIds() []astutils.NodeId         { return []astutils.NodeId{e.hlIdentifier} }
 
 type (
 	ExprStatement struct {
@@ -128,4 +135,16 @@ func (b BlockExpr) LastStatement() Statement {
 	}
 
 	return b.Statements[len(b.Statements)-1]
+}
+
+func (Module) declNode()             {}
+func (m Module) ID() astutils.NodeId { return m.Name.ID() }
+func (m Module) HighlevelNodeIds() []astutils.NodeId {
+	hnodes := make([]astutils.NodeId, len(m.Declarations))
+
+	for _, decl := range m.Declarations {
+		hnodes = append(hnodes, decl.HighlevelNodeIds()...)
+	}
+
+	return hnodes
 }

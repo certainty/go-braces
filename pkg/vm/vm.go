@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/pkg/introspection/vm_introspection"
@@ -54,6 +55,7 @@ func (vm *VM) LoadModule(module *isa.AssemblyModule) error {
 		return fmt.Errorf("invalid entry point")
 	}
 
+	log.Printf("Loading module: %v", module)
 	vm.code = &module.Functions[module.EntryPoint].Code
 	vm.pc = 0
 
