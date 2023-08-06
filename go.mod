@@ -10,6 +10,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/gkampitakis/go-snaps v0.4.7
 	github.com/philistino/teacup v0.0.0-20230407173306-0aed529e2eaa
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 )

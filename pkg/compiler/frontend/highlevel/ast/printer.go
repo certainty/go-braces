@@ -2,7 +2,6 @@ package ast
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
@@ -61,7 +60,6 @@ func (p *ASTPrinter) print(node Node) string {
 }
 
 func (p *ASTPrinter) Enter(node Node) bool {
-	log.Printf("Enter: %T", node)
 	switch n := node.(type) {
 	case Source:
 		p.output.WriteString(" (source")

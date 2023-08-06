@@ -106,8 +106,12 @@ func (disass *Disassembler) disassConstant(code *isa.CodeUnit, addr isa.Instruct
 
 func disassOperands(op isa.OpCode, operands []isa.Operand) string {
 	switch op {
-	case isa.OP_LOAD, isa.OP_STORE:
+	case isa.OP_LOAD:
 		return fmt.Sprintf("%s, %s", asRegister(operands[0]), asConstAddress(operands[1]))
+	case isa.OP_STORE:
+		return fmt.Sprintf("%s, %s", asRegister(operands[0]), asRegister(operands[1]))
+	case isa.OP_RET:
+		return asRegister(operands[0])
 	case isa.OP_ADD, isa.OP_SUB, isa.OP_MUL, isa.OP_DIV:
 		return fmt.Sprintf("%s, %s, %s", asRegister(operands[0]), asRegister(operands[1]), asRegister(operands[2]))
 	case isa.OP_ADDI, isa.OP_SUBI:

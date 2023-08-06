@@ -2,12 +2,12 @@ package parser
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/lexer"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
+	log "github.com/sirupsen/logrus"
 )
 
 type Precedence uint8
@@ -172,7 +172,8 @@ func (p *Parser) synchronize() {
 }
 
 func (p *Parser) ParseDeclaration() ast.Declaration {
-	log.Printf("ParseDeclaration: %s", p.currentToken)
+	log.Debugf("ParseDeclaration: %s", p.currentToken)
+
 	switch p.currentToken.Type {
 	case token.PROC:
 		return p.parseProcedureDeclaration()
@@ -191,15 +192,13 @@ func (p *Parser) ParseDeclaration() ast.Declaration {
 }
 
 func (p *Parser) parseProcedureDeclaration() ast.Declaration {
-	log.Printf("ParseProcedure: %s", p.currentToken)
+	log.Debugf("ParseProcedure: %s", p.currentToken)
 
 	p.consume(token.PROC, "expected proc")
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
 	params := p.parseArguments()
-	log.Printf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
-
-	log.Print("ParseTypeSpec")
+	log.Debugf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
 
 	var result *ast.TypeSpec = nil
 	if p.check(token.COLON) {
@@ -230,7 +229,7 @@ func (p *Parser) parseArguments() []ast.Field {
 }
 
 func (p *Parser) parseTypeSpec() ast.TypeSpec {
-	log.Printf("ParseTypeSpec: %s", p.currentToken)
+	log.Debugf("ParseTypeSpec: %s", p.currentToken)
 	location := p.currentToken.Location
 
 	p.consume(token.COLON, "expected ':'")
@@ -247,8 +246,8 @@ func (p *Parser) parseIdentifier() ast.Identifier {
 }
 
 func (p *Parser) parseBlock() ast.BlockExpr {
-	log.Printf("ParseBlock: %s", p.currentToken)
-	// TODO: track scope
+	log.Debugf("ParseBlock: %s", p.currentToken)
+
 	p.consume(token.LBRACE, "expected '{'")
 	location := p.previousToken.Location
 	statements := []ast.Statement{}
@@ -260,7 +259,7 @@ func (p *Parser) parseBlock() ast.BlockExpr {
 }
 
 func (p *Parser) parseBlockStatment() ast.Statement {
-	log.Printf("parseBlockStatment: %s", p.currentToken)
+	log.Debugf("parseBlockStatment: %s", p.currentToken)
 
 	if p.match(token.LBRACE) {
 		return p.astBuilder.NewExprStatement(p.parseBlock())

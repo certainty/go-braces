@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/certainty/go-braces/pkg/compiler/backend/codegen"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
@@ -16,6 +15,7 @@ import (
 	"github.com/certainty/go-braces/pkg/compiler/middleend/optimization"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
+	log "github.com/sirupsen/logrus"
 )
 
 type Compiler struct {
@@ -40,8 +40,8 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("ParseError: %w", err)
 	}
-	log.Printf("AST: %v", theAST)
-	log.Printf("AST: %s", ast.Print(theAST, ast.PrintTruthfully()))
+	log.Debugf("AST: %v", theAST)
+	log.Debugf("AST: %s", ast.Print(theAST, ast.PrintTruthfully()))
 
 	tpeUniverse, err := c.typeCheck(theAST)
 	if err != nil {
@@ -53,21 +53,21 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	if err != nil {
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
-	log.Printf("IR %v", irModule)
-	log.Printf("IR %s", ir.Print(*irModule, ir.PrintTruthfully()))
+	log.Debugf("IR %v", irModule)
+	log.Debugf("IR %s", ir.Print(*irModule, ir.PrintTruthfully()))
 
 	ssa, err := c.optimize(irModule)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
-	log.Printf("Optimized IR %v", ssa)
+	log.Debugf("Optimized IR %v", ssa)
 
 	// backend
 	assemblyModule, err := c.generateCode(ssa)
 	if err != nil {
 		return nil, fmt.Errorf("CodeGenError: %w", err)
 	}
-	log.Printf("AssemblyModule %v", assemblyModule)
+	log.Debugf("AssemblyModule %v", assemblyModule)
 
 	c.instrumentation.LeaveCompilerModule(*assemblyModule)
 	return assemblyModule, nil

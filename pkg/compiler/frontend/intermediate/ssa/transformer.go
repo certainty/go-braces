@@ -2,7 +2,8 @@ package ssa
 
 import (
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"

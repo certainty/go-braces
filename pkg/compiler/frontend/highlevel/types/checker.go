@@ -2,7 +2,8 @@ package types
 
 import (
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
@@ -40,7 +41,7 @@ func (t Checker) Check(ast *ast.Source) (*TypeUniverse, error) {
 	t.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer t.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
-	log.Printf("Type universe: %v", t.typeUniverse)
+	log.Debugf("Type universe: %v", t.typeUniverse)
 
 	for _, node := range ast.Declarations {
 		_, err := t.typeCheck(node)
@@ -49,7 +50,7 @@ func (t Checker) Check(ast *ast.Source) (*TypeUniverse, error) {
 		}
 	}
 
-	log.Printf("Type universe after check: %v", t.typeUniverse)
+	log.Debugf("Type universe after check: %v", t.typeUniverse)
 	return t.typeUniverse, nil
 }
 
@@ -66,7 +67,7 @@ func (t Checker) typeCheck(node ast.Node) (Type, error) {
 	case ast.ExprStmt:
 		return t.typeCheck(node.Expr)
 	default:
-		log.Printf("Unknown node type %T", node)
+		log.Warnf("Unknown node type %T", node)
 		return UnknownType, nil
 	}
 }

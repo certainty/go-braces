@@ -2,7 +2,8 @@ package vm
 
 import (
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/certainty/go-braces/pkg/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/pkg/introspection/vm_introspection"
@@ -55,7 +56,7 @@ func (vm *VM) LoadModule(module *isa.AssemblyModule) error {
 		return fmt.Errorf("invalid entry point")
 	}
 
-	log.Printf("Loading module: %v", module)
+	log.Debugf("Loading module: %v", module)
 	vm.code = &module.Functions[module.EntryPoint].Code
 	vm.pc = 0
 
@@ -105,7 +106,6 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 		case isa.OP_STORE:
 			target := instr.Operands[0]
 			source := instr.Operands[1]
-			// TODO: use registers of function on current stack frame
 			vm.registers[target] = vm.registers[source]
 		case isa.OP_HALT:
 			vm.registers[isa.REG_SP_HALT] = vm.registers[isa.REG_SP_ACCU]
