@@ -13,7 +13,6 @@ package ast
 
 import (
 	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
-	hlast "github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/types"
 )
@@ -21,7 +20,7 @@ import (
 type (
 	Node interface {
 		astutils.NodeIded
-		HighlevelNodes() []hlast.Node // the AST nodes that were used to create this node
+		HighlevelNodeIds() []astutils.NodeId
 	}
 
 	Expression interface {
@@ -48,18 +47,19 @@ type (
 	}
 
 	BinaryExpr struct {
-		id astutils.NodeId
-		Op token.Token
-		//tpe    types.Type
-		Left   Expression
-		Right  Expression
-		hlExpr hlast.BinaryExpr
+		id           astutils.NodeId
+		Op           token.Token
+		tpe          types.Type
+		Left         Expression
+		Right        Expression
+		hlExprNodeId astutils.NodeId
 	}
 
 	AtomicLitExpr struct {
-		id     astutils.NodeId
-		tpe    types.Type
-		HlExpr hlast.BasicLitExpr
+		id           astutils.NodeId
+		tpe          types.Type
+		Value        token.Token
+		hlExprNodeId astutils.NodeId
 	}
 
 	Label string
@@ -73,16 +73,16 @@ func (e BlockExpr) ID() astutils.NodeId     { return e.id }
 func (e BinaryExpr) ID() astutils.NodeId    { return e.id }
 func (e AtomicLitExpr) ID() astutils.NodeId { return e.id }
 
-func (e BlockExpr) HighlevelNodes() []hlast.Node {
-	hnodes := make([]hlast.Node, len(e.Statements))
+func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
+	hnodes := make([]astutils.NodeId, len(e.Statements))
 
 	for _, stmt := range e.Statements {
-		hnodes = append(hnodes, stmt.HighlevelNodes()...)
+		hnodes = append(hnodes, stmt.HighlevelNodeIds()...)
 	}
 	return hnodes
 }
-func (e BinaryExpr) HighlevelNodes() []hlast.Node    { return []hlast.Node{e.hlExpr} }
-func (e AtomicLitExpr) HighlevelNodes() []hlast.Node { return []hlast.Node{e.HlExpr} }
+func (e BinaryExpr) HighlevelNodeIds() []astutils.NodeId    { return []astutils.NodeId{e.hlExprNodeId} }
+func (e AtomicLitExpr) HighlevelNodeIds() []astutils.NodeId { return []astutils.NodeId{e.hlExprNodeId} }
 
 type (
 	ExprStatement struct {
@@ -92,24 +92,24 @@ type (
 
 func (ExprStatement) stmtNode()             {}
 func (e ExprStatement) ID() astutils.NodeId { return e.Expr.ID() }
-func (e ExprStatement) HighlevelNodes() []hlast.Node {
-	return e.Expr.HighlevelNodes()
+func (e ExprStatement) HighlevelNodeIds() []astutils.NodeId {
+	return e.Expr.HighlevelNodeIds()
 }
 
 type (
 	ProcDecl struct {
-		id     astutils.NodeId
-		hlDecl hlast.ProcDecl
-		Blocks []BlockExpr
-		Type   types.Procedure
-		Name   Label
+		id       astutils.NodeId
+		hlDeclID astutils.NodeId
+		Blocks   []BlockExpr
+		Type     types.Procedure
+		Name     Label
 	}
 )
 
 func (ProcDecl) declNode()             {}
 func (d ProcDecl) ID() astutils.NodeId { return d.id }
-func (d ProcDecl) HighlevelNodes() []hlast.Node {
-	return []hlast.Node{d.hlDecl}
+func (d ProcDecl) HighlevelNodeIds() []astutils.NodeId {
+	return []astutils.NodeId{d.hlDeclID}
 }
 
 type Module struct {

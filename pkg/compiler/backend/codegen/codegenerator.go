@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
@@ -74,7 +75,6 @@ func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModu
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
 	for _, decl := range ssaModule.Declarations {
-
 		if err := c.emitDeclaration(decl); err != nil {
 			return nil, err
 		}
@@ -135,7 +135,7 @@ func (c *Codegenerator) emitReturn(stmt ssa.ReturnStmt, builder *CodeUnitBuilder
 		if error != nil {
 			return error
 		}
-		builder.AddInstruction(isa.InstRet(*reg))
+		builder.AddInstruction(isa.InstRet(reg))
 		return nil
 	case ssa.Variable:
 		builder.AddInstruction(isa.InstRet(c.findRegister(v)))
@@ -145,57 +145,61 @@ func (c *Codegenerator) emitReturn(stmt ssa.ReturnStmt, builder *CodeUnitBuilder
 	}
 }
 
-func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilder) {
-	addr := builder.AddConstant(isa.Value(stmt.Value))
-	reg := c.findRegister(stmt.Variable)
-	builder.AddInstruction(isa.InstLoad(reg, addr))
+func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilder) error {
+	reg, err := c.emitExpression(stmt.Value, builder)
+	if err != nil {
+		return err
+	}
+	target := c.findRegister(stmt.Variable)
+	builder.AddInstruction(isa.InstStore(target, reg))
+	return nil
 }
 
-// func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (*isa.Register, error) {
-// 	switch expr := expr.(type) {
-// 	case ssa.AtomicLitExpr:
-// 		return c.emitLiteral(expr, builder)
-// 	// case ssa.BinaryExpr:
-// 	// 	return c.emitBinaryExpression(expr, builder)
-// 	default:
-// 		return nil, fmt.Errorf("unknown expression type: %T", expr)
-// 	}
-// }
+func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
+	switch expr := expr.(type) {
+	case ssa.AtomicLitExpr:
+		return c.emitLiteral(expr, builder)
+	case ssa.BinaryExpr:
+		return c.emitBinaryExpression(expr, builder)
+	default:
+		return 0, fmt.Errorf("unknown expression type: %T", expr)
+	}
+}
 
-func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
-	value := expr.IrExpr.HlExpr.Token.LitValue
+func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (isa.Register, error) {
+	value := expr.IrExpr.Value.LitValue
 	if value == nil {
-		return nil, fmt.Errorf("nil return value")
+		return 0, fmt.Errorf("nil return value")
 	}
 
 	convertedValue, err := c.convertValue(value)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	addr := builder.AddConstant(convertedValue)
 	reg := builder.NextRegister()
 	builder.AddInstruction(isa.InstLoad(reg, addr))
-	return &reg, nil
+	return reg, nil
 }
 
-// func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (*isa.Register, error) {
-// 	left := c.findRegister(expr.Left)
-// 	right := c.findRegister(expr.Right)
-// 	reg := builder.NextRegister()
+func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (isa.Register, error) {
+	left := c.findRegister(expr.Left)
+	right := c.findRegister(expr.Right)
+	reg := builder.NextRegister()
 
-// 	switch expr.IrExpr.Op.Type {
-// 	case token.ADD:
-// 		builder.AddInstruction(isa.InstAdd(reg, left, right))
-// 	case token.SUB:
-// 		builder.AddInstruction(isa.InstSub(reg, left, right))
-// 	case token.MUL:
-// 		builder.AddInstruction(isa.InstMul(reg, left, right))
-// 	default:
-// 		return nil, fmt.Errorf("unknown binary expression type: %T", expr)
-// 	}
+	switch expr.IrExpr.Op.Type {
+	case token.ADD:
+		builder.AddInstruction(isa.InstAdd(reg, left, right))
+	case token.SUB:
+		builder.AddInstruction(isa.InstSub(reg, left, right))
+	case token.MUL:
+		builder.AddInstruction(isa.InstMul(reg, left, right))
+	default:
+		return 0, fmt.Errorf("unknown binary expression type: %T", expr)
+	}
 
-// 	return &reg, nil
-// }
+	return reg, nil
+}
 
 func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
 	return isa.Register(v.Version)

@@ -13,13 +13,13 @@ import (
 )
 
 type Context struct {
-	Types   hltypes.TypeUniverse
+	Types   *hltypes.TypeUniverse
 	Origin  token.Origin
 	Module  *ir.Module
 	builder *ir.Builder
 }
 
-func Lower(origin token.Origin, theAst *hl.Source, tpeUniverse hltypes.TypeUniverse) (*ir.Module, error) {
+func Lower(origin token.Origin, theAst *hl.Source, tpeUniverse *hltypes.TypeUniverse) (*ir.Module, error) {
 	ctx := &Context{
 		Origin:  origin,
 		Types:   tpeUniverse,
@@ -73,13 +73,17 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 func (ctx *Context) lowerStatement(stmt hl.Statement) (ast.Statement, error) {
 	switch stmt := stmt.(type) {
 	case hl.ExprStmt:
-		return ctx.lowerExpr(stmt.Expr)
+		expr, err := ctx.lowerExpr(stmt.Expr)
+		if err != nil {
+			return nil, err
+		}
+		return ctx.builder.ExprStatement(expr), nil
 	default:
 		return nil, fmt.Errorf("unexpected statement type: %T", stmt)
 	}
 }
 
-func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Statement, error) {
+func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 	switch expr := expr.(type) {
 	case hl.BasicLitExpr:
 		exprType, err := ctx.typeOf(expr)
@@ -90,7 +94,25 @@ func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ctx.builder.ExprStatement(ctx.builder.AtomicLit(loweredType, expr)), nil
+		return ctx.builder.AtomicLit(loweredType, expr.ID()), nil
+	case hl.BinaryExpr:
+		exprType, err := ctx.typeOf(expr)
+		if err != nil {
+			return nil, err
+		}
+		loweredType, err := ctx.lowerType(exprType)
+		if err != nil {
+			return nil, err
+		}
+		left, err := ctx.lowerExpr(expr.Left)
+		if err != nil {
+			return nil, err
+		}
+		right, err := ctx.lowerExpr(expr.Right)
+		if err != nil {
+			return nil, err
+		}
+		return ctx.builder.BinaryExpr(loweredType, expr.Op, left, right, expr.ID()), nil
 	default:
 		return nil, fmt.Errorf("unexpected expression type: %T", expr)
 	}
@@ -131,13 +153,15 @@ func (ctx *Context) lowerType(tpe hltypes.Type) (types.Type, error) {
 			Params:  loweredParams,
 			Results: loweredResults,
 		}, nil
+	case hltypes.Unit:
+		return types.VoidType, nil
 	default:
 		return nil, fmt.Errorf("unexpected type: %T", tpe)
 	}
 }
 
-func (ctx Context) typeOf(n hl.Node) (hltypes.Type, error) {
-	tpe, ok := ctx.Types[n.ID()]
+func (ctx *Context) typeOf(n hl.Node) (hltypes.Type, error) {
+	tpe, ok := ctx.Types.ExpressionTypes[n.ID()]
 	if !ok {
 		return nil, fmt.Errorf("no type for node %v", n)
 	}

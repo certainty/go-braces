@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+
 	"github.com/certainty/go-braces/pkg/compiler/backend/disassembler"
 	"github.com/certainty/go-braces/pkg/introspection/vm_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
@@ -97,6 +98,11 @@ func (vm *VM) ExecuteModule(module *isa.AssemblyModule) (isa.Value, error) {
 				vm.panic("invalid constant")
 			}
 			vm.registers[register] = value
+		case isa.OP_STORE:
+			target := instr.Operands[0]
+			source := instr.Operands[1]
+			// TODO: use registers of function on current stack frame
+			vm.registers[target] = vm.registers[source]
 		case isa.OP_HALT:
 			vm.registers[isa.REG_SP_HALT] = vm.registers[isa.REG_SP_ACCU]
 			return vm.registers[isa.REG_SP_HALT], nil

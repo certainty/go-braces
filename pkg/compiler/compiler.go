@@ -80,7 +80,7 @@ func (c Compiler) parse(input *lexer.Input) (*ast.Source, error) {
 	return parser.Parse(input)
 }
 
-func (c Compiler) typeCheck(theAST *ast.Source) (types.TypeUniverse, error) {
+func (c Compiler) typeCheck(theAST *ast.Source) (*types.TypeUniverse, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseTypeCheck)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseTypeCheck)
 
@@ -89,11 +89,10 @@ func (c Compiler) typeCheck(theAST *ast.Source) (types.TypeUniverse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("TypeError: %w", err)
 	}
-
 	return typeUniverse, nil
 }
 
-func (c Compiler) lowerToIR(theAST *ast.Source, tpeUniverse types.TypeUniverse, origin token.Origin) (*ir.Module, error) {
+func (c Compiler) lowerToIR(theAST *ast.Source, tpeUniverse *types.TypeUniverse, origin token.Origin) (*ir.Module, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseLowerToIR)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseLowerToIR)
 

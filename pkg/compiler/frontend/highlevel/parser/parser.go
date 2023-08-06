@@ -197,15 +197,17 @@ func (p *Parser) parseProcedureDeclaration() ast.Declaration {
 	location := p.currentToken.Location
 	procName := p.parseIdentifier()
 	params := p.parseArguments()
+	log.Printf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
+
+	log.Print("ParseTypeSpec")
+
 	var result *ast.TypeSpec = nil
-	if p.match(token.COLON) {
+	if p.check(token.COLON) {
 		r := p.parseTypeSpec()
 		result = &r
 	}
 
-	log.Printf("ParseArgs: %s hadError: %v", p.currentToken, p.hadError)
 	body := p.parseBlock()
-	log.Printf("ParseArgs: done %v", p.hadError)
 	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
 

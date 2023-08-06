@@ -3,6 +3,7 @@ package ast
 import (
 	"github.com/certainty/go-braces/pkg/compiler/frontend/astutils"
 	hl "github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/ast"
+	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
 	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/types"
 )
 
@@ -29,11 +30,21 @@ func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl hl.ProcDecl) 
 	}
 }
 
-func (b *Builder) AtomicLit(tpe types.Type, hlExpr hl.BasicLitExpr) AtomicLitExpr {
+func (b *Builder) AtomicLit(tpe types.Type, hlExpr astutils.NodeId) AtomicLitExpr {
 	return AtomicLitExpr{
-		id:     b.nodeIds.Next(),
-		tpe:    tpe,
-		HlExpr: hlExpr,
+		id:           b.nodeIds.Next(),
+		tpe:          tpe,
+		hlExprNodeId: hlExpr,
+	}
+}
+
+func (b *Builder) BinaryExpr(tpe types.Type, op token.Token, left Expression, right Expression, hlExpr astutils.NodeId) BinaryExpr {
+	return BinaryExpr{
+		id:           b.nodeIds.Next(),
+		tpe:          tpe,
+		Left:         left,
+		Right:        right,
+		hlExprNodeId: hlExpr,
 	}
 }
 

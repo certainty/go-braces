@@ -97,3 +97,7 @@ func InstLoad(target Register, address ConstantAddress) Instruction {
 func InstLoadI(target Register, value ImmediateValue) Instruction {
 	return NewInstruction(OP_LOADI, Operand(target), Operand(value))
 }
+
+func InstStore(target Register, source Register) Instruction {
+	return NewInstruction(OP_STORE, Operand(target), Operand(source))
+}
