@@ -116,8 +116,9 @@ func disassOperands(op isa.OpCode, operands []isa.Operand) string {
 		return fmt.Sprintf("%s, %s, %s", asRegister(operands[0]), asRegister(operands[1]), asRegister(operands[2]))
 	case isa.OP_ADDI, isa.OP_SUBI:
 		return fmt.Sprintf("%s, %s, %s", asRegister(operands[0]), asRegister(operands[1]), asImmediate(operands[2]))
+	default:
+		return ""
 	}
-	return ""
 }
 
 func asRegister(operand isa.Operand) string {
@@ -132,37 +133,26 @@ func asImmediate(operand isa.Operand) string {
 	return fmt.Sprintf("%d", operand)
 }
 
+var opCodeMap = map[isa.OpCode]string{
+	isa.OP_LOAD:  "LOAD",
+	isa.OP_LOADI: "LOADI",
+	isa.OP_STORE: "STORE",
+	isa.OP_ADD:   "ADD",
+	isa.OP_ADDI:  "ADDI",
+	isa.OP_SUB:   "SUB",
+	isa.OP_SUBI:  "SUBI",
+	isa.OP_MUL:   "MUL",
+	isa.OP_DIV:   "DIV",
+	isa.OP_MOD:   "MOD",
+	isa.OP_AND:   "AND",
+	isa.OP_OR:    "OR",
+	isa.OP_RET:   "RET",
+	isa.OP_HALT:  "HALT",
+}
+
 func disassOpCode(code isa.OpCode) string {
-	switch code {
-	case isa.OP_LOAD:
-		return "LOAD"
-	case isa.OP_LOADI:
-		return "LOADI"
-	case isa.OP_STORE:
-		return "STORE"
-	case isa.OP_ADD:
-		return "ADD"
-	case isa.OP_ADDI:
-		return "ADDI"
-	case isa.OP_SUB:
-		return "SUB"
-	case isa.OP_SUBI:
-		return "SUBI"
-	case isa.OP_MUL:
-		return "MUL"
-	case isa.OP_DIV:
-		return "DIV"
-	case isa.OP_MOD:
-		return "MOD"
-	case isa.OP_AND:
-		return "AND"
-	case isa.OP_OR:
-		return "OR"
-	case isa.OP_RET:
-		return "RET"
-	case isa.OP_HALT:
-		return "HALT"
-	default:
-		panic("Unknown opcode")
+	if op, ok := opCodeMap[code]; ok {
+		return op
 	}
+	panic("Unknown opcode")
 }
