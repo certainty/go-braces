@@ -84,8 +84,11 @@ install-staticcheck:
 		go install honnef.co/go/tools/cmd/staticcheck@latest; \
 	fi
 
-repl: build
-	./target/braces-vm repl
+run_simple: build
+	./target/braces-vm run examples/simple.braces
+
+introspect_simple: build
+	./target/braces-vm run --introspect-compiler examples/simple.braces
 
 introspect: build 
 	./target/braces-introspect compiler
