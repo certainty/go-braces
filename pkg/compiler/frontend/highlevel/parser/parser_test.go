@@ -130,7 +130,7 @@ func TestParseProcedure(t *testing.T) {
 			input := lexer.NewStringInput("test", test.input)
 			decl, _ := parser.Parse(input)
 			assert.Empty(t, parser.Errors())
-			result := ast.Print(*decl, printOptions)
+			result := ast.Print(decl, printOptions)
 			assert.Equal(t, test.expected, result)
 		})
 	}

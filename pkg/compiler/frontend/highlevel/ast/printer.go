@@ -110,7 +110,7 @@ func (p *ASTPrinter) Enter(node Node) bool {
 
 func (p *ASTPrinter) Leave(node Node) {
 	switch node.(type) {
-	case BasicLitExpr, Identifier:
+	case *BasicLitExpr, *Identifier:
 		if p.options.LiteralAsStrings {
 			return
 		}
