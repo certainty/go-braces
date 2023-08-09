@@ -26,29 +26,29 @@ func Walk(v Visitor, node Node) {
 	}
 
 	switch n := node.(type) {
-	case Source:
+	case *Source:
 		walkDeclarations(v, n.Declarations)
-	case BadDecl, TypeSpec, Identifier:
+	case *BadDecl, *TypeSpec, *Identifier:
 		/// nothing to do
-	case ProcDecl:
+	case *ProcDecl:
 		Walk(v, n.Name)
 		Walk(v, n.Body)
-	case Field:
+	case *Field:
 		Walk(v, n.Name)
 		Walk(v, n.Type)
-	case BadStmt:
+	case *BadStmt:
 		// nothing
-	case ExprStmt:
+	case *ExprStmt:
 		Walk(v, n.Expr)
-	case BadExpr, BasicLitExpr:
+	case *BadExpr, *BasicLitExpr:
 		//nothing
-	case BlockExpr:
+	case *BlockExpr:
 		walkStatements(v, n.Statements)
-	case ParenExpr:
+	case *ParenExpr:
 		Walk(v, n.Expr)
-	case UnaryExpr:
+	case *UnaryExpr:
 		Walk(v, n.Expr)
-	case BinaryExpr:
+	case *BinaryExpr:
 		Walk(v, n.Left)
 		Walk(v, n.Right)
 	default:

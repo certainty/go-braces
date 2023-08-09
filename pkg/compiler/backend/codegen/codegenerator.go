@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
-	"github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ssa"
+	ir "github.com/certainty/go-braces/pkg/compiler/frontend/intermediate/ast"
 	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
 	"github.com/certainty/go-braces/pkg/shared/isa"
 	"github.com/certainty/go-braces/pkg/shared/isa/arity"
@@ -72,7 +72,7 @@ func NewCodegenerator(instrumentation compiler_introspection.Instrumentation) *C
 	}
 }
 
-func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModule, error) {
+func (c *Codegenerator) GenerateModule(ssaModule *ir.Module) (*isa.AssemblyModule, error) {
 	c.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseCodegen)
 	defer c.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseCodegen)
 
@@ -86,26 +86,30 @@ func (c *Codegenerator) GenerateModule(ssaModule *ssa.Module) (*isa.AssemblyModu
 	return c.module, nil
 }
 
-func (c *Codegenerator) emitDeclaration(decl ssa.Declaration) error {
+func (c *Codegenerator) emitDeclaration(decl ir.Declaration) error {
 	switch decl := decl.(type) {
-	case ssa.ProcDecl:
-		return c.emitProcedure(&decl)
+	case *ir.ProcDecl:
+		return c.emitProcedure(decl)
 	default:
 		return fmt.Errorf("unknown declaration type %T", decl)
 	}
 }
 
 // we should return the function address to fill the jump table
-func (c *Codegenerator) emitProcedure(procDecl *ssa.ProcDecl) error {
+func (c *Codegenerator) emitProcedure(procDecl *ir.ProcDecl) error {
 	codeBuilder := newCodeUnitBuilder(c.instrumentation, c.currentGeneralPurposeRegister)
 
-	for _, block := range procDecl.Blocks {
+	if procDecl.SSABlocks == nil {
+		return fmt.Errorf("procedure %s has no SSA blocks", procDecl.Name.Value)
+	}
+
+	for _, block := range procDecl.SSABlocks {
 		if err := c.emitBlock(block, codeBuilder); err != nil {
 			return err
 		}
 	}
 
-	c.addFunction(isa.Label(procDecl.Name.Name), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
+	c.addFunction(isa.Label(procDecl.Name.Value), arity.Exactly(0), *codeBuilder.BuildCodeUnit())
 	return nil
 }
 
@@ -118,15 +122,15 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 	c.functionAddresses[label] = isa.Address(len(c.module.Functions) - 1)
 }
 
-func (c *Codegenerator) emitBlock(block *ssa.BasicBlock, builder *CodeUnitBuilder) error {
+func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder) error {
 	for _, statement := range block.Statements {
 		switch stmt := statement.(type) {
-		case ssa.ReturnStmt:
+		case *ir.ReturnStmt:
 			err := c.emitReturn(stmt, builder)
 			if err != nil {
 				return nil
 			}
-		case ssa.SetStmt:
+		case *ir.AssignStmt:
 			err := c.emitAssignment(stmt, builder)
 			if err != nil {
 				return err
@@ -138,25 +142,25 @@ func (c *Codegenerator) emitBlock(block *ssa.BasicBlock, builder *CodeUnitBuilde
 	return nil
 }
 
-func (c *Codegenerator) emitReturn(stmt ssa.ReturnStmt, builder *CodeUnitBuilder) error {
+func (c *Codegenerator) emitReturn(stmt *ir.ReturnStmt, builder *CodeUnitBuilder) error {
 	switch v := stmt.Value.(type) {
-	case ssa.AtomicLitExpr:
+	case *ir.AtomicLitExpr:
 		reg, error := c.emitLiteral(v, builder)
 		if error != nil {
 			return error
 		}
 		builder.AddInstruction(isa.InstRet(reg))
 		return nil
-	case ssa.VariableExpr:
-		builder.AddInstruction(isa.InstRet(c.findRegister(v.Variable)))
+	case *ir.Variable:
+		builder.AddInstruction(isa.InstRet(c.findRegister(v)))
 		return nil
 	default:
 		return fmt.Errorf("unknown return type: %T", stmt.Value)
 	}
 }
 
-func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilder) error {
-	reg, err := c.emitExpression(stmt.Value, builder)
+func (c *Codegenerator) emitAssignment(stmt *ir.AssignStmt, builder *CodeUnitBuilder) error {
+	reg, err := c.emitExpression(stmt.Expr, builder)
 	if err != nil {
 		return err
 	}
@@ -166,18 +170,18 @@ func (c *Codegenerator) emitAssignment(stmt ssa.SetStmt, builder *CodeUnitBuilde
 	return nil
 }
 
-func (c *Codegenerator) emitExpression(expr ssa.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
+func (c *Codegenerator) emitExpression(expr ir.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
 	switch expr := expr.(type) {
-	case ssa.AtomicLitExpr:
+	case *ir.AtomicLitExpr:
 		return c.emitLiteral(expr, builder)
-	case ssa.BinaryExpr:
+	case *ir.BinaryExpr:
 		return c.emitBinaryExpression(expr, builder)
 	default:
 		return 0, fmt.Errorf("unknown expression type: %T", expr)
 	}
 }
 
-func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBuilder) (isa.Register, error) {
+func (c *Codegenerator) emitLiteral(expr *ir.AtomicLitExpr, builder *CodeUnitBuilder) (isa.Register, error) {
 	value := expr.Value.LitValue
 
 	if value == nil {
@@ -194,7 +198,7 @@ func (c *Codegenerator) emitLiteral(expr ssa.AtomicLitExpr, builder *CodeUnitBui
 	return reg, nil
 }
 
-func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeUnitBuilder) (isa.Register, error) {
+func (c *Codegenerator) emitBinaryExpression(expr *ir.BinaryExpr, builder *CodeUnitBuilder) (isa.Register, error) {
 	left, err := c.emitBinaryExprOperand(expr.Left, builder)
 	if err != nil {
 		return 0, err
@@ -219,19 +223,19 @@ func (c *Codegenerator) emitBinaryExpression(expr ssa.BinaryExpr, builder *CodeU
 	return reg, nil
 }
 
-func (c *Codegenerator) emitBinaryExprOperand(expr ssa.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
+func (c *Codegenerator) emitBinaryExprOperand(expr ir.Expression, builder *CodeUnitBuilder) (isa.Register, error) {
 	switch expr := expr.(type) {
-	case ssa.AtomicLitExpr:
+	case *ir.AtomicLitExpr:
 		return c.emitLiteral(expr, builder)
-	case ssa.VariableExpr:
-		return c.findRegister(expr.Variable), nil
+	case *ir.Variable:
+		return c.findRegister(expr), nil
 	default:
 		return 0, fmt.Errorf("unknown binary expression operand type: %T", expr)
 	}
 }
 
-func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
-	varKey := variableKey(v)
+func (c *Codegenerator) findRegister(v *ir.Variable) isa.Register {
+	varKey := variableKey(*v)
 	reg, ok := c.registers[varKey]
 
 	if !ok {
@@ -243,8 +247,8 @@ func (c *Codegenerator) findRegister(v ssa.Variable) isa.Register {
 	}
 }
 
-func variableKey(v ssa.Variable) string {
-	return fmt.Sprintf("%s%d", v.Prefix, v.Version)
+func variableKey(v ir.Variable) string {
+	return fmt.Sprintf("%s%d", v.Name, v.Version)
 }
 
 func (c *Codegenerator) NextRegister() isa.Register {

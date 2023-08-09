@@ -40,16 +40,10 @@ type (
 )
 
 type (
-	BlockExpr struct {
-		id         astutils.NodeId
-		Label      Label
-		Statements []Statement
-	}
-
 	BinaryExpr struct {
 		id           astutils.NodeId
 		Op           token.Token
-		tpe          types.Type
+		Type         types.Type
 		Left         Expression
 		Right        Expression
 		hlExprNodeId astutils.NodeId
@@ -63,23 +57,32 @@ type (
 	}
 
 	Label struct {
-		id           astutils.NodeId
-		hlIdentifier astutils.NodeId
-		Name         string
+		id     astutils.NodeId
+		Origin *astutils.NodeId // if it stems from an identifier in the source code
+		Value  string
+	}
+
+	Variable struct {
+		id      astutils.NodeId
+		Version astutils.Version
+		Origin  *astutils.NodeId // if it stems from an identifier in the source code
+		Name    string
 	}
 )
 
-func (BlockExpr) exprNode()     {}
+func (BasicBlock) exprNode()    {}
 func (BinaryExpr) exprNode()    {}
 func (AtomicLitExpr) exprNode() {}
 func (Label) exprNode()         {}
+func (Variable) exprNode()      {}
 
-func (e BlockExpr) ID() astutils.NodeId     { return e.id }
+func (e BasicBlock) ID() astutils.NodeId    { return e.id }
 func (e BinaryExpr) ID() astutils.NodeId    { return e.id }
 func (e AtomicLitExpr) ID() astutils.NodeId { return e.id }
 func (e Label) ID() astutils.NodeId         { return e.id }
+func (e Variable) ID() astutils.NodeId      { return e.id }
 
-func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
+func (e BasicBlock) HighlevelNodeIds() []astutils.NodeId {
 	hnodes := make([]astutils.NodeId, len(e.Statements))
 
 	for _, stmt := range e.Statements {
@@ -89,7 +92,19 @@ func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
 }
 func (e BinaryExpr) HighlevelNodeIds() []astutils.NodeId    { return []astutils.NodeId{e.hlExprNodeId} }
 func (e AtomicLitExpr) HighlevelNodeIds() []astutils.NodeId { return []astutils.NodeId{e.hlExprNodeId} }
-func (e Label) HighlevelNodeIds() []astutils.NodeId         { return []astutils.NodeId{e.hlIdentifier} }
+func (e Label) HighlevelNodeIds() []astutils.NodeId {
+	if e.Origin == nil {
+		return []astutils.NodeId{}
+	}
+	return []astutils.NodeId{*e.Origin}
+}
+
+func (e Variable) HighlevelNodeIds() []astutils.NodeId {
+	if e.Origin == nil {
+		return []astutils.NodeId{}
+	}
+	return []astutils.NodeId{*e.Origin}
+}
 
 type (
 	ExprStatement struct {
@@ -100,13 +115,43 @@ type (
 		id    astutils.NodeId
 		Value Expression
 	}
+
+	AssignStmt struct {
+		id       astutils.NodeId
+		Variable *Variable
+		Expr     Expression
+	}
+
+	// SSA specific nodes
+	Phi struct {
+		id       astutils.NodeId
+		Variable *Variable
+		Choices  []PhiChoice
+	}
+
+	PhiChoice struct {
+		Predecessor *BasicBlock
+		Value       Expression
+	}
+
+	BasicBlock struct {
+		id           astutils.NodeId
+		Label        Label
+		Statements   []Statement
+		Predecessors []*BasicBlock
+		Successors   []*BasicBlock
+	}
 )
 
 func (ExprStatement) stmtNode() {}
 func (ReturnStmt) stmtNode()    {}
+func (AssignStmt) stmtNode()    {}
+func (Phi) stmtNode()           {}
 
 func (e ExprStatement) ID() astutils.NodeId { return e.Expr.ID() }
 func (e ReturnStmt) ID() astutils.NodeId    { return e.id }
+func (e AssignStmt) ID() astutils.NodeId    { return e.id }
+func (e Phi) ID() astutils.NodeId           { return e.id }
 
 func (e ExprStatement) HighlevelNodeIds() []astutils.NodeId {
 	return e.Expr.HighlevelNodeIds()
@@ -116,13 +161,25 @@ func (e ReturnStmt) HighlevelNodeIds() []astutils.NodeId {
 	return e.Value.HighlevelNodeIds()
 }
 
+func (e AssignStmt) HighlevelNodeIds() []astutils.NodeId {
+	if e.Variable.Origin == nil {
+		return []astutils.NodeId{}
+	}
+	return []astutils.NodeId{*e.Variable.Origin}
+}
+
+func (e Phi) HighlevelNodeIds() []astutils.NodeId {
+	return []astutils.NodeId{}
+}
+
 type (
 	ProcDecl struct {
-		id       astutils.NodeId
-		hlDeclID astutils.NodeId
-		Blocks   []BlockExpr
-		Type     types.Procedure
-		Name     Label
+		id        astutils.NodeId
+		hlDeclID  astutils.NodeId
+		Blocks    []*BasicBlock
+		SSABlocks []*BasicBlock // will be set after SSA conversion
+		Type      types.Procedure
+		Name      Label
 	}
 )
 
@@ -137,13 +194,12 @@ type Module struct {
 	Declarations []Declaration
 }
 
-func (b BlockExpr) IsEmpty() bool {
+func (b BasicBlock) IsEmpty() bool {
 	return len(b.Statements) == 0
 }
 
-func (b BlockExpr) LastStatement() Statement {
+func (b BasicBlock) LastStatement() Statement {
 	if b.IsEmpty() {
-		// TODO: synthesize a return statement
 		return nil
 	}
 

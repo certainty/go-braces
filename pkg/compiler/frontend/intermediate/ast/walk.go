@@ -5,7 +5,7 @@ type Visitor interface {
 	Leave(node Node)
 }
 
-func Walk(v Visitor, node Node) {
+func Walk(v Visitor, node Node, visitSSABlocks bool) {
 	cont := v.Enter(node)
 	defer v.Leave(node)
 	if !cont {
@@ -13,25 +13,42 @@ func Walk(v Visitor, node Node) {
 	}
 
 	switch n := node.(type) {
-	case Module:
+	case *Module:
 		for _, decl := range n.Declarations {
-			Walk(v, decl)
+			Walk(v, decl, visitSSABlocks)
 		}
-	case BlockExpr:
+	case *BasicBlock:
 		for _, stmt := range n.Statements {
-			Walk(v, stmt)
+			Walk(v, stmt, visitSSABlocks)
 		}
-	case BinaryExpr:
-		Walk(v, n.Left)
-		Walk(v, n.Right)
-	case AtomicLitExpr:
+	case *BinaryExpr:
+		Walk(v, n.Left, visitSSABlocks)
+		Walk(v, n.Right, visitSSABlocks)
+
+	case *AtomicLitExpr:
 		// nothing
-	case ExprStatement:
-		Walk(v, n.Expr)
-	case ProcDecl:
-		Walk(v, n.Name)
-		for _, block := range n.Blocks {
-			Walk(v, block)
+	case *ExprStatement:
+		Walk(v, n.Expr, visitSSABlocks)
+	case *Phi:
+	// nothing
+	case *Variable:
+		// nothing
+	case *AssignStmt:
+		Walk(v, n.Variable, visitSSABlocks)
+		Walk(v, n.Expr, visitSSABlocks)
+	case *ReturnStmt:
+		Walk(v, n.Value, visitSSABlocks)
+	case *ProcDecl:
+		Walk(v, n.Name, visitSSABlocks)
+
+		if visitSSABlocks {
+			for _, block := range n.SSABlocks {
+				Walk(v, block, visitSSABlocks)
+			}
+		} else {
+			for _, block := range n.Blocks {
+				Walk(v, block, visitSSABlocks)
+			}
 		}
 	default: //nothing
 	}

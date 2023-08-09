@@ -203,15 +203,15 @@ func (p *Parser) parseProcedureDeclaration() ast.Declaration {
 	var result *ast.TypeSpec = nil
 	if p.check(token.COLON) {
 		r := p.parseTypeSpec()
-		result = &r
+		result = r
 	}
 
 	body := p.parseBlock()
 	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
 
-func (p *Parser) parseArguments() []ast.Field {
-	args := []ast.Field{}
+func (p *Parser) parseArguments() []*ast.Field {
+	args := []*ast.Field{}
 	p.consume(token.LPAREN, "expected '('")
 	for {
 		if p.check(token.RPAREN) {
@@ -219,7 +219,7 @@ func (p *Parser) parseArguments() []ast.Field {
 		}
 		argName := p.parseIdentifier()
 		argType := p.parseTypeSpec()
-		args = append(args, p.astBuilder.NewField(argName, &argType))
+		args = append(args, p.astBuilder.NewField(argName, argType))
 		if !p.match(token.COMMA) {
 			break
 		}
@@ -228,7 +228,7 @@ func (p *Parser) parseArguments() []ast.Field {
 	return args
 }
 
-func (p *Parser) parseTypeSpec() ast.TypeSpec {
+func (p *Parser) parseTypeSpec() *ast.TypeSpec {
 	log.Debugf("ParseTypeSpec: %s", p.currentToken)
 	location := p.currentToken.Location
 
@@ -236,7 +236,7 @@ func (p *Parser) parseTypeSpec() ast.TypeSpec {
 	return p.astBuilder.NewTypeSpec(location, p.parseIdentifier())
 }
 
-func (p *Parser) parseIdentifier() ast.Identifier {
+func (p *Parser) parseIdentifier() *ast.Identifier {
 	p.consume(token.IDENTIFIER, "expected identifier")
 
 	return p.astBuilder.NewIdentifier(
@@ -245,7 +245,7 @@ func (p *Parser) parseIdentifier() ast.Identifier {
 	)
 }
 
-func (p *Parser) parseBlock() ast.BlockExpr {
+func (p *Parser) parseBlock() *ast.BlockExpr {
 	log.Debugf("ParseBlock: %s", p.currentToken)
 
 	p.consume(token.LBRACE, "expected '{'")

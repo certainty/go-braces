@@ -141,15 +141,15 @@ type (
 	TypeSpec struct {
 		id       astutils.NodeId
 		location token.Location
-		Name     Identifier
+		Name     *Identifier
 	}
 
 	ProcDecl struct {
 		id       astutils.NodeId
 		location token.Location
-		Name     Identifier
-		Type     ProcType
-		Body     BlockExpr
+		Name     *Identifier
+		Type     *ProcType
+		Body     *BlockExpr
 	}
 )
 
@@ -171,13 +171,13 @@ func (d ProcDecl) Location() token.Location { return d.location }
 type (
 	Field struct {
 		id   astutils.NodeId
-		Name Identifier
+		Name *Identifier
 		Type *TypeSpec
 	}
 
 	ProcType struct {
 		id     astutils.NodeId
-		Params []Field
+		Params []*Field
 		Result *TypeSpec
 	}
 )

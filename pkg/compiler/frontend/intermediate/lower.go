@@ -32,7 +32,7 @@ func Lower(origin token.Origin, theAst *hl.Source, tpeUniverse *hltypes.TypeUniv
 func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 	for _, node := range source.Declarations {
 		switch node := node.(type) {
-		case hl.ProcDecl:
+		case *hl.ProcDecl:
 			proc, err := ctx.lowerProcDecl(node)
 			if err != nil {
 				return nil, err
@@ -43,28 +43,29 @@ func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 	return ctx.Module, nil
 }
 
-func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
+func (ctx *Context) lowerProcDecl(decl *hl.ProcDecl) (*ir.ProcDecl, error) {
 	var err error
 
 	procType, err := ctx.typeOf(decl)
 	if err != nil {
-		return ast.ProcDecl{}, err
+		return nil, err
 	}
 
 	loweredType, err := ctx.lowerType(procType)
 	if err != nil {
-		return ast.ProcDecl{}, err
+		return nil, err
 	}
-	procName := ctx.builder.Label(decl.Name.Name, decl.ID())
+	id := decl.ID()
+	procName := ctx.builder.Label(decl.Name.Name, &id)
 	proc := ctx.builder.ProcDecl(procName, loweredType.(types.Procedure), decl)
 
-	entryBlock := ctx.builder.BlockBuilder("entry", decl.ID())
+	entryBlock := ctx.builder.BlockBuilder(ctx.builder.Label("entry", nil), &id)
 	var loweredStmt ast.Statement
 
 	for _, stmt := range decl.Body.Statements {
 		loweredStmt, err = ctx.lowerStatement(stmt)
 		if err != nil {
-			return ast.ProcDecl{}, err
+			return nil, err
 		}
 		entryBlock.AddStatement(loweredStmt)
 	}
@@ -72,7 +73,7 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 	if loweredStmt != nil {
 		switch stmt := loweredStmt.(type) {
 
-		case ast.ExprStatement:
+		case *ast.ExprStatement:
 			entryBlock.ReplaceLastStatement(entryBlock.ReturnStmt(stmt.Expr))
 		}
 	}
@@ -83,7 +84,7 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 
 func (ctx *Context) lowerStatement(stmt hl.Statement) (ast.Statement, error) {
 	switch stmt := stmt.(type) {
-	case hl.ExprStmt:
+	case *hl.ExprStmt:
 		expr, err := ctx.lowerExpr(stmt.Expr)
 		if err != nil {
 			return nil, err
@@ -96,7 +97,7 @@ func (ctx *Context) lowerStatement(stmt hl.Statement) (ast.Statement, error) {
 
 func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 	switch expr := expr.(type) {
-	case hl.BasicLitExpr:
+	case *hl.BasicLitExpr:
 		exprType, err := ctx.typeOf(expr)
 		if err != nil {
 			return nil, err
@@ -106,7 +107,7 @@ func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 			return nil, err
 		}
 		return ctx.builder.AtomicLit(loweredType, expr.Token, expr.ID()), nil
-	case hl.BinaryExpr:
+	case *hl.BinaryExpr:
 		exprType, err := ctx.typeOf(expr)
 		if err != nil {
 			return nil, err

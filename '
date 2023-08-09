@@ -53,14 +53,13 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 		return nil, fmt.Errorf("IRError: %w", err)
 	}
 	log.Debugf("IR %v", irModule)
-	log.Debugf("IR %s", ir.Print(irModule, ir.PrintTruthfully()))
+	log.Debugf("IR %s", ir.Print(*irModule, ir.PrintTruthfully()))
 
 	ssa, err := c.optimize(irModule)
 	if err != nil {
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
 	log.Debugf("Optimized IR %v", ssa)
-	log.Debugf("Optmized IR %v", ir.Print(ssa, ir.PrintTruthfully().ForSSA()))
 
 	// backend
 	assemblyModule, err := c.generateCode(ssa)

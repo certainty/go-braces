@@ -61,45 +61,45 @@ func (p *ASTPrinter) print(node Node) string {
 
 func (p *ASTPrinter) Enter(node Node) bool {
 	switch n := node.(type) {
-	case Source:
+	case *Source:
 		p.output.WriteString(" (source")
 		p.printCommonNodeProps(n)
-	case BadDecl:
+	case *BadDecl:
 		p.output.WriteString(" (bad-decl")
 		p.printCommonNodeProps(n)
-	case TypeSpec:
+	case *TypeSpec:
 		p.output.WriteString(" (type-spec")
 		p.printCommonNodeProps(n)
-	case Identifier:
+	case *Identifier:
 		p.printIdentifier(n)
-	case ProcDecl:
+	case *ProcDecl:
 		p.output.WriteString(" (proc-decl")
 		p.printCommonNodeProps(n)
-	case Field:
+	case *Field:
 		p.output.WriteString(" (field")
 		p.printCommonNodeProps(n)
-	case BadStmt:
+	case *BadStmt:
 		p.output.WriteString(" (bad-stmt")
 		p.printCommonNodeProps(n)
-	case ExprStmt:
+	case *ExprStmt:
 		p.output.WriteString(" (expr-stmt")
 		p.printCommonNodeProps(n)
-	case BadExpr:
+	case *BadExpr:
 		p.output.WriteString(" (bad-expr")
 		p.printCommonNodeProps(n)
-	case BasicLitExpr:
+	case *BasicLitExpr:
 		p.printLiteral(n)
-	case BlockExpr:
+	case *BlockExpr:
 		p.output.WriteString(" (block-expr")
 		p.printCommonNodeProps(n)
-	case ParenExpr:
+	case *ParenExpr:
 		p.output.WriteString(" (paren-expr")
 		p.printCommonNodeProps(n)
-	case UnaryExpr:
+	case *UnaryExpr:
 		p.output.WriteString(" (unary-expr")
 		p.printCommonNodeProps(n)
 		p.printToken(n.Op)
-	case BinaryExpr:
+	case *BinaryExpr:
 		p.output.WriteString(" (binary-expr")
 		p.printCommonNodeProps(n)
 		p.printToken(n.Op)
@@ -110,7 +110,7 @@ func (p *ASTPrinter) Enter(node Node) bool {
 
 func (p *ASTPrinter) Leave(node Node) {
 	switch node.(type) {
-	case BasicLitExpr, Identifier:
+	case *BasicLitExpr, *Identifier:
 		if p.options.LiteralAsStrings {
 			return
 		}
@@ -123,7 +123,7 @@ func (p *ASTPrinter) printCommonNodeProps(node Node) {
 	p.printLocation(node)
 }
 
-func (p *ASTPrinter) printIdentifier(node Identifier) {
+func (p *ASTPrinter) printIdentifier(node *Identifier) {
 	p.output.WriteRune(' ')
 	if p.options.IdentifiersAsStrings {
 		p.output.WriteString(node.Name)
@@ -135,7 +135,7 @@ func (p *ASTPrinter) printIdentifier(node Identifier) {
 	}
 }
 
-func (p *ASTPrinter) printLiteral(node BasicLitExpr) {
+func (p *ASTPrinter) printLiteral(node *BasicLitExpr) {
 	p.output.WriteRune(' ')
 	if p.options.LiteralAsStrings {
 		p.output.WriteString(string(node.Token.Text))

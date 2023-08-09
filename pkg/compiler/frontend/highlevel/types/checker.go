@@ -56,15 +56,15 @@ func (t Checker) Check(ast *ast.Source) (*TypeUniverse, error) {
 
 func (t Checker) typeCheck(node ast.Node) (Type, error) {
 	switch node := node.(type) {
-	case ast.ProcDecl:
-		return t.typeCheckProcDecl(&node)
-	case ast.BasicLitExpr:
-		return t.typeCheckLiteral(&node)
-	case ast.BinaryExpr:
-		return t.typeCheckBinaryExpression(&node)
-	case ast.BlockExpr:
-		return t.typeCheckBlockExpr(&node)
-	case ast.ExprStmt:
+	case *ast.ProcDecl:
+		return t.typeCheckProcDecl(node)
+	case *ast.BasicLitExpr:
+		return t.typeCheckLiteral(node)
+	case *ast.BinaryExpr:
+		return t.typeCheckBinaryExpression(node)
+	case *ast.BlockExpr:
+		return t.typeCheckBlockExpr(node)
+	case *ast.ExprStmt:
 		return t.typeCheck(node.Expr)
 	default:
 		log.Warnf("Unknown node type %T", node)
@@ -128,8 +128,8 @@ func (t *Checker) typeCheckBlockExpr(node *ast.BlockExpr) (Type, error) {
 	return blockReturnType, nil
 }
 
-func (t *Checker) typeFromName(typeIdentifier ast.Identifier) (Type, error) {
-	switch typeIdentifier.Name {
+func (t *Checker) typeFromName(typeIdentifier *ast.Identifier) (Type, error) {
+	switch (*typeIdentifier).Name {
 	case "Int":
 		return IntType, nil
 	case "Float":
