@@ -8,11 +8,12 @@ import (
 )
 
 type Builder struct {
-	nodeIds astutils.NodeIdManager
+	nodeIds   astutils.NodeIdManager
+	variables astutils.VersionManager
 }
 
 type BlockBuilder struct {
-	Builder
+	*Builder
 	expr *BlockExpr
 }
 
@@ -22,16 +23,16 @@ func NewBuilder() *Builder {
 	}
 }
 
-func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl hl.ProcDecl) ProcDecl {
-	return ProcDecl{
+func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl hl.ProcDecl) *ProcDecl {
+	return &ProcDecl{
 		id:   b.nodeIds.Next(),
 		Type: tpe,
 		Name: name,
 	}
 }
 
-func (b *Builder) AtomicLit(tpe types.Type, value token.Token, hlExpr astutils.NodeId) AtomicLitExpr {
-	return AtomicLitExpr{
+func (b *Builder) AtomicLit(tpe types.Type, value token.Token, hlExpr astutils.NodeId) *AtomicLitExpr {
+	return &AtomicLitExpr{
 		id:           b.nodeIds.Next(),
 		tpe:          tpe,
 		Value:        value,
@@ -39,10 +40,10 @@ func (b *Builder) AtomicLit(tpe types.Type, value token.Token, hlExpr astutils.N
 	}
 }
 
-func (b *Builder) BinaryExpr(tpe types.Type, op token.Token, left Expression, right Expression, hlExpr astutils.NodeId) BinaryExpr {
-	return BinaryExpr{
+func (b *Builder) BinaryExpr(tpe types.Type, op token.Token, left Expression, right Expression, hlExpr astutils.NodeId) *BinaryExpr {
+	return &BinaryExpr{
 		id:           b.nodeIds.Next(),
-		tpe:          tpe,
+		Type:         tpe,
 		Op:           op,
 		Left:         left,
 		Right:        right,
@@ -51,25 +52,23 @@ func (b *Builder) BinaryExpr(tpe types.Type, op token.Token, left Expression, ri
 }
 
 func (b *Builder) ExprStatement(expr Expression) Statement {
-	return ExprStatement{
+	return &ExprStatement{
 		Expr: expr,
 	}
 }
 
-func (b *Builder) BlockBuilder(blockLabel string, blockId astutils.NodeId) *BlockBuilder {
-	synthLabel := b.Label(blockLabel, blockId)
-
+func (b *Builder) BlockBuilder(blockLabel Label, origin *astutils.NodeId) *BlockBuilder {
 	return &BlockBuilder{
-		Builder: *b,
-		expr:    &BlockExpr{Label: synthLabel, Statements: make([]Statement, 0)},
+		Builder: b,
+		expr:    &BlockExpr{Label: blockLabel, Statements: make([]Statement, 0)},
 	}
 }
 
-func (b *Builder) Label(name string, hlIdentifier astutils.NodeId) Label {
+func (b *Builder) Label(name string, origin *astutils.NodeId) Label {
 	return Label{
-		id:           b.nodeIds.Next(),
-		hlIdentifier: hlIdentifier,
-		Name:         name,
+		id:     b.nodeIds.Next(),
+		Origin: origin,
+		Value:  name,
 	}
 }
 
@@ -81,14 +80,36 @@ func (b *BlockBuilder) ReplaceLastStatement(statement Statement) {
 	b.expr.Statements[len(b.expr.Statements)-1] = statement
 }
 
+func (b *BlockBuilder) AddAssignment(variable *Variable, value Expression) {
+	b.AddStatement(&AssignStmt{
+		id:       b.nodeIds.Next(),
+		Variable: variable,
+		Expr:     value,
+	})
+}
+
 func (b *Builder) ReturnStmt(expr Expression) Statement {
-	return ReturnStmt{
+	return &ReturnStmt{
 		id:    b.nodeIds.Next(),
 		Value: expr,
 	}
 }
 
-func (b *BlockBuilder) Close() BlockExpr {
-	// todo add terminating return if it's missing
-	return *b.expr
+func (b *Builder) Variable(name string) *Variable {
+	return &Variable{
+		id:      b.nodeIds.Next(),
+		Version: b.variables.Next(),
+	}
+}
+
+func (b *BlockBuilder) Close() *BlockExpr {
+	return b.expr
+}
+
+func (b *BlockBuilder) SSABlock() *SSABlock {
+	return &SSABlock{
+		BlockExpr:    b.expr,
+		Predecessors: make([]*SSABlock, 0),
+		Successors:   make([]*SSABlock, 0),
+	}
 }

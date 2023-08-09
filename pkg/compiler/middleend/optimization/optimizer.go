@@ -16,15 +16,16 @@ func NewOptimizer(instrumentation compiler_introspection.Instrumentation) *Optim
 	}
 }
 
-func (o *Optimizer) Optimize(intermediate *ir.Module) (*ssa.Module, error) {
+func (o *Optimizer) Optimize(intermediate *ir.Module) (*ir.Module, error) {
 	o.instrumentation.EnterPhase(compiler_introspection.CompilationPhaseOptimize)
 	defer o.instrumentation.LeavePhase(compiler_introspection.CompilationPhaseOptimize)
 
 	ssaTransformer := ssa.NewTransformer(o.instrumentation)
-	ssaModule, err := ssaTransformer.Transform(*intermediate)
+	err := ssaTransformer.Transform(intermediate)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return ssaModule, nil
+	return intermediate, nil
 }

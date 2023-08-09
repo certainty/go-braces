@@ -43,28 +43,29 @@ func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 	return ctx.Module, nil
 }
 
-func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
+func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (*ir.ProcDecl, error) {
 	var err error
 
 	procType, err := ctx.typeOf(decl)
 	if err != nil {
-		return ast.ProcDecl{}, err
+		return nil, err
 	}
 
 	loweredType, err := ctx.lowerType(procType)
 	if err != nil {
-		return ast.ProcDecl{}, err
+		return nil, err
 	}
-	procName := ctx.builder.Label(decl.Name.Name, decl.ID())
+	id := decl.ID()
+	procName := ctx.builder.Label(decl.Name.Name, &id)
 	proc := ctx.builder.ProcDecl(procName, loweredType.(types.Procedure), decl)
 
-	entryBlock := ctx.builder.BlockBuilder("entry", decl.ID())
+	entryBlock := ctx.builder.BlockBuilder(ctx.builder.Label("entry", nil), &id)
 	var loweredStmt ast.Statement
 
 	for _, stmt := range decl.Body.Statements {
 		loweredStmt, err = ctx.lowerStatement(stmt)
 		if err != nil {
-			return ast.ProcDecl{}, err
+			return nil, err
 		}
 		entryBlock.AddStatement(loweredStmt)
 	}
@@ -72,7 +73,7 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (ir.ProcDecl, error) {
 	if loweredStmt != nil {
 		switch stmt := loweredStmt.(type) {
 
-		case ast.ExprStatement:
+		case *ast.ExprStatement:
 			entryBlock.ReplaceLastStatement(entryBlock.ReturnStmt(stmt.Expr))
 		}
 	}

@@ -56,20 +56,20 @@ func Print(node Node, options PrintingOptions) string {
 
 func (p *Printer) Enter(node Node) bool {
 	switch n := node.(type) {
-	case Module:
-		p.output.WriteString(fmt.Sprintf(" (module %s", n.Name.Name))
-	case Label:
-		p.printLabel(n)
-	case BlockExpr:
+	case *Module:
+		p.output.WriteString(fmt.Sprintf(" (module %s", n.Name.Value))
+	case *Label:
+		p.printLabel(*n)
+	case *BlockExpr:
 		p.output.WriteString(" (block-expr")
 		p.printCommonNodeProps(n)
-	case BinaryExpr:
+	case *BinaryExpr:
 		p.output.WriteString(" (binary-expr")
 		p.printCommonNodeProps(n)
 		p.printToken(n.Op)
-	case AtomicLitExpr:
-		p.printLiteral(n)
-	case ExprStatement:
+	case *AtomicLitExpr:
+		p.printLiteral(*n)
+	case *ExprStatement:
 		p.output.WriteString(" (expr-stmt")
 		p.printCommonNodeProps(n)
 	}
@@ -100,11 +100,11 @@ func (p *Printer) printLiteral(node AtomicLitExpr) {
 func (p *Printer) printLabel(node Label) {
 	p.output.WriteRune(' ')
 	if p.options.LabelsAsStrings {
-		p.output.WriteString(node.Name)
+		p.output.WriteString(node.Value)
 	} else {
 		p.output.WriteString("(id ")
 		p.printCommonNodeProps(node)
-		p.output.WriteString(fmt.Sprintf("\"%s\"", node.Name))
+		p.output.WriteString(fmt.Sprintf("\"%s\"", node.Value))
 		p.output.WriteString(")")
 	}
 }
