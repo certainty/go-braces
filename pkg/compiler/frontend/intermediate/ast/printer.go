@@ -60,7 +60,7 @@ func (p *Printer) Enter(node Node) bool {
 		p.output.WriteString(fmt.Sprintf(" (module %s", n.Name.Value))
 	case *Label:
 		p.printLabel(*n)
-	case *BlockExpr:
+	case *BasicBlock:
 		p.output.WriteString(" (block-expr")
 		p.printCommonNodeProps(n)
 	case *BinaryExpr:

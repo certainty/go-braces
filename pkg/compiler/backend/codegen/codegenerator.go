@@ -122,7 +122,7 @@ func (c *Codegenerator) addFunction(label isa.Label, theArity arity.Arity, code 
 	c.functionAddresses[label] = isa.Address(len(c.module.Functions) - 1)
 }
 
-func (c *Codegenerator) emitBlock(block *ir.SSABlock, builder *CodeUnitBuilder) error {
+func (c *Codegenerator) emitBlock(block *ir.BasicBlock, builder *CodeUnitBuilder) error {
 	for _, statement := range block.Statements {
 		switch stmt := statement.(type) {
 		case *ir.ReturnStmt:

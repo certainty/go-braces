@@ -14,7 +14,7 @@ type Builder struct {
 
 type BlockBuilder struct {
 	*Builder
-	expr *BlockExpr
+	expr *BasicBlock
 }
 
 func NewBuilder() *Builder {
@@ -60,7 +60,7 @@ func (b *Builder) ExprStatement(expr Expression) Statement {
 func (b *Builder) BlockBuilder(blockLabel Label, origin *astutils.NodeId) *BlockBuilder {
 	return &BlockBuilder{
 		Builder: b,
-		expr:    &BlockExpr{Label: blockLabel, Statements: make([]Statement, 0)},
+		expr:    &BasicBlock{Label: blockLabel, Statements: make([]Statement, 0)},
 	}
 }
 
@@ -102,14 +102,6 @@ func (b *Builder) Variable(name string) *Variable {
 	}
 }
 
-func (b *BlockBuilder) Close() *BlockExpr {
+func (b *BlockBuilder) Close() *BasicBlock {
 	return b.expr
-}
-
-func (b *BlockBuilder) SSABlock() *SSABlock {
-	return &SSABlock{
-		BlockExpr:    b.expr,
-		Predecessors: make([]*SSABlock, 0),
-		Successors:   make([]*SSABlock, 0),
-	}
 }

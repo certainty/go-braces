@@ -40,12 +40,6 @@ type (
 )
 
 type (
-	BlockExpr struct {
-		id         astutils.NodeId
-		Label      Label
-		Statements []Statement
-	}
-
 	BinaryExpr struct {
 		id           astutils.NodeId
 		Op           token.Token
@@ -76,19 +70,19 @@ type (
 	}
 )
 
-func (BlockExpr) exprNode()     {}
+func (BasicBlock) exprNode()    {}
 func (BinaryExpr) exprNode()    {}
 func (AtomicLitExpr) exprNode() {}
 func (Label) exprNode()         {}
 func (Variable) exprNode()      {}
 
-func (e BlockExpr) ID() astutils.NodeId     { return e.id }
+func (e BasicBlock) ID() astutils.NodeId    { return e.id }
 func (e BinaryExpr) ID() astutils.NodeId    { return e.id }
 func (e AtomicLitExpr) ID() astutils.NodeId { return e.id }
 func (e Label) ID() astutils.NodeId         { return e.id }
 func (e Variable) ID() astutils.NodeId      { return e.id }
 
-func (e BlockExpr) HighlevelNodeIds() []astutils.NodeId {
+func (e BasicBlock) HighlevelNodeIds() []astutils.NodeId {
 	hnodes := make([]astutils.NodeId, len(e.Statements))
 
 	for _, stmt := range e.Statements {
@@ -136,14 +130,16 @@ type (
 	}
 
 	PhiChoice struct {
-		Predecessor *SSABlock
+		Predecessor *BasicBlock
 		Value       Expression
 	}
 
-	SSABlock struct {
-		*BlockExpr
-		Predecessors []*SSABlock
-		Successors   []*SSABlock
+	BasicBlock struct {
+		id           astutils.NodeId
+		Label        Label
+		Statements   []Statement
+		Predecessors []*BasicBlock
+		Successors   []*BasicBlock
 	}
 )
 
@@ -180,8 +176,8 @@ type (
 	ProcDecl struct {
 		id        astutils.NodeId
 		hlDeclID  astutils.NodeId
-		Blocks    []*BlockExpr
-		SSABlocks []*SSABlock // will be set after SSA conversion
+		Blocks    []*BasicBlock
+		SSABlocks []*BasicBlock // will be set after SSA conversion
 		Type      types.Procedure
 		Name      Label
 	}
@@ -198,11 +194,11 @@ type Module struct {
 	Declarations []Declaration
 }
 
-func (b BlockExpr) IsEmpty() bool {
+func (b BasicBlock) IsEmpty() bool {
 	return len(b.Statements) == 0
 }
 
-func (b BlockExpr) LastStatement() Statement {
+func (b BasicBlock) LastStatement() Statement {
 	if b.IsEmpty() {
 		return nil
 	}

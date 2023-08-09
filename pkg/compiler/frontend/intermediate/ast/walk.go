@@ -17,11 +17,7 @@ func Walk(v Visitor, node Node) {
 		for _, decl := range n.Declarations {
 			Walk(v, decl)
 		}
-	case *BlockExpr:
-		for _, stmt := range n.Statements {
-			Walk(v, stmt)
-		}
-	case *SSABlock:
+	case *BasicBlock:
 		for _, stmt := range n.Statements {
 			Walk(v, stmt)
 		}

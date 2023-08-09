@@ -42,7 +42,7 @@ func (t *Transformer) Enter(node ir.Node) bool {
 
 func (t *Transformer) TransformProc(proc *ir.ProcDecl) error {
 	log.Debugf("Transforming proc %v", proc)
-	ssaBlocks := make([]*ir.SSABlock, 0)
+	ssaBlocks := make([]*ir.BasicBlock, 0)
 
 	for _, block := range proc.Blocks {
 		ssaBlock, err := t.TransformBlock(block)
@@ -55,7 +55,7 @@ func (t *Transformer) TransformProc(proc *ir.ProcDecl) error {
 	return nil
 }
 
-func (t *Transformer) TransformBlock(block *ir.BlockExpr) (*ir.SSABlock, error) {
+func (t *Transformer) TransformBlock(block *ir.BasicBlock) (*ir.BasicBlock, error) {
 	log.Debugf("Transforming block %v", block)
 
 	blockBuilder := t.BlockBuilder(block.Label, nil)
@@ -66,7 +66,8 @@ func (t *Transformer) TransformBlock(block *ir.BlockExpr) (*ir.SSABlock, error) 
 			return nil, err
 		}
 	}
-	return blockBuilder.SSABlock(), nil
+
+	return blockBuilder.Close(), nil
 }
 
 func (t *Transformer) TransformStatement(stmt ir.Statement, block *ir.BlockBuilder) (ir.Expression, error) {
