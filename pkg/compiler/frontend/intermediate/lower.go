@@ -32,7 +32,7 @@ func Lower(origin token.Origin, theAst *hl.Source, tpeUniverse *hltypes.TypeUniv
 func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 	for _, node := range source.Declarations {
 		switch node := node.(type) {
-		case hl.ProcDecl:
+		case *hl.ProcDecl:
 			proc, err := ctx.lowerProcDecl(node)
 			if err != nil {
 				return nil, err
@@ -43,7 +43,7 @@ func (ctx *Context) lower(source *hl.Source) (*ir.Module, error) {
 	return ctx.Module, nil
 }
 
-func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (*ir.ProcDecl, error) {
+func (ctx *Context) lowerProcDecl(decl *hl.ProcDecl) (*ir.ProcDecl, error) {
 	var err error
 
 	procType, err := ctx.typeOf(decl)
@@ -84,7 +84,7 @@ func (ctx *Context) lowerProcDecl(decl hl.ProcDecl) (*ir.ProcDecl, error) {
 
 func (ctx *Context) lowerStatement(stmt hl.Statement) (ast.Statement, error) {
 	switch stmt := stmt.(type) {
-	case hl.ExprStmt:
+	case *hl.ExprStmt:
 		expr, err := ctx.lowerExpr(stmt.Expr)
 		if err != nil {
 			return nil, err
@@ -97,7 +97,7 @@ func (ctx *Context) lowerStatement(stmt hl.Statement) (ast.Statement, error) {
 
 func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 	switch expr := expr.(type) {
-	case hl.BasicLitExpr:
+	case *hl.BasicLitExpr:
 		exprType, err := ctx.typeOf(expr)
 		if err != nil {
 			return nil, err
@@ -107,7 +107,7 @@ func (ctx *Context) lowerExpr(expr hl.Expression) (ast.Expression, error) {
 			return nil, err
 		}
 		return ctx.builder.AtomicLit(loweredType, expr.Token, expr.ID()), nil
-	case hl.BinaryExpr:
+	case *hl.BinaryExpr:
 		exprType, err := ctx.typeOf(expr)
 		if err != nil {
 			return nil, err

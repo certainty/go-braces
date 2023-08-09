@@ -23,7 +23,7 @@ func NewBuilder() *Builder {
 	}
 }
 
-func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl hl.ProcDecl) *ProcDecl {
+func (b *Builder) ProcDecl(name Label, tpe types.Procedure, hlDecl *hl.ProcDecl) *ProcDecl {
 	return &ProcDecl{
 		id:   b.nodeIds.Next(),
 		Type: tpe,
