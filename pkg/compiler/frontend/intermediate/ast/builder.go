@@ -99,6 +99,7 @@ func (b *Builder) Variable(name string) *Variable {
 	return &Variable{
 		id:      b.nodeIds.Next(),
 		Version: b.variables.Next(),
+		Name:    name,
 	}
 }
 

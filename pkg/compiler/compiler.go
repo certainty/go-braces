@@ -60,6 +60,7 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 		return nil, fmt.Errorf("OptimizerError: %w", err)
 	}
 	log.Debugf("Optimized IR %v", ssa)
+	log.Debugf("Optmized IR %v", ir.Print(ssa, ir.PrintTruthfully().ForSSA()))
 
 	// backend
 	assemblyModule, err := c.generateCode(ssa)

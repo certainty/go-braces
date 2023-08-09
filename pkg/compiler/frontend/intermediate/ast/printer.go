@@ -13,8 +13,14 @@ type PrintingOptions struct {
 	TokensAsStrings     bool // don't create a node for tokens but inline their textual representation
 	IncludeReferenceIDs bool // include reference node IDs from the highlevel AST
 	LiteralAsStrings    bool // don't create a node for literals but inline their textual representation
+	PrintSSABlocks      bool
 	LabelsAsStrings     bool // don't create a node for identifiers but inline their textual representation
 	PrettyPrint         bool // pretty print the output
+}
+
+func (p PrintingOptions) ForSSA() PrintingOptions {
+	p.PrintSSABlocks = true
+	return p
 }
 
 func PrintCanonical() PrintingOptions {
@@ -22,6 +28,7 @@ func PrintCanonical() PrintingOptions {
 		IncludeIDs:          false,
 		TokensAsStrings:     true,
 		IncludeReferenceIDs: false,
+		PrintSSABlocks:      false,
 		LiteralAsStrings:    true,
 		LabelsAsStrings:     true,
 		PrettyPrint:         false,
@@ -33,6 +40,7 @@ func PrintTruthfully() PrintingOptions {
 		IncludeIDs:          true,
 		IncludeReferenceIDs: false,
 		TokensAsStrings:     false,
+		PrintSSABlocks:      false,
 		LiteralAsStrings:    false,
 		LabelsAsStrings:     false,
 		PrettyPrint:         true,
@@ -46,10 +54,11 @@ type Printer struct {
 
 func Print(node Node, options PrintingOptions) string {
 	printer := &Printer{
-		output: strings.Builder{},
+		output:  strings.Builder{},
+		options: options,
 	}
 
-	Walk(printer, node)
+	Walk(printer, node, options.PrintSSABlocks)
 
 	return strings.Trim(printer.output.String(), " ")
 }
@@ -57,9 +66,11 @@ func Print(node Node, options PrintingOptions) string {
 func (p *Printer) Enter(node Node) bool {
 	switch n := node.(type) {
 	case *Module:
-		p.output.WriteString(fmt.Sprintf(" (module %s", n.Name.Value))
+		p.output.WriteString(fmt.Sprintf(" (module (ssa %v) %s", p.options.PrintSSABlocks, n.Name.Value))
 	case *Label:
 		p.printLabel(*n)
+	case *Variable:
+		p.output.WriteString(fmt.Sprintf(" (var %s%d)", n.Name, n.Version))
 	case *BasicBlock:
 		p.output.WriteString(" (block-expr")
 		p.printCommonNodeProps(n)
@@ -71,6 +82,12 @@ func (p *Printer) Enter(node Node) bool {
 		p.printLiteral(*n)
 	case *ExprStatement:
 		p.output.WriteString(" (expr-stmt")
+		p.printCommonNodeProps(n)
+	case *AssignStmt:
+		p.output.WriteString(" (assign-stmt")
+		p.printCommonNodeProps(n)
+	case *ReturnStmt:
+		p.output.WriteString(" (return-stmt")
 		p.printCommonNodeProps(n)
 	}
 	return true

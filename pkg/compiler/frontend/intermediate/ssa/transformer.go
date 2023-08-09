@@ -20,7 +20,7 @@ func NewTransformer(instrumentation compiler_introspection.Instrumentation) *Tra
 }
 
 func (t *Transformer) Transform(module *ir.Module) error {
-	ir.Walk(t, module)
+	ir.Walk(t, module, false)
 	return nil
 }
 
