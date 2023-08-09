@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
-	github.com/chzyer/readline v1.5.1
 	github.com/gkampitakis/go-snaps v0.4.7
 	github.com/philistino/teacup v0.0.0-20230407173306-0aed529e2eaa
 	github.com/sirupsen/logrus v1.9.3

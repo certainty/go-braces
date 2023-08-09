@@ -1,0 +1,6 @@
+
+// the simplest file we can use right now
+
+proc main(): Int {
+  3+3
+}
