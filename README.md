@@ -57,27 +57,29 @@ make test
 ### Introspecting a compiler run
 
 The introspector and the compiler are not packaged into one executable. This is so, that you can attach to arbitrary 
-compilations including the ones taking place during interaction with the REPL. And this is in fact also
-the easiest (at the time of this writing only) way to do it.
+compilations. And this is in fact also the easiest (at the time of this writing only) way to do it.
 
 You will need two terminals, either  separate instanes or if you're using tmux two panes.
-In one pane you're going to start the REPL like so:
+In one pane you're going to run the VM on a file like so:
 
 ```
-./target/braces-vm repl -c
+make
+
+./target/braces-vm run -c examples/simple.braces
 ```
 
-This will open up the vm in REPL mode with compiler introspection enabled.
+This will make the VM compile and run the input file, while enabling compiler introspection.
 You'll be greeted by a little banner saying that it's waiting for an introspection client to connect.
 So let's do that now. In a separate terminal or pane, execute:
 
 ```
+make
+
 ./target/braces-introspect compiler 
 ```
 
-This starts the introspector for the compiler. If everything went smoothly, the REPL should be out of 
-the waiting state and dropped you into the prompt. Here you can interact with the it as usual, but what you
-will observe is that the introspector picks up the compilation events and gives you insights into what's happening.
+This starts the introspector for the compiler. If everything went smoothly, the runner should be out of 
+the waiting state and executed the program. 
 
 By default the compiler is in single-stepping mode, meaning that it will stop at strategic points during compilation
 and allow you to interact with it and see its state.
