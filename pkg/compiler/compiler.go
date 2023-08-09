@@ -27,7 +27,15 @@ func NewCompiler(options CompilerOptions) *Compiler {
 	}
 }
 
-func (c Compiler) CompileString(code string, label string) (*isa.AssemblyModule, error) {
+func (c *Compiler) CompileFile(path string) (*isa.AssemblyModule, error) {
+	input, err := lexer.NewFileInput(path)
+	if err != nil {
+		return nil, err
+	}
+	return c.CompileModule(input)
+}
+
+func (c *Compiler) CompileString(code string, label string) (*isa.AssemblyModule, error) {
 	input := lexer.NewStringInput(label, code)
 	return c.CompileModule(input)
 }

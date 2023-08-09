@@ -207,6 +207,11 @@ func (p *Parser) parseProcedureDeclaration() ast.Declaration {
 	}
 
 	body := p.parseBlock()
+	if body == nil {
+		p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected block")
+		return p.astBuilder.NewBadDecl(location)
+	}
+
 	return p.astBuilder.NewProcDecl(location, procName, params, result, body)
 }
 
@@ -253,6 +258,11 @@ func (p *Parser) parseBlock() *ast.BlockExpr {
 	statements := []ast.Statement{}
 
 	for !p.match(token.RBRACE) {
+		if p.currentToken.IsEOF() {
+			p.errorAtCurrent(ParseErrorIdUnexpectedToken, "expected '}'")
+			// TODO: this is the only parser that returns nil currently
+			return nil
+		}
 		statements = append(statements, p.parseBlockStatment())
 	}
 	return p.astBuilder.NewBlockExpr(location, statements)

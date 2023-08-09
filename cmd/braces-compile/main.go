@@ -2,21 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "braces-compile",
-	Short: "A compiler for the braces language, with emphasis on introspection.",
-	Long:  `A compiler for the braces language, with emphasis on introspection.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// Add your application logic here
-		fmt.Println("Runnning braces-compile")
-	},
-}
-
 func main() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.WarnLevel)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

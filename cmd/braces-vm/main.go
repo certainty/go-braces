@@ -12,7 +12,7 @@ import (
 func main() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.WarnLevel)
+	log.SetLevel(log.DebugLevel)
 
 	compiler_introspection.RegisterTypes()
 
