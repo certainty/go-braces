@@ -41,7 +41,7 @@ func (c *Compiler) CompileString(code string, label string) (*isa.AssemblyModule
 }
 
 func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error) {
-	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
+	//	c.instrumentation.EnterCompilerModule(input.Origin, string(*input.Buffer))
 
 	theAST, err := c.parse(input)
 	if err != nil {
@@ -77,7 +77,7 @@ func (c Compiler) CompileModule(input *lexer.Input) (*isa.AssemblyModule, error)
 	}
 	log.Debugf("AssemblyModule %v", assemblyModule)
 
-	c.instrumentation.LeaveCompilerModule(*assemblyModule)
+	//c.instrumentation.LeaveCompilerModule(*assemblyModule)
 	return assemblyModule, nil
 }
 

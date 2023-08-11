@@ -1,9 +1,11 @@
 package introspection
 
 import (
-	"encoding/gob"
+	"bufio"
+	"encoding/json"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net"
 	"reflect"
 	"sync"
@@ -15,9 +17,9 @@ type WireConnectioon interface {
 	Close()
 }
 
-type WireControlConnection struct {
-	In       chan Payload
-	Out      chan Payload
+type WireControlConnection[T any] struct {
+	In       chan T
+	Out      chan T
 	shutdown chan bool
 	socket   net.Conn
 	wg       sync.WaitGroup
@@ -30,16 +32,16 @@ const (
 	WireEventSink
 )
 
-type WireEventConnection struct {
-	Channel  chan Payload
+type WireEventConnection[T any] struct {
+	Channel  chan T
 	shutdown chan bool
 	socket   net.Conn
 }
 
-func NewWireControlConnection(socket net.Conn) *WireControlConnection {
-	connection := &WireControlConnection{
-		In:       make(chan Payload),
-		Out:      make(chan Payload),
+func NewWireControlConnection[T any](socket net.Conn) *WireControlConnection[T] {
+	connection := &WireControlConnection[T]{
+		In:       make(chan T),
+		Out:      make(chan T),
 		shutdown: make(chan bool),
 		socket:   socket,
 		wg:       sync.WaitGroup{},
@@ -49,9 +51,9 @@ func NewWireControlConnection(socket net.Conn) *WireControlConnection {
 	return connection
 }
 
-func NewWireEventConnection(socket net.Conn, connectionType WireEventConnectionType) *WireEventConnection {
-	connection := &WireEventConnection{
-		Channel:  make(chan Payload),
+func NewWireEventConnection[T any](socket net.Conn, connectionType WireEventConnectionType) *WireEventConnection[T] {
+	connection := &WireEventConnection[T]{
+		Channel:  make(chan T),
 		shutdown: make(chan bool),
 		socket:   socket,
 	}
@@ -64,83 +66,79 @@ func NewWireEventConnection(socket net.Conn, connectionType WireEventConnectionT
 	return connection
 }
 
-func (w *WireControlConnection) processControlMessages() {
+func (w *WireControlConnection[T]) processControlMessages() {
 	go w.processIncomingControlMessages()
 
 	go w.processOutgoingControlMessages()
 }
 
-func (w *WireControlConnection) Close() error {
+func (w *WireControlConnection[T]) Close() error {
 	w.shutdown <- true
 	return w.closeSocket()
 }
 
-func (w *WireEventConnection) Close() error {
+func (w *WireEventConnection[T]) Close() error {
 	w.shutdown <- true
 	return w.closeSocket()
 }
 
-func (w *WireControlConnection) IsOpen() bool {
+func (w *WireControlConnection[T]) IsOpen() bool {
 	return w.socket != nil
 }
 
-func (w *WireEventConnection) IsOpen() bool {
+func (w *WireEventConnection[T]) IsOpen() bool {
 	return w.socket != nil
 }
 
-func (w *WireControlConnection) closeSocket() error {
+func (w *WireControlConnection[T]) closeSocket() error {
 	w.socket.Close()
 	w.socket = nil
 	return nil
 }
 
-func (w *WireEventConnection) closeSocket() error {
+func (w *WireEventConnection[T]) closeSocket() error {
 	w.socket.Close()
 	w.socket = nil
 	return nil
 }
 
-func (w *WireControlConnection) processIncomingControlMessages() {
+func (w *WireControlConnection[T]) processIncomingControlMessages() {
 	w.wg.Add(1)
 	defer w.wg.Done()
 
-	decoder := gob.NewDecoder(w.socket)
-
 	for {
-		wireMessage := WireMessage{}
-		if err := decoder.Decode(&wireMessage); err != nil {
-			// check if its OpError
+		wireMessage, err := readWireMessage[T](w.socket)
+
+		if err != nil {
 			if _, ok := err.(*net.OpError); ok {
-				log.Printf("Control connection closed. Leaving incoming control message processing loop.")
+				log.Errorf("Control connection closed. Leaving incoming control message processing loop.")
 				w.Close()
 				return
 			} else if err == io.EOF || err == io.ErrClosedPipe {
-				log.Printf("Control connection closed. Leaving incoming control message processing loop.")
+				log.Errorf("Control connection closed. Leaving incoming control message processing loop.")
 				w.Close()
 				return
 			} else {
-				log.Printf("Error decoding control message: %v", reflect.TypeOf(err))
+				log.Errorf("Error decoding control message: %v", reflect.TypeOf(err))
 			}
 		} else {
 			switch wireMessage.MessageType {
 			case MessageTypeControl:
 				w.In <- wireMessage.Payload
 			case MessageTypeShutdown:
-				log.Printf("Client has shut down. Shutting down server.")
+				log.Infof("Client has shut down. Shutting down server.")
 				w.Close()
 				return
 			default:
-				log.Printf("Unknown message type: %v", wireMessage.MessageType)
+				log.Debugf("Unknown message type: %v", wireMessage.MessageType)
 			}
 		}
 	}
 }
 
-func (w *WireControlConnection) processOutgoingControlMessages() {
+func (w *WireControlConnection[T]) processOutgoingControlMessages() {
 	w.wg.Add(1)
 	defer w.wg.Done()
-
-	encoder := gob.NewEncoder(w.socket)
 	var err error
 
 	for {
@@ -148,16 +146,17 @@ func (w *WireControlConnection) processOutgoingControlMessages() {
 		case <-w.shutdown:
 			return
 		case payload := <-w.Out:
-			wireMessage := WireMessage{MessageTypeControl, payload}
-			if err = encoder.Encode(wireMessage); err != nil {
+			wireMessage := WireMessage[T]{MessageTypeControl, payload}
+
+			if err = writeWireMessage(w.socket, &wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
-					log.Printf("Control connection closed. Leaving outgoing control message processing loop.")
+					log.Errorf("Control connection closed. Leaving outgoing control message processing loop.")
 					if err = w.closeSocket(); err != nil {
-						log.Printf("Failed to close socket. Ignoring...")
+						log.Errorf("Failed to close socket. Ignoring...")
 					}
 					return
 				} else {
-					log.Printf("Error encoding control message: %v", err)
+					log.Errorf("Error encoding control message: %v", err)
 				}
 			}
 		default:
@@ -166,18 +165,16 @@ func (w *WireControlConnection) processOutgoingControlMessages() {
 	}
 }
 
-func (w *WireEventConnection) processIncomingEvents() {
-	decoder := gob.NewDecoder(w.socket)
-
+func (w *WireEventConnection[T]) processIncomingEvents() {
 	for {
-		wireMessage := WireMessage{}
-		if err := decoder.Decode(&wireMessage); err != nil {
+		wireMessage, err := readWireMessage[T](w.socket)
+		if err != nil {
 			if err == io.EOF || err == io.ErrClosedPipe {
-				log.Printf("Event connection closed. Leaving event message processing loop.")
+				log.Errorf("Event connection closed. Leaving event message processing loop.")
 				w.Close()
 				return
 			} else {
-				log.Printf("Error decoding event message: %v", err)
+				log.Errorf("Error decoding event message: %v", err)
 			}
 		} else {
 			switch wireMessage.MessageType {
@@ -187,14 +184,13 @@ func (w *WireEventConnection) processIncomingEvents() {
 				w.Close()
 				return
 			default:
-				log.Printf("Message not supported by event connection: %v", wireMessage.MessageType)
+				log.Debugf("Message not supported by event connection: %v", wireMessage.MessageType)
 			}
 		}
 	}
 }
 
-func (w *WireEventConnection) processOutgoingEvents() {
-	encoder := gob.NewEncoder(w.socket)
+func (w *WireEventConnection[T]) processOutgoingEvents() {
 	var err error
 
 	for {
@@ -202,20 +198,60 @@ func (w *WireEventConnection) processOutgoingEvents() {
 		case <-w.shutdown:
 			return
 		case event := <-w.Channel:
-			wireMessage := WireMessage{MessageTypeEvent, event}
-			if err = encoder.Encode(wireMessage); err != nil {
+			wireMessage := WireMessage[T]{MessageTypeEvent, event}
+			if err = writeWireMessage(w.socket, &wireMessage); err != nil {
 				if err == io.EOF || err == io.ErrClosedPipe {
-					log.Printf("Event connection closed. Leaving event message processing loop.")
+					log.Errorf("Event connection closed. Leaving event message processing loop.")
 					if err = w.closeSocket(); err != nil {
-						log.Printf("Failed to close socket. Ignoring...")
+						log.Errorf("Failed to close socket. Ignoring...")
 					}
 					return
 				} else {
-					log.Printf("Error encoding event message: %v", err)
+					log.Errorf("Error encoding event message: %v", err)
 				}
 			}
 		default:
 			time.Sleep(2 * time.Millisecond)
 		}
 	}
+}
+
+func writeWireMessage[T any](w io.Writer, message *WireMessage[T]) error {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(w, "Content-Length: %d\r\n\r\n", len(data))
+	_, err = w.Write(data)
+	if err != nil {
+		return err
+	}
+	log.Debugf("Sent message: %d %s", len(data), data)
+	return nil
+}
+
+func readWireMessage[T any](r io.Reader) (*WireMessage[T], error) {
+	var contentLength int
+	var msg WireMessage[T]
+
+	bufReader := bufio.NewReader(r)
+	buf, err := bufReader.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Sscanf(buf, "Content-Length: %d", &contentLength)
+	bufReader.ReadString('\n') // read the empty line
+
+	content := make([]byte, contentLength)
+	_, err = io.ReadFull(bufReader, content)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = json.Unmarshal(content, &msg); err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }

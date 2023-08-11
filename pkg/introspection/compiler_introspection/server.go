@@ -8,13 +8,13 @@ import (
 const INTROSPECTION_TOOL_NAME = "compiler-introspection-server"
 
 type Server struct {
-	wireServer *introspection.WireServer
-	events     *introspection.WireEventConnection
-	control    *introspection.WireControlConnection
+	wireServer *introspection.WireServer[CompilerIntrospectionControl, CompilerIntrospectionEvent]
+	events     *introspection.WireEventConnection[CompilerIntrospectionEvent]
+	control    *introspection.WireControlConnection[CompilerIntrospectionControl]
 }
 
 func NewServer() (*Server, error) {
-	wireServer, err := introspection.NewWireServer(INTROSPECTION_TOOL_NAME)
+	wireServer, err := introspection.NewWireServer[CompilerIntrospectionControl, CompilerIntrospectionEvent](INTROSPECTION_TOOL_NAME)
 	if err != nil {
 		return nil, err
 	}

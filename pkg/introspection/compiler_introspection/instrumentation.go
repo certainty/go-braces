@@ -1,120 +1,81 @@
 package compiler_introspection
 
 import (
-	"fmt"
 	"log"
-
-	"github.com/certainty/go-braces/pkg/compiler/frontend/highlevel/token"
-	"github.com/certainty/go-braces/pkg/shared/isa"
 )
 
 type IntrospectionSubject interface{}
-
 type CompilationPhase string
+type EventType string
 
 const (
-	CompilationPhaseRead        CompilationPhase = "read"
-	CompilationPhaseParse       CompilationPhase = "parse"
-	CompilationPhaseTypeCheck   CompilationPhase = "typecheck"
-	CompilationPhaseLowerToCore CompilationPhase = "lowertocore"
-	CompilationPhaseLowerToIR   CompilationPhase = "lowertoir"
-	CompilationPhaseSSA         CompilationPhase = "ssa"
-	CompilationPhaseOptimize    CompilationPhase = "optimize"
-	CompilationPhaseCodegen     CompilationPhase = "codegen"
+	EventEnterPhase EventType = "urn:x-braces:compiler:event:enterphase"
+	EventLeavePhase EventType = "urn:x-braces:compiler:event:leavephase"
+	EventBreakpoint EventType = "urn:x-braces:compiler:event:breakpoint"
+)
+
+type CompilerIntrospectionEvent struct {
+	Type EventType
+	Data interface{}
+}
+
+func NewEventEnterPhase(phase CompilationPhase) CompilerIntrospectionEvent {
+	return CompilerIntrospectionEvent{
+		Type: EventEnterPhase,
+		Data: phase,
+	}
+}
+
+func NewEventLeavePhase(phase CompilationPhase) CompilerIntrospectionEvent {
+	return CompilerIntrospectionEvent{
+		Type: EventLeavePhase,
+		Data: phase,
+	}
+}
+
+func NewEventBreakpoint(id BreakpointID) CompilerIntrospectionEvent {
+	return CompilerIntrospectionEvent{
+		Type: EventBreakpoint,
+		Data: id,
+	}
+}
+
+const (
+	CompilationPhaseRead      CompilationPhase = "urn:x-braces:compiler:phase:read"
+	CompilationPhaseParse     CompilationPhase = "urn:x-braces:compiler:phase:parse"
+	CompilationPhaseTypeCheck CompilationPhase = "urn:x-braces:compiler:phase:typecheck"
+	CompilationPhaseLowerToIR CompilationPhase = "urn:x-braces:compiler:phase:lowertoir"
+	CompilationPhaseSSA       CompilationPhase = "urn:x-braces:compiler:phase:ssa"
+	CompilationPhaseOptimize  CompilationPhase = "urn:x-braces:compiler:phase:optimize"
+	CompilationPhaseCodegen   CompilationPhase = "urn:x-braces:compiler:phase:codegen"
 )
 
 type BreakpointID string
 
 const (
-	BPCompilerBeforeLex BreakpointID = "compiler:before:lex"
-	BPCompilerAfterLex  BreakpointID = "compiler:after:lex"
-	BPReaderParseDatum  BreakpointID = "lexer:parse"
-	BPReaderAccepted    BreakpointID = "lexer:accepted"
+	BPScannerBeginLex BreakpointID = "urn:x-braces:compiler:bp:begin-lex"
+	BPScannerEndLex   BreakpointID = "urn:x-braces:compiler:bp:end-lex"
+	BPReaderAccepted  BreakpointID = "urn:x-braces:compiler:bp:token-accepted"
 
-	BPCompilerBeforeParse BreakpointID = "compiler:before:parse"
-	BPCompilerAfterParse  BreakpointID = "compiler:after:parse"
-
-	BPCompilerBeforeCoreCompile BreakpointID = "compiler:before:corecompile"
-
-	BPCompilerBeforeTypeCheck BreakpointID = "compiler:before:typecheck"
-	BPCompilerAfterTypeCheck  BreakpointID = "compiler:after:typecheck"
-	BPCompilerBeforeOptimize  BreakpointID = "compiler:before:optimize"
-	BPCompilerAfterOptimize   BreakpointID = "compiler:after:optimize"
-	BPCompilerBeforeCodegen   BreakpointID = "compiler:before:codegen"
-	BPCompilerAfterCodegen    BreakpointID = "compiler:after:codegen"
+	BPCompilerBeforeParse BreakpointID = "urn:x-braces:compiler:bp:before-parse"
+	BPCompilerAfterParse  BreakpointID = "urn:x-braces:compiler:bp:after-parse"
 )
-
-// events
-type CompilerIntrospectionEvent interface{}
-
-type EventBeginCompileModule struct {
-	Origin     token.Origin
-	SourceCode string
-}
-
-func (e EventBeginCompileModule) String() string {
-	return fmt.Sprintf("EventBeginCompileModule{Location: %s, SourceCodeSize: %d}", e.Origin.Name(), len(e.SourceCode))
-}
-
-type EventEndCompileModule struct {
-	Meta      isa.AssemblyMeta
-	Functions []isa.Function
-	Closures  []isa.Closure
-}
-
-func NewEventEndCompileModule(module isa.AssemblyModule) EventEndCompileModule {
-	return EventEndCompileModule{
-		Meta: module.Meta,
-	}
-}
-
-func (e EventEndCompileModule) String() string {
-	return fmt.Sprintf("EventEndCompileModule{Meta: %v }", e.Meta)
-}
-
-type EventEnterPhase struct {
-	Phase CompilationPhase
-}
-
-type EventLeavePhase struct {
-	Phase CompilationPhase
-}
-
-func (e EventEnterPhase) String() string {
-	return fmt.Sprintf("EventEnterPhase{Phase: %s}", e.Phase)
-}
-
-func (e EventLeavePhase) String() string {
-	return fmt.Sprintf("EventLeavePhase{Phase: %s}", e.Phase)
-}
-
-type EventBreakpoint struct {
-	ID BreakpointID
-}
-
-func (e EventBreakpoint) String() string {
-	return fmt.Sprintf("EventBreakpoint{ID: %s}", e.ID)
-}
-
-// control stuff
 
 type CompilerIntrospectionControl interface{}
 
-// TODO: do we need a correlation ID?
 type CommandOk struct {
 	Value CompilerIntrospectionControl
 }
 
 type CommandError struct {
 	Message string
-}                                // error
+} // error
+
 type BreakpointContinue struct{} // continue execution
 
 type Instrumentation interface {
 	EnterPhase(phase CompilationPhase)
 	LeavePhase(phase CompilationPhase)
-	EnterCompilerModule(origin token.Origin, sourceCode string)
-	LeaveCompilerModule(module isa.AssemblyModule)
 	Breakpoint(id BreakpointID, subject IntrospectionSubject)
 }
 
@@ -124,30 +85,21 @@ type InstrumentationFromServer struct {
 }
 
 func NewInstrumentationFromServer(server *Server) Instrumentation {
-	return &InstrumentationFromServer{server: server, haltOnBreakpoint: true}
+	return &InstrumentationFromServer{
+		server:           server,
+		haltOnBreakpoint: true,
+	}
 }
 
 func (s *InstrumentationFromServer) EnterPhase(phase CompilationPhase) {
 	if s.server != nil && s.server.IsConnected() {
-		s.server.SendEvents(EventEnterPhase{Phase: phase}) // nolint:errcheck
+		s.server.SendEvents(NewEventEnterPhase(phase)) // nolint:errcheck
 	}
 }
 
 func (s *InstrumentationFromServer) LeavePhase(phase CompilationPhase) {
 	if s.server != nil && s.server.IsConnected() {
-		s.server.SendEvents(EventLeavePhase{Phase: phase}) //nolint:errcheck
-	}
-}
-
-func (s *InstrumentationFromServer) EnterCompilerModule(origin token.Origin, sourceCode string) {
-	if s.server != nil && s.server.IsConnected() {
-		s.server.SendEvents(EventBeginCompileModule{Origin: origin, SourceCode: sourceCode}) //nolint:errcheck
-	}
-}
-
-func (s *InstrumentationFromServer) LeaveCompilerModule(module isa.AssemblyModule) {
-	if s.server != nil && s.server.IsConnected() {
-		s.server.SendEvents(NewEventEndCompileModule(module)) //nolint:errcheck
+		s.server.SendEvents(NewEventLeavePhase(phase)) //nolint:errcheck
 	}
 }
 
@@ -157,7 +109,7 @@ func (s *InstrumentationFromServer) Breakpoint(id BreakpointID, subject Introspe
 	}
 
 	if s.server != nil && s.server.IsConnected() {
-		s.server.SendEvents(EventBreakpoint{id}) //nolint:errcheck
+		s.server.SendEvents(NewEventBreakpoint(id)) //nolint:errcheck
 		s.breakpointRepl(id, subject)
 		log.Printf("Breakpoint resumed  %s", id)
 	}

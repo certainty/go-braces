@@ -8,13 +8,13 @@ import (
 )
 
 type Client struct {
-	wireClient *introspection.WireClient
-	events     *introspection.WireEventConnection
-	control    *introspection.WireControlConnection
+	wireClient *introspection.WireClient[CompilerIntrospectionControl, CompilerIntrospectionEvent]
+	events     *introspection.WireEventConnection[CompilerIntrospectionEvent]
+	control    *introspection.WireControlConnection[CompilerIntrospectionControl]
 }
 
 func NewClient() (*Client, error) {
-	client := introspection.NewWireClient(INTROSPECTION_TOOL_NAME)
+	client := introspection.NewWireClient[CompilerIntrospectionControl, CompilerIntrospectionEvent](INTROSPECTION_TOOL_NAME)
 
 	return &Client{
 		wireClient: &client,
@@ -61,16 +61,11 @@ func (c *Client) DisableBreakPoints() error {
 
 func (c *Client) PollEvent() (CompilerIntrospectionEvent, error) {
 	if !c.IsConnected() {
-		return nil, errors.New("No client connected")
+		return CompilerIntrospectionEvent{}, errors.New("No client connected")
 	}
 
 	event := <-c.events.Channel
-	switch event := event.(type) {
-	case CompilerIntrospectionEvent:
-		return event, nil
-	default:
-		return nil, errors.New("Not a CompilerIntrospectionEvent")
-	}
+	return event, nil
 }
 
 func (c *Client) SendControl(control CompilerIntrospectionControl) error {

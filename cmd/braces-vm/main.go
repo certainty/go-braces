@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/certainty/go-braces/pkg/introspection/compiler_introspection"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -13,8 +11,6 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.DebugLevel)
-
-	compiler_introspection.RegisterTypes()
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
