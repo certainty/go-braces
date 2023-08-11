@@ -65,10 +65,8 @@ func NewWireEventConnection(socket net.Conn, connectionType WireEventConnectionT
 }
 
 func (w *WireControlConnection) processControlMessages() {
-	w.wg.Add(1)
 	go w.processIncomingControlMessages()
 
-	w.wg.Add(1)
 	go w.processOutgoingControlMessages()
 }
 
@@ -103,7 +101,9 @@ func (w *WireEventConnection) closeSocket() error {
 }
 
 func (w *WireControlConnection) processIncomingControlMessages() {
+	w.wg.Add(1)
 	defer w.wg.Done()
+
 	decoder := gob.NewDecoder(w.socket)
 
 	for {
@@ -137,7 +137,9 @@ func (w *WireControlConnection) processIncomingControlMessages() {
 }
 
 func (w *WireControlConnection) processOutgoingControlMessages() {
+	w.wg.Add(1)
 	defer w.wg.Done()
+
 	encoder := gob.NewEncoder(w.socket)
 	var err error
 

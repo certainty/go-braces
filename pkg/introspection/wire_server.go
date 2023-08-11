@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 )
 
 type WireServer struct {
@@ -24,9 +23,6 @@ func NewWireServer(scope string) (*WireServer, error) {
 
 	eventSockPath := EventSocketPath(scope)
 	controlSockPath := ControlSocketPath(scope)
-
-	os.Remove(eventSockPath)
-	os.Remove(controlSockPath)
 
 	eventSock, err := net.Listen("unix", eventSockPath)
 	if err != nil {
