@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
-	github.com/gkampitakis/go-snaps v0.4.7
+	github.com/gkampitakis/go-snaps v0.4.11
 	github.com/philistino/teacup v0.0.0-20230407173306-0aed529e2eaa
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
@@ -20,7 +20,7 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
-	github.com/gkampitakis/ciinfo v0.2.4 // indirect
+	github.com/gkampitakis/ciinfo v0.2.5 // indirect
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -35,9 +35,9 @@ require (
 	github.com/muesli/termenv v0.15.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tidwall/gjson v1.14.4 // indirect
+	github.com/tidwall/gjson v1.16.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
